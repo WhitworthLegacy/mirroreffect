@@ -34,6 +34,13 @@ export default function SeoPage({ params }: PageProps) {
     notFound();
   }
 
+  const normalized = normalizeSlug(page.slug);
+  const isNl = normalized.startsWith("nl") || normalized.startsWith("spiegel-");
+  const ctaPrimary = isNl ? "Controleer beschikbaarheid" : "Vérifier la disponibilité";
+  const ctaSecondary = isNl ? "Bekijk pakketten" : "Voir les packs";
+  const ctaFinal = isNl ? "Start de reservatie" : "Démarrer la réservation";
+  const reservationHref = `/reservation?lang=${isNl ? "nl" : "fr"}`;
+
   return (
     <main className="relative min-h-screen romance-bg text-[#12130F]">
       <div
@@ -51,11 +58,11 @@ export default function SeoPage({ params }: PageProps) {
           {page.seo.description}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <a className="btn btn-gold" href="/reservation">
-            Vérifier la disponibilité
+          <a className="btn btn-gold" href={reservationHref}>
+            {ctaPrimary}
           </a>
           <a className="btn btn-dark" href="/#packs-b2c">
-            Voir les packs
+            {ctaSecondary}
           </a>
         </div>
       </header>
@@ -95,13 +102,17 @@ export default function SeoPage({ params }: PageProps) {
 
       <section className="section pt-0 text-center">
         <div className="rounded-[24px] bg-[#12130F] px-6 py-10 text-white shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
-          <h2 className="text-3xl font-black">Prêt à réserver votre date ?</h2>
+          <h2 className="text-3xl font-black">
+            {isNl ? "Klaar om uw datum te reserveren?" : "Prêt à réserver votre date ?"}
+          </h2>
           <p className="mt-3 text-sm text-[#f0f0f0]">
-            Réponse instantanée, disponibilité en quelques clics.
+            {isNl
+              ? "Snelle reactie, beschikbaarheid in enkele klikken."
+              : "Réponse instantanée, disponibilité en quelques clics."}
           </p>
           <div className="mt-5 flex justify-center">
-            <a className="btn btn-gold" href="/reservation">
-              Démarrer la réservation
+            <a className="btn btn-gold" href={reservationHref}>
+              {ctaFinal}
             </a>
           </div>
         </div>

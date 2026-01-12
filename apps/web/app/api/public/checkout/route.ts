@@ -73,6 +73,8 @@ export async function POST(req: Request) {
     const webhookUrl =
       (process.env.APP_URL ? `${process.env.APP_URL}/api/webhooks/mollie` : null);
 
+    const redirectUrl = `${process.env.APP_URL}/booking/success?event_id=${created.id}&lang=${b.language}`;
+
     const res = await fetch("https://api.mollie.com/v2/payments", {
       method: "POST",
       headers: {
@@ -82,7 +84,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         amount: { currency: "EUR", value: (deposit_cents / 100).toFixed(2) },
         description: `MirrorEffect — Acompte — ${b.client_name} — ${b.event_date}`,
-        redirectUrl: `${process.env.APP_URL}/booking/success?event_id=${created.id}`,
+        redirectUrl,
         webhookUrl: webhookUrl ?? undefined,
         metadata: {
             event_id: created.id,     // 🔑 obligatoire pour le webhook

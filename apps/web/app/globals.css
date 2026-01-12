@@ -171,3 +171,74 @@
     transform: translateY(0px);
   }
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flow-shell {
+  background:
+    radial-gradient(600px 420px at 10% -10%, rgba(227, 192, 74, 0.18), transparent 60%),
+    radial-gradient(520px 420px at 90% -10%, rgba(193, 149, 14, 0.2), transparent 65%),
+    linear-gradient(180deg, #fbfbf7 0%, #ffffff 100%);
+}
+
+.flow-card {
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(227, 192, 74, 0.2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.1);
+}
+
+.flow-step {
+  animation: rise-in 0.6s ease forwards;
+}
+
+.flow-progress {
+  background: linear-gradient(90deg, #c1950e 0%, #e3c04a 60%, #c1950e 100%);
+  background-size: 200% 200%;
+  animation: shimmer 4s linear infinite;
+}
+
+.flow-media {
+  background: #fdfcf8;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16);
+}
+
+.flow-glow {
+  box-shadow: 0 18px 50px rgba(193, 149, 14, 0.2), 0 0 0 1px rgba(227, 192, 74, 0.3);
+}
+
+.flow-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.flow-cta::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.5), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.flow-cta:hover::after {
+  opacity: 0.8;
+}

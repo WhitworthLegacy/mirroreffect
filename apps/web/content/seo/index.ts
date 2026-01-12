@@ -19,8 +19,8 @@ export type SeoPage = {
     description: string;
   };
   h1: string;
-  sections: { heading: string; html: string }[];
-  faqs: { question: string; answer: string }[];
+  sections: ReadonlyArray<{ heading: string; html: string }>;
+  faqs: ReadonlyArray<{ question: string; answer: string }>;
 };
 
 export const seoPages: SeoPage[] = [
