@@ -206,7 +206,7 @@ export function ReservationFlow() {
   const searchParams = useSearchParams();
   const lang = searchParams.get("lang") === "nl" ? "nl" : "fr";
   const strings = copy[lang];
-  const t = <K extends keyof typeof copy.fr>(key: K) => strings[key];
+  const t = (key: Exclude<keyof typeof copy.fr, "proofItems">) => strings[key];
   const proofItems = strings.proofItems;
 
   const packs = useMemo(
