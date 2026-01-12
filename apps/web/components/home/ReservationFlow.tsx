@@ -468,8 +468,7 @@ const packs = useMemo(
   const optionChoices = useMemo(
     () => [
       { code: "RED_CARPET", title: t("optionRed"), desc: t("optionRedDesc") },
-      { code: "STANCHIONS_GOLD", title: `${t("optionStanchions")} — Doré`, desc: t("optionStanchionsDesc") },
-      { code: "STANCHIONS_SILVER", title: `${t("optionStanchions")} — Argenté`, desc: t("optionStanchionsDesc") },
+      { code: "STANCHIONS", title: t("optionStanchions"), desc: t("optionStanchionsDesc") },
       { code: "DIGITAL_ALBUM", title: t("optionAlbum"), desc: t("optionAlbumDesc") }
     ],
     [lang]
@@ -506,6 +505,8 @@ const packs = useMemo(
   const [priority, setPriority] = useState("");
   const [packCode, setPackCode] = useState<PackCode | "">("");
   const [options, setOptions] = useState<string[]>([]);
+  const [stanchionsEnabled, setStanchionsEnabled] = useState(false);
+  const [stanchionsColor, setStanchionsColor] = useState<"GOLD" | "SILVER">("GOLD");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
@@ -523,6 +524,11 @@ const packs = useMemo(
   const currentTestimonialImage = encodeURI(
     testimonialImages[testimonialIndex % testimonialImages.length]
   );
+
+  const selectedOptionsForRecap = useMemo(() => {
+    const stanchionsCode = stanchionsEnabled ? `STANCHIONS_${stanchionsColor}` : null;
+    return stanchionsCode ? [...options, stanchionsCode] : options;
+  }, [options, stanchionsEnabled, stanchionsColor]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -544,6 +550,10 @@ const packs = useMemo(
 
   const toggleOption = (code: string) => {
     setOptions((prev) => (prev.includes(code) ? prev.filter((item) => item !== code) : [...prev, code]));
+  };
+
+  const toggleStanchions = () => {
+    setStanchionsEnabled((prev) => !prev);
   };
 
   const handleAvailability = async () => {
@@ -570,6 +580,9 @@ const packs = useMemo(
     setCheckoutError("");
 
     try {
+      const stanchionsCode = stanchionsEnabled ? `STANCHIONS_${stanchionsColor}` : null;
+      const optionsPayload = stanchionsCode ? [...options, stanchionsCode] : options;
+
       const res = await fetch("/api/public/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -581,7 +594,7 @@ const packs = useMemo(
           event_date: eventDate,
           zone_code: zone,
           pack_code: selectedPack.code,
-          options
+          options: optionsPayload
         })
       });
 
@@ -896,9 +909,19 @@ const packs = useMemo(
                     }`}
                     onClick={() => setPackCode(pack.code)}
                   >
-                    <h3 className="text-lg font-black">{pack.name}</h3>
+                    <h3 className="text-lg font-black">
+                      {pack.name} — {pack.included[0]}
+                    </h3>
                     <p className="mt-1 text-xs text-[#6b6b6b]">{pack.description}</p>
                     <p className="mt-1 text-[11px] text-[#9a9a9a]">{t("transportPackNote")}</p>
+                    <div className="mt-3 space-y-1 text-xs text-[#4a4a4a]">
+                      {pack.included.slice(1).map((item) => (
+                        <div key={item} className="flex items-center gap-2">
+                          <span className="text-[#C1950E]">•</span>
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
                     <div className="mt-3 flex items-baseline gap-2">
                       <span className="text-2xl font-black text-[#12130F]">{pack.promo}€</span>
                       <span className="text-xs text-[#9a9a9a] line-through">{pack.original}€</span>
@@ -908,21 +931,52 @@ const packs = useMemo(
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                {optionChoices.map((item) => (
-                  <button
-                    key={item.code}
-                    type="button"
-                    className={`rounded-2xl border px-4 py-3 text-left ${
-                      options.includes(item.code)
-                        ? "border-[#C1950E] bg-white shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
-                        : "border-[#eee] bg-white"
-                    }`}
-                    onClick={() => toggleOption(item.code)}
-                  >
-                    <div className="text-sm font-black">{item.title}</div>
-                    <p className="mt-1 text-xs text-[#6b6b6b]">{item.desc}</p>
-                  </button>
-                ))}
+                {optionChoices.map((item) => {
+                  if (item.code === "STANCHIONS") {
+                    return (
+                      <div
+                        key={item.code}
+                        className={`rounded-2xl border px-4 py-3 text-left ${
+                          stanchionsEnabled
+                            ? "border-[#C1950E] bg-white shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
+                            : "border-[#eee] bg-white"
+                        }`}
+                      >
+                        <button type="button" className="w-full text-left" onClick={toggleStanchions}>
+                          <div className="text-sm font-black">{item.title}</div>
+                          <p className="mt-1 text-xs text-[#6b6b6b]">{item.desc}</p>
+                        </button>
+                        {stanchionsEnabled && (
+                          <select
+                            className={`${baseClass} mt-2 text-sm`}
+                            value={stanchionsColor}
+                            onChange={(event) => setStanchionsColor(event.target.value as "GOLD" | "SILVER")}
+                          >
+                            <option value="GOLD">Doré</option>
+                            <option value="SILVER">Argenté</option>
+                          </select>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  const isSelected = options.includes(item.code);
+                  return (
+                    <button
+                      key={item.code}
+                      type="button"
+                      className={`rounded-2xl border px-4 py-3 text-left ${
+                        isSelected
+                          ? "border-[#C1950E] bg-white shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
+                          : "border-[#eee] bg-white"
+                      }`}
+                      onClick={() => toggleOption(item.code)}
+                    >
+                      <div className="text-sm font-black">{item.title}</div>
+                      <p className="mt-1 text-xs text-[#6b6b6b]">{item.desc}</p>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="rounded-3xl border border-[#f0e6c7] bg-white px-5 py-5">
@@ -1023,9 +1077,9 @@ const packs = useMemo(
                 <p className="mt-2">
                   {t("recapPack")}: {selectedPack ? selectedPack.name : "—"}
                 </p>
-                {options.length > 0 && (
+                {selectedOptionsForRecap.length > 0 && (
                   <p>
-                    {t("recapOptions")}: {options.map((item) => optionLabels[item] ?? item).join(", ")}
+                    {t("recapOptions")}: {selectedOptionsForRecap.map((item) => optionLabels[item] ?? item).join(", ")}
                   </p>
                 )}
                 <p>
