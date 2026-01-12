@@ -151,53 +151,95 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       {mode === "b2c" ? (
         <div id="page-b2c" data-mode="b2c">
           <section className="mx-auto mt-8 max-w-[1200px] px-4 pb-20">
-            <div className="relative overflow-hidden rounded-[26px] bg-black gold-frame">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(40%_40%_at_80%_10%,_rgba(227,192,74,0.2),_transparent_60%)]" />
-              <div className="relative h-[520px] sm:h-[520px] lg:h-[620px]">
+            <div className="relative overflow-hidden rounded-[30px] gold-frame">
+              <div className="absolute inset-0">
                 <Image
                   src="https://mirroreffect.co/wp-content/uploads/2022/08/DSC06760-2.jpg"
                   alt="Photobooth miroir MirrorEffect en mariage élégant"
                   fill
                   priority
                   sizes="(max-width: 768px) 100vw, 1100px"
-                  className="object-cover object-[50%_55%] brightness-[0.62] contrast-[1.02]"
+                  className="object-cover object-[50%_55%] brightness-[0.62] contrast-[1.05]"
                 />
+                <div className="absolute inset-0 hero-stage" />
+                <div className="absolute inset-x-0 top-14 h-[2px] sparkle-line opacity-50" />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/60 to-black/80" />
-              <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-6 sm:px-8 sm:pb-8">
-                <MotionReveal>
-                  <span className="inline-flex rounded-full bg-gradient-to-r from-[#C1950E] to-[#e3c04a] px-3 py-1 text-xs font-black text-[#14140f] shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
-                    ✨ L’animation signature des mariages élégants
-                  </span>
-                </MotionReveal>
-                <MotionReveal delay={0.05}>
-                  <h1 className="mt-3 text-[clamp(22px,7vw,44px)] font-black leading-tight text-white">
-                    Faites briller votre{" "}
-                    <span className="text-shimmer">mariage</span>, offrez un
-                    souvenir{" "}
-                    <span className="text-shimmer">aussi beau que vous</span>
-                  </h1>
-                </MotionReveal>
-                <MotionReveal delay={0.1}>
-                  <p className="mt-3 max-w-2xl text-sm text-[#efefef] sm:text-base">
-                    Un miroir photobooth premium qui attire les regards, libère les sourires et imprime
-                    l’instant en quelques secondes. Installation discrète, rendu éditorial.
-                  </p>
-                </MotionReveal>
-                <MotionReveal delay={0.15}>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <a className={`${primaryButton} openLead`} href="#">
-                      💌 Recevoir mon offre personnalisée
-                    </a>
-                    <a className={ghostButton} href="#packs-b2c">
-                      Voir nos packs
-                    </a>
+
+              <div className="absolute -left-20 -top-16 h-48 w-48 rounded-full bg-[radial-gradient(circle,_rgba(227,192,74,0.45)_0%,_transparent_60%)] opacity-70 hero-orb" />
+              <div className="absolute -bottom-24 right-6 h-56 w-56 rounded-full bg-[radial-gradient(circle,_rgba(193,149,14,0.5)_0%,_transparent_62%)] opacity-60 hero-orb-delayed" />
+
+              <div className="relative z-10 grid gap-8 px-6 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-14">
+                <div>
+                  <MotionReveal>
+                    <span className="inline-flex rounded-full bg-gradient-to-r from-[#C1950E] to-[#e3c04a] px-3 py-1 text-xs font-black text-[#14140f] shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
+                      ✨ L’animation signature des mariages élégants
+                    </span>
+                  </MotionReveal>
+                  <MotionReveal delay={0.05}>
+                    <h1 className="mt-4 text-[clamp(28px,6vw,52px)] font-black leading-tight text-white">
+                      Quand vos proches arrivent, ils{" "}
+                      <span className="text-shimmer">s’arrêtent</span>, sourient,
+                      et{" "}
+                      <span className="text-shimmer">vivent l’instant</span>.
+                    </h1>
+                  </MotionReveal>
+                  <MotionReveal delay={0.1}>
+                    <p className="mt-4 max-w-xl text-sm text-[#efefef] sm:text-base">
+                      MirrorEffect transforme votre mariage en une scène lumineuse et joyeuse.
+                      Miroir premium, tirages 10×15 sublimes, galerie élégante — tout est fluide,
+                      tout est beau.
+                    </p>
+                  </MotionReveal>
+                  <MotionReveal delay={0.15}>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <a className={`${primaryButton} openLead`} href="#">
+                        💌 Recevoir mon offre personnalisée
+                      </a>
+                      <a className={ghostButton} href="#packs-b2c">
+                        Voir nos packs
+                      </a>
+                    </div>
+                  </MotionReveal>
+                  <div className="mt-5 flex flex-wrap gap-3 text-xs text-[#e8e8e8]">
+                    {[
+                      "⏱️ Offre instantanée par e-mail",
+                      "🖼️ Tirages premium 10×15",
+                      "📍 Belgique entière"
+                    ].map((item) => (
+                      <span key={item} className="rounded-full border border-white/20 px-3 py-1">
+                        {item}
+                      </span>
+                    ))}
                   </div>
-                </MotionReveal>
-                <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#e2e2e2]">
-                  <span>⏱️ Réponse par e-mail instantanée</span>
-                  <span>🖼️ Tirages 10×15 premium</span>
-                  <span>📍 Belgique entière</span>
+                </div>
+
+                <div className="relative">
+                  <div className="grid gap-4">
+                    <div className="glass-card rounded-[18px] p-4 text-white">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#e3c04a]">
+                        Effet wow garanti
+                      </p>
+                      <p className="mt-2 text-sm text-[#f4f4f4]">
+                        “Le miroir a réuni toutes les générations. On garde des photos pleines d’émotion.”
+                      </p>
+                      <p className="mt-2 text-xs text-[#d7d7d7]">Sarah & Mehdi — Bruxelles</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        "💫 Cadre photo sur-mesure",
+                        "💌 Galerie privée élégante",
+                        "🕯️ Mise en scène chic",
+                        "📸 Éclairage flatteur"
+                      ].map((item) => (
+                        <div key={item} className="glass-card rounded-2xl px-4 py-3 text-xs text-white">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="rounded-[18px] border border-white/25 bg-white/10 px-4 py-3 text-xs text-white">
+                      ⭐️ 4,9/5 sur 120+ avis — 950+ mariages & événements
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
