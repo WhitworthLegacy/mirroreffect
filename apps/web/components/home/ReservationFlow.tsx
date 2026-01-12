@@ -69,8 +69,8 @@ const copy = {
     priorityC: "Un souvenir qui fait parler",
     step5Title: "5. Choisissez votre pack.",
     step5Desc: "Prix promo valables pour une reservation directe aujourd'hui.",
-    frameTitle: "Cadres photo personnalises",
-    frameDesc: "Choisissez un style, on l'adapte a vos noms, votre date et votre theme.",
+    frameTitle: "Idees de cadres photo",
+    frameDesc: "Voici des idees, ne vous inquietez pas on personnalise tout pour vous !",
     step4More: "Besoin de plus d'impressions ?",
     step4MoreDesc:
       "Laissez votre email et votre numero pour une proposition sur-mesure.",
@@ -84,6 +84,7 @@ const copy = {
     recapPack: "Pack",
     recapOptions: "Options",
     recapTransport: "Transport",
+    transportNote: "Frais de transport fixes: 90€",
     recapTotal: "Total",
     recapDeposit: "Acompte aujourd'hui: 180€",
     checkoutError: "Une erreur est survenue. Merci de reessayer.",
@@ -180,8 +181,8 @@ const copy = {
     priorityC: "Een herinnering die blijft",
     step5Title: "5. Kies uw pakket.",
     step5Desc: "Promo-prijzen voor directe reservatie vandaag.",
-    frameTitle: "Gepersonaliseerde fotokaders",
-    frameDesc: "Kies een stijl, wij passen het aan met namen, datum en thema.",
+    frameTitle: "Voorbeelden van fotokaders",
+    frameDesc: "Enkele ideeen, geen zorgen: wij personaliseren alles voor u.",
     step4More: "Meer afdrukken nodig?",
     step4MoreDesc: "Laat uw e-mail en telefoon achter voor een voorstel op maat.",
     step4MoreCta: "Klik hier om aan te vragen",
@@ -194,6 +195,7 @@ const copy = {
     recapPack: "Pakket",
     recapOptions: "Opties",
     recapTransport: "Transport",
+    transportNote: "Transportkosten vast: €90",
     recapTotal: "Totaal",
     recapDeposit: "Voorschot vandaag: €180",
     checkoutError: "Er ging iets mis. Probeer opnieuw.",
@@ -298,27 +300,16 @@ export function ReservationFlow() {
     [lang]
   );
 
-  const themeGroups = useMemo(() => {
-    const items = [
-      { id: "classic", label: t("themeClassic"), image: "/images/(2).png", group: t("themeGroupElegant") },
-      { id: "gold", label: t("themeGold"), image: "/images/43.png", group: t("themeGroupGlam") },
-      { id: "rose", label: t("themeRose"), image: "/images/10.png", group: t("themeGroupRomance") },
-      { id: "minimal", label: t("themeMinimal"), image: "/images/111.png", group: t("themeGroupMinimal") },
-      { id: "editorial", label: t("themeEditorial"), image: "/images/Hilton - 29.11.2025.png", group: t("themeGroupCorporate") }
-    ].map((item) => ({ ...item, image: encodeURI(item.image) }));
-
-    const groups = new Map<string, typeof items>();
-    items.forEach((item) => {
-      const existing = groups.get(item.group) ?? [];
-      existing.push(item);
-      groups.set(item.group, existing);
-    });
-
-    return Array.from(groups.entries()).map(([groupLabel, groupItems]) => ({
-      label: groupLabel,
-      items: groupItems
-    }));
-  }, [lang]);
+  const themeOptions = useMemo(
+    () => [
+      { id: "classic", label: t("themeClassic"), image: "/images/(2).png" },
+      { id: "gold", label: t("themeGold"), image: "/images/43.png" },
+      { id: "rose", label: t("themeRose"), image: "/images/10.png" },
+      { id: "minimal", label: t("themeMinimal"), image: "/images/111.png" },
+      { id: "editorial", label: t("themeEditorial"), image: "/images/Hilton - 29.11.2025.png" }
+    ].map((item) => ({ ...item, image: encodeURI(item.image) })),
+    [lang]
+  );
 
   const optionChoices = useMemo(
     () => [
@@ -328,37 +319,6 @@ export function ReservationFlow() {
     ],
     [lang]
   );
-
-  const frameSets = useMemo(() => {
-    const frames = [
-      "/images/(2).png",
-      "/images/(3).png",
-      "/images/3.png",
-      "/images/4.png",
-      "/images/5.png",
-      "/images/6.png",
-      "/images/8.png",
-      "/images/9.png",
-      "/images/10.png",
-      "/images/11.png",
-      "/images/12.png",
-      "/images/13.png",
-      "/images/43.png",
-      "/images/44.png",
-      "/images/45.png",
-      "/images/46.png",
-      "/images/47.png",
-      "/images/111.png",
-      "/images/Hilton - 29.11.2025.png"
-    ].map((src) => encodeURI(src));
-
-    return [
-      { label: t("frameClassic"), images: frames.slice(0, 5) },
-      { label: t("frameGold"), images: frames.slice(5, 10) },
-      { label: t("frameRomance"), images: frames.slice(10, 15) },
-      { label: t("frameMinimal"), images: frames.slice(15, 19) }
-    ];
-  }, [lang]);
 
   const optionLabels: Record<string, string> = {
     RED_CARPET: strings.optionRed,
@@ -400,7 +360,7 @@ export function ReservationFlow() {
   const [zoomImage, setZoomImage] = useState("");
   const [zoomLabel, setZoomLabel] = useState("");
 
-  const transportFee = zone === "BE" ? 90 : 110;
+  const transportFee = 90;
   const selectedPack = packs.find((pack) => pack.code === packCode) ?? null;
   const totalPrice = selectedPack ? selectedPack.promo + transportFee : null;
 
@@ -676,50 +636,49 @@ export function ReservationFlow() {
             <div className="flow-step mt-6 space-y-4">
               <h2 className="text-2xl font-black">{t("step3Title")}</h2>
               <p className="text-sm text-[#666]">{t("step3Desc")}</p>
-              <div className="space-y-5">
-                {themeGroups.map((group) => (
-                  <div key={group.label}>
-                    <p className="text-sm font-black text-[#C1950E]">{group.label}</p>
-                    <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {group.items.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className={`rounded-2xl border p-3 text-left transition ${
-                            theme === item.id
-                              ? "border-[#C1950E] shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
-                              : "border-[#eee]"
-                          }`}
-                          onClick={() => setTheme(item.id)}
+              <div className="rounded-3xl border border-[#f0e6c7] bg-white px-5 py-5">
+                <div>
+                  <h3 className="text-lg font-black">{t("frameTitle")}</h3>
+                  <p className="mt-1 text-xs text-[#6b6b6b]">{t("frameDesc")}</p>
+                </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {themeOptions.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`rounded-2xl border p-3 text-left transition ${
+                        theme === item.id
+                          ? "border-[#C1950E] shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
+                          : "border-[#eee]"
+                      }`}
+                      onClick={() => setTheme(item.id)}
+                    >
+                      <div className="relative h-[150px] overflow-hidden rounded-xl bg-white">
+                        <Image src={item.image} alt={item.label} fill className="object-contain p-2" />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <span className="text-sm font-black">{item.label}</span>
+                        <span
+                          className="text-xs font-semibold text-[#C1950E]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openZoom(item.image, item.label);
+                          }}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              openZoom(item.image, item.label);
+                            }
+                          }}
                         >
-                          <div className="relative h-[150px] overflow-hidden rounded-xl bg-white">
-                            <Image src={item.image} alt={item.label} fill className="object-contain p-2" />
-                          </div>
-                          <div className="mt-3 flex items-center justify-between gap-2">
-                            <span className="text-sm font-black">{item.label}</span>
-                            <span
-                              className="text-xs font-semibold text-[#C1950E]"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                openZoom(item.image, item.label);
-                              }}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  openZoom(item.image, item.label);
-                                }
-                              }}
-                            >
-                              Zoom
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                          Zoom
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -785,35 +744,6 @@ export function ReservationFlow() {
                     </div>
                   </button>
                 ))}
-              </div>
-
-              <div className="rounded-3xl border border-[#f0e6c7] bg-white px-5 py-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-black">{t("frameTitle")}</h3>
-                    <p className="mt-1 text-xs text-[#6b6b6b]">{t("frameDesc")}</p>
-                  </div>
-                </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  {frameSets.map((set) => (
-                    <div key={set.label} className="rounded-2xl border border-[#eee] bg-white p-4">
-                      <p className="text-sm font-black">{set.label}</p>
-                      <div className="mt-3 grid grid-cols-3 gap-2">
-                        {set.images.map((src) => (
-                          <div key={src} className="overflow-hidden rounded-xl border border-[#f2ead2] bg-[#fffaf0]">
-                            <Image
-                              src={src}
-                              alt={t("imageAlt")}
-                              width={240}
-                              height={240}
-                              className="h-[90px] w-full object-cover"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
@@ -914,6 +844,7 @@ export function ReservationFlow() {
                 <p>
                   {t("recapTransport")}: {transportFee}€
                 </p>
+                <p className="text-xs text-[#6b6b6b]">{t("transportNote")}</p>
                 <p className="mt-2 font-black">
                   {t("recapTotal")}: {totalPrice ? `${totalPrice}€` : "—"}
                 </p>
