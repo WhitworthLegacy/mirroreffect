@@ -97,13 +97,15 @@ const copy = {
     availabilityError: "Impossible de verifier la disponibilite pour l'instant. Merci de reessayer.",
     step2Title: "2. L'ambiance que vous voulez offrir.",
     step2Desc: "Choisissez l'univers qui correspond a votre mariage. On s'adapte a votre deco.",
-    step3Title: "3. Votre theme de couleur.",
-    step3Desc: "Choisissez le style visuel du cadre photo, on le declinera a votre nom.",
-    themeClassic: "Ivoire & chic",
-    themeGold: "Dorures champagne",
-    themeRose: "Romance rose",
-    themeMinimal: "Minimal noir & blanc",
-    themeEditorial: "Editorial moderne",
+    step3Title: "3. Votre thème de couleur.",
+    step3Desc: "Choisissez la palette principale. On adaptera le cadre et l'écran à vos couleurs.",
+    themeTitle: "Palette de votre mariage",
+    themeDesc: "Dites-nous l'ambiance colorée, on harmonise tout.",
+    themeClassic: "Ivoire & champagne",
+    themeGold: "Or & noir",
+    themeRose: "Rose poudré & crème",
+    themeMinimal: "Noir & blanc",
+    themeEditorial: "Terracotta & sable",
     themeGroupElegant: "Élégant",
     themeGroupGlam: "Glam",
     themeGroupRomance: "Romance",
@@ -121,8 +123,9 @@ const copy = {
     step5Title: "5. Choisissez votre pack.",
     step5Desc: "Prix promo valables pour une réservation directe aujourd'hui.",
     depositLine: "Acompte de 180€ aujourd'hui. Solde le jour J.",
-    frameTitle: "Idees de cadres photo",
-    frameDesc: "Voici des idees, ne vous inquietez pas on personnalise tout pour vous !",
+    transportPackNote: "+ 90€ de frais de transport",
+    frameTitle: "Idées de cadres photo",
+    frameDesc: "Voici des idées, ne vous inquiétez pas : on personnalise tout pour vous !",
     step4More: "Besoin de plus d'impressions ?",
     step4MoreDesc:
       "Laissez votre email et votre numero pour une proposition sur-mesure.",
@@ -263,12 +266,14 @@ const copy = {
     step2Title: "2. De sfeer die u wil geven.",
     step2Desc: "Kies de stijl die bij uw huwelijk past. Wij passen ons aan.",
     step3Title: "3. Uw kleurthema.",
-    step3Desc: "Kies de visuele stijl van het fotokader. Wij personaliseren alles.",
-    themeClassic: "Ivoor & chic",
-    themeGold: "Champagne goud",
-    themeRose: "Romantisch roze",
-    themeMinimal: "Minimal zwart-wit",
-    themeEditorial: "Modern editorial",
+    step3Desc: "Kies de hoofdpalette. We passen kader en scherm aan uw kleuren aan.",
+    themeTitle: "Kleurpalet van uw huwelijk",
+    themeDesc: "Kies de sfeer, wij harmoniseren alles.",
+    themeClassic: "Ivoor & champagne",
+    themeGold: "Goud & zwart",
+    themeRose: "Poederroze & crème",
+    themeMinimal: "Zwart & wit",
+    themeEditorial: "Terracotta & zand",
     themeGroupElegant: "Elegant",
     themeGroupGlam: "Glamour",
     themeGroupRomance: "Romantisch",
@@ -285,8 +290,9 @@ const copy = {
     step5Title: "5. Kies uw pakket.",
     step5Desc: "Promo-prijzen voor directe reservatie vandaag.",
     depositLine: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
+    transportPackNote: "+ €90 transportkosten",
     frameTitle: "Voorbeelden van fotokaders",
-    frameDesc: "Enkele ideeen, geen zorgen: wij personaliseren alles voor u.",
+    frameDesc: "Enkele ideeën, geen zorgen: wij personaliseren alles voor u.",
     step4More: "Meer afdrukken nodig?",
     step4MoreDesc: "Laat uw e-mail en telefoon achter voor een voorstel op maat.",
     step4MoreCta: "Klik hier om aan te vragen",
@@ -406,13 +412,42 @@ export function ReservationFlow() {
 
   const themeOptions = useMemo(
     () => [
-      { id: "classic", label: t("themeClassic"), image: "/images/(2).png" },
-      { id: "gold", label: t("themeGold"), image: "/images/43.png" },
-      { id: "rose", label: t("themeRose"), image: "/images/10.png" },
-      { id: "minimal", label: t("themeMinimal"), image: "/images/111.png" },
-      { id: "editorial", label: t("themeEditorial"), image: "/images/Hilton - 29.11.2025.png" }
-    ].map((item) => ({ ...item, image: encodeURI(item.image) })),
+      { id: "classic", label: t("themeClassic"), swatch: ["#f8f1e7", "#c9a86a"] },
+      { id: "gold", label: t("themeGold"), swatch: ["#1f1c18", "#c1950e"] },
+      { id: "rose", label: t("themeRose"), swatch: ["#f2d4da", "#f7f2ea"] },
+      { id: "minimal", label: t("themeMinimal"), swatch: ["#111111", "#f5f5f5"] },
+      { id: "editorial", label: t("themeEditorial"), swatch: ["#b86b4b", "#e6d2c1"] }
+    ],
     [lang]
+  );
+
+  const frameImages = useMemo(
+    () => [
+      "/images/(2).png",
+      "/images/(3).png",
+      "/images/3.png",
+      "/images/4.png",
+      "/images/5.png",
+      "/images/6.png",
+      "/images/8.png",
+      "/images/9.png",
+      "/images/10.png",
+      "/images/11.png",
+      "/images/12.png",
+      "/images/13.png"
+    ].map((src) => encodeURI(src)),
+    []
+  );
+
+  const testimonialImages = useMemo(
+    () => [
+      "/images/IMG_0478.jpg",
+      "/images/IMG_0479.jpg",
+      "/images/IMG_0480.jpg",
+      "/images/IMG_0481.jpg",
+      "/images/IMG_0482.jpg"
+    ],
+    []
   );
 
   const optionChoices = useMemo(
@@ -468,6 +503,9 @@ export function ReservationFlow() {
   const story = strings.stories[Math.max(0, Math.min(step - 1, strings.stories.length - 1))];
   const testimonials = strings.testimonials;
   const currentTestimonial = testimonials[testimonialIndex % testimonials.length];
+  const currentTestimonialImage = encodeURI(
+    testimonialImages[testimonialIndex % testimonialImages.length]
+  );
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -754,8 +792,8 @@ export function ReservationFlow() {
               <p className="text-sm text-[#666]">{t("step3Desc")}</p>
               <div className="rounded-3xl border border-[#f0e6c7] bg-white px-5 py-5">
                 <div>
-                  <h3 className="text-lg font-black">{t("frameTitle")}</h3>
-                  <p className="mt-1 text-xs text-[#6b6b6b]">{t("frameDesc")}</p>
+                  <h3 className="text-lg font-black">{t("themeTitle")}</h3>
+                  <p className="mt-1 text-xs text-[#6b6b6b]">{t("themeDesc")}</p>
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {themeOptions.map((item) => (
@@ -769,28 +807,16 @@ export function ReservationFlow() {
                       }`}
                       onClick={() => setTheme(item.id)}
                     >
-                      <div className="relative h-[150px] overflow-hidden rounded-xl bg-white">
-                        <Image src={item.image} alt={item.label} fill className="object-contain p-2" />
-                      </div>
-                      <div className="mt-3 flex items-center justify-between gap-2">
-                        <span className="text-sm font-black">&nbsp;</span>
+                      <div className="flex items-center gap-3">
                         <span
-                          className="text-xs font-semibold text-[#C1950E]"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            openZoom(item.image, item.label);
-                          }}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              openZoom(item.image, item.label);
-                            }
-                          }}
-                        >
-                          Zoom
-                        </span>
+                          className="h-10 w-10 rounded-full border border-[#eee]"
+                          style={{ background: item.swatch[0] }}
+                        />
+                        <span
+                          className="h-10 w-10 rounded-full border border-[#eee]"
+                          style={{ background: item.swatch[1] }}
+                        />
+                        <span className="text-sm font-black">{item.label}</span>
                       </div>
                     </button>
                   ))}
@@ -855,13 +881,38 @@ export function ReservationFlow() {
                   >
                     <h3 className="text-lg font-black">{pack.name}</h3>
                     <p className="mt-1 text-xs text-[#6b6b6b]">{pack.description}</p>
-                    <p className="mt-1 text-[11px] text-[#9a9a9a]">+ 90€ frais de transport</p>
+                    <p className="mt-1 text-[11px] text-[#9a9a9a]">{t("transportPackNote")}</p>
                     <div className="mt-3 flex items-baseline gap-2">
                       <span className="text-2xl font-black text-[#12130F]">{pack.promo}€</span>
                       <span className="text-xs text-[#9a9a9a] line-through">{pack.original}€</span>
                     </div>
                   </button>
                 ))}
+              </div>
+
+              <div className="rounded-3xl border border-[#f0e6c7] bg-white px-5 py-5">
+                <div>
+                  <h3 className="text-lg font-black">{t("frameTitle")}</h3>
+                  <p className="mt-1 text-xs text-[#6b6b6b]">{t("frameDesc")}</p>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {frameImages.map((src) => (
+                    <button
+                      key={src}
+                      type="button"
+                      className="overflow-hidden rounded-xl border border-[#f2ead2] bg-[#fffaf0]"
+                      onClick={() => openZoom(src, t("frameTitle"))}
+                    >
+                      <Image
+                        src={src}
+                        alt={t("imageAlt")}
+                        width={240}
+                        height={240}
+                        className="h-[110px] w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
@@ -1019,7 +1070,7 @@ export function ReservationFlow() {
         <div className="space-y-6">
           <div className="flow-media rounded-3xl p-4">
             <Image
-              src="/images/IMG_0492.jpg"
+              src={currentTestimonialImage}
               alt={t("imageAlt")}
               width={520}
               height={640}
