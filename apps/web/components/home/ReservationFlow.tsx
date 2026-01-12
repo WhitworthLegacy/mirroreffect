@@ -170,6 +170,12 @@ const copy = {
     packDiscoveryName: "Découverte",
     packEssentialName: "Essentiel",
     packPremiumName: "Premium",
+    impressions200: "200 impressions",
+    impressions400: "400 impressions",
+    impressions800: "800 impressions",
+    includeFrame: "Cadre personnalisé",
+    includeRedCarpet: "Tapis rouge",
+    includeStanchions: "Potelets + cordes",
     frameClassic: "Classique elegant",
     frameGold: "Dorures & glamour",
     frameRomance: "Romance florale",
@@ -336,6 +342,12 @@ const copy = {
     packDiscoveryName: "Découverte",
     packEssentialName: "Essentiel",
     packPremiumName: "Premium",
+    impressions200: "200 prints",
+    impressions400: "400 prints",
+    impressions800: "800 prints",
+    includeFrame: "Gepersonaliseerd kader",
+    includeRedCarpet: "Rode loper",
+    includeStanchions: "Paaltjes + koord",
     frameClassic: "Klassiek elegant",
     frameGold: "Goud & glamour",
     frameRomance: "Romantisch floral",
@@ -357,28 +369,31 @@ export function ReservationFlow() {
   const t = (key: Exclude<keyof typeof copy.fr, "proofItems" | "stories" | "testimonials">) => strings[key];
   const proofItems = strings.proofItems;
 
-  const packs = useMemo(
+const packs = useMemo(
     () => [
       {
         code: "DISCOVERY" as PackCode,
         name: t("packDiscoveryName"),
         promo: 390,
         original: 450,
-        description: t("packDiscoveryDesc")
+        description: t("packDiscoveryDesc"),
+        included: [t("impressions200"), t("includeRedCarpet"), t("includeStanchions"), t("includeFrame")]
       },
       {
         code: "ESSENTIAL" as PackCode,
         name: t("packEssentialName"),
         promo: 440,
         original: 500,
-        description: t("packEssentialDesc")
+        description: t("packEssentialDesc"),
+        included: [t("impressions400"), t("includeRedCarpet"), t("includeStanchions"), t("includeFrame")]
       },
       {
         code: "PREMIUM" as PackCode,
         name: t("packPremiumName"),
         promo: 490,
         original: 550,
-        description: t("packPremiumDesc")
+        description: t("packPremiumDesc"),
+        included: [t("impressions800"), t("includeRedCarpet"), t("includeStanchions"), t("includeFrame")]
       }
     ],
     [lang]
@@ -453,7 +468,8 @@ export function ReservationFlow() {
   const optionChoices = useMemo(
     () => [
       { code: "RED_CARPET", title: t("optionRed"), desc: t("optionRedDesc") },
-      { code: "STANCHIONS", title: t("optionStanchions"), desc: t("optionStanchionsDesc") },
+      { code: "STANCHIONS_GOLD", title: `${t("optionStanchions")} — Doré`, desc: t("optionStanchionsDesc") },
+      { code: "STANCHIONS_SILVER", title: `${t("optionStanchions")} — Argenté`, desc: t("optionStanchionsDesc") },
       { code: "DIGITAL_ALBUM", title: t("optionAlbum"), desc: t("optionAlbumDesc") }
     ],
     [lang]
@@ -461,7 +477,8 @@ export function ReservationFlow() {
 
   const optionLabels: Record<string, string> = {
     RED_CARPET: strings.optionRed,
-    STANCHIONS: strings.optionStanchions,
+    STANCHIONS_GOLD: `${strings.optionStanchions} — Doré`,
+    STANCHIONS_SILVER: `${strings.optionStanchions} — Argenté`,
     DIGITAL_ALBUM: strings.optionAlbum
   };
   const eventTypeOptions = lang === "nl"
@@ -890,6 +907,24 @@ export function ReservationFlow() {
                 ))}
               </div>
 
+              <div className="grid gap-3 sm:grid-cols-3">
+                {optionChoices.map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    className={`rounded-2xl border px-4 py-3 text-left ${
+                      options.includes(item.code)
+                        ? "border-[#C1950E] bg-white shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
+                        : "border-[#eee] bg-white"
+                    }`}
+                    onClick={() => toggleOption(item.code)}
+                  >
+                    <div className="text-sm font-black">{item.title}</div>
+                    <p className="mt-1 text-xs text-[#6b6b6b]">{item.desc}</p>
+                  </button>
+                ))}
+              </div>
+
               <div className="rounded-3xl border border-[#f0e6c7] bg-white px-5 py-5">
                 <div>
                   <h3 className="text-lg font-black">{t("frameTitle")}</h3>
@@ -913,24 +948,6 @@ export function ReservationFlow() {
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                {optionChoices.map((item) => (
-                  <button
-                    key={item.code}
-                    type="button"
-                    className={`rounded-2xl border px-4 py-3 text-left ${
-                      options.includes(item.code)
-                        ? "border-[#C1950E] bg-white shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
-                        : "border-[#eee] bg-white"
-                    }`}
-                    onClick={() => toggleOption(item.code)}
-                  >
-                    <div className="text-sm font-black">{item.title}</div>
-                    <p className="mt-1 text-xs text-[#6b6b6b]">{item.desc}</p>
-                  </button>
-                ))}
               </div>
 
               <div className="rounded-2xl border border-[#e8d082] bg-white px-4 py-4 text-sm text-[#3a3a3a]">
