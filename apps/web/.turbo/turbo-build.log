@@ -1,0 +1,22 @@
+
+
+> @mirroreffect/web@ build /Users/macbook/Dev/mirroreffect/apps/web
+> next build
+
+  [1m[38;2;173;127;168m▲ Next.js 14.2.5[39m[22m
+  - Environments: .env.local
+
+ [37m[1m [22m[39m Creating an optimized production build ...
+ [32m[1m✓[22m[39m Compiled successfully
+[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[31mFailed to compile.
+[39m
+[36m./lib/email/smtp.ts[39m:[33m1[39m:[33m24[39m
+[31m[1mType error[22m[39m: Could not find a declaration file for module 'nodemailer'. '/Users/macbook/Dev/mirroreffect/node_modules/.pnpm/nodemailer@6.10.1/node_modules/nodemailer/lib/nodemailer.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/nodemailer` if it exists or add a new declaration (.d.ts) file containing `declare module 'nodemailer';`
+
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m nodemailer [36mfrom[39m [32m"nodemailer"[39m[33m;[39m[0m
+[0m [90m   |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 2 |[39m[0m
+[0m [90m 3 |[39m type [33mSendEmailInput[39m [33m=[39m {[0m
+[0m [90m 4 |[39m   to[33m:[39m string[33m;[39m[0m
+[?25h[41m[30m ELIFECYCLE [39m[49m [31mCommand failed with exit code 1.[39m
