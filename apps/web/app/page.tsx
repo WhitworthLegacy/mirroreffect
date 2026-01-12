@@ -49,7 +49,11 @@ export default function Page({ searchParams }: PageProps) {
   const mode = searchParams?.mode === "b2b" ? "b2b" : "b2c";
 
   return (
-    <main className="min-h-screen bg-white text-[#12130F]">
+    <main className="relative min-h-screen romance-bg text-[#12130F]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 sparkle-field opacity-50"
+      />
       <Script id="fb-pixel" strategy="afterInteractive">
         {`!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -124,7 +128,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       </noscript>
 
-      <header className="mx-auto max-w-[1100px] px-4 pt-6 text-center">
+      <header className="mx-auto max-w-[1100px] px-4 pt-10 text-center">
         <div className="flex justify-center">
           <span
             className={`rounded-full px-3 py-1 text-xs font-black shadow-[0_2px_8px_rgba(193,149,14,0.25)] ${
@@ -133,18 +137,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 : "bg-[#C1950E] text-[#14140f]"
             }`}
           >
-            ⭐️ Depuis 2018 • 950+ événements réussis (Belgique & Nord de la France)
+            ⭐️ Depuis 2018 • 950+ moments d’exception en Belgique & Nord de la France
           </span>
         </div>
         <nav className="mt-6 flex justify-center" aria-label="Navigation principale">
           <ModeSwitch showLanguage />
         </nav>
+        <p className="mt-4 text-sm text-[#5c5c5c]">
+          Le photobooth miroir qui fait briller les mariages — élégant, fluide, inoubliable.
+        </p>
       </header>
 
       {mode === "b2c" ? (
         <div id="page-b2c" data-mode="b2c">
           <section className="mx-auto mt-8 max-w-[1200px] px-4 pb-20">
-            <div className="relative overflow-hidden rounded-[26px] bg-black shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+            <div className="relative overflow-hidden rounded-[26px] bg-black gold-frame">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(40%_40%_at_80%_10%,_rgba(227,192,74,0.2),_transparent_60%)]" />
               <div className="relative h-[520px] sm:h-[520px] lg:h-[620px]">
                 <Image
                   src="https://mirroreffect.co/wp-content/uploads/2022/08/DSC06760-2.jpg"
@@ -155,28 +163,25 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                   className="object-cover object-[50%_55%] brightness-[0.62] contrast-[1.02]"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/55 to-black/75" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/60 to-black/80" />
               <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-6 sm:px-8 sm:pb-8">
                 <MotionReveal>
                   <span className="inline-flex rounded-full bg-gradient-to-r from-[#C1950E] to-[#e3c04a] px-3 py-1 text-xs font-black text-[#14140f] shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
-                    ✨ Photobooth Miroir Élégant
+                    ✨ L’animation signature des mariages élégants
                   </span>
                 </MotionReveal>
                 <MotionReveal delay={0.05}>
                   <h1 className="mt-3 text-[clamp(22px,7vw,44px)] font-black leading-tight text-white">
                     Faites briller votre{" "}
-                    <span className="bg-gradient-to-r from-[#C1950E] via-[#e3c04a] to-[#C1950E] bg-clip-text text-transparent">
-                      mariage, anniversaire
-                    </span>{" "}
-                    ou{" "}
-                    <span className="bg-gradient-to-r from-[#C1950E] via-[#e3c04a] to-[#C1950E] bg-clip-text text-transparent">
-                      baptême
-                    </span>
+                    <span className="text-shimmer">mariage</span>, offrez un
+                    souvenir{" "}
+                    <span className="text-shimmer">aussi beau que vous</span>
                   </h1>
                 </MotionReveal>
                 <MotionReveal delay={0.1}>
                   <p className="mt-3 max-w-2xl text-sm text-[#efefef] sm:text-base">
-                    Installation discrète, impressions rapides, galerie en ligne – partout en Belgique.
+                    Un miroir photobooth premium qui attire les regards, libère les sourires et imprime
+                    l’instant en quelques secondes. Installation discrète, rendu éditorial.
                   </p>
                 </MotionReveal>
                 <MotionReveal delay={0.15}>
@@ -189,7 +194,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     </a>
                   </div>
                 </MotionReveal>
-                <div className="mt-3 text-xs text-[#ddd]">Réponse par mail instantanée</div>
+                <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#e2e2e2]">
+                  <span>⏱️ Réponse par e-mail instantanée</span>
+                  <span>🖼️ Tirages 10×15 premium</span>
+                  <span>📍 Belgique entière</span>
+                </div>
               </div>
             </div>
           </section>
@@ -197,13 +206,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <section className="mx-auto max-w-[1100px] px-4 py-24">
             <MotionReveal>
               <h2 className="text-center text-3xl sm:text-4xl font-black tracking-tight">
-                Pourquoi choisir MirrorEffect ? 💫
+                Pourquoi les couples choisissent MirrorEffect ? 💫
               </h2>
             </MotionReveal>
             <MotionReveal delay={0.05}>
               <p className="mt-2 text-center text-sm text-[#666]">
-              On ne capture pas seulement des photos. On capture des regards, des fous rires, des
-              retrouvailles.
+                On ne capture pas seulement des photos. On capture des regards, des fous rires, des
+                retrouvailles.
               </p>
             </MotionReveal>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -211,17 +220,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 {
                   icon: "💞",
                   title: "Des émotions vraies",
-                  text: "Le miroir attire, rassure et libère les sourires. Des photos complices à garder."
+                  text: "Le miroir attire, rassure et libère les sourires. Des clichés complices à garder."
                 },
                 {
                   icon: "🎉",
                   title: "L’ambiance qui rassemble",
-                  text: "Point de rencontre naturel pour toutes les générations."
+                  text: "Un point de rencontre naturel pour toutes les générations."
                 },
                 {
                   icon: "🖼️",
                   title: "Souvenirs durables",
-                  text: "Tirages 10×15 premium + galerie privée."
+                  text: "Tirages 10×15 premium + galerie privée élégante."
                 },
                 {
                   icon: "🎨",
@@ -241,7 +250,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               ].map((item) => (
                 <article
                   key={item.title}
-                  className="rounded-[18px] border border-[#eee] bg-white p-7 text-center shadow-[0_10px_28px_rgba(0,0,0,0.07)]"
+                  className="glow-card rounded-[18px] p-7 text-center"
                 >
                   <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-gradient-to-r from-[#C1950E] to-[#d8b73b] text-xl text-[#14140f]">
                     {item.icon}
@@ -294,9 +303,44 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                   width={520}
                   height={360}
                   sizes="(max-width: 768px) 100vw, 360px"
-                  className="h-[260px] w-full rounded-2xl object-cover shadow-[0_8px_22px_rgba(0,0,0,0.08)] transition duration-200 hover:scale-[1.02]"
+                  className="h-[260px] w-full rounded-2xl object-cover shadow-[0_10px_28px_rgba(0,0,0,0.12)] transition duration-200 hover:scale-[1.02] hover:-rotate-[0.4deg]"
                 />
               ))}
+            </div>
+          </section>
+
+          <section className="mx-auto max-w-[1100px] px-4 pb-10">
+            <div className="relative overflow-hidden rounded-[24px] bg-[#12130F] px-6 py-10 text-white shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_10%_0%,_rgba(227,192,74,0.28),_transparent_70%)]" />
+              <div className="relative grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#e3c04a]">
+                    Signature MirrorEffect
+                  </p>
+                  <h3 className="mt-3 text-2xl sm:text-3xl font-black">
+                    Une scénographie lumineuse, une animation chic, un rendu éditorial.
+                  </h3>
+                  <p className="mt-3 text-sm text-[#e9e9e9]">
+                    Votre mariage mérite plus qu’un simple photobooth. Nous créons un point d’attraction
+                    élégant qui sublime chaque tenue et chaque sourire.
+                  </p>
+                </div>
+                <div className="grid gap-3 text-sm">
+                  {[
+                    "🌟 Cadres photo designés à vos couleurs",
+                    "🕯️ Mise en scène soignée, discrète et raffinée",
+                    "📸 Qualité d’image premium, éclairage flatteur",
+                    "💌 Souvenirs instantanés + galerie élégante"
+                  ].map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-[#f3f3f3]"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
@@ -307,14 +351,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <section id="packs-b2c" className="mx-auto max-w-[1100px] px-4 py-24">
             <MotionReveal>
               <h2 className="text-center text-3xl sm:text-4xl font-black tracking-tight">
-                Des packs clairs, selon votre fête 🎁
+                Des packs élégants, selon votre fête 🎁
               </h2>
             </MotionReveal>
             <div className="mt-10 grid gap-6 lg:grid-cols-3">
               {[
                 {
                   title: "Découverte",
-                  subtitle: "Pour petites réceptions.",
+                  subtitle: "Pour les fêtes intimes.",
                   bullets: ["200 impressions 10×15", "Cadre personnalisé", "Galerie en ligne"],
                   ctaClass: darkButton
                 },
@@ -334,8 +378,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               ].map((pack) => (
                 <article
                   key={pack.title}
-                  className={`rounded-[18px] border bg-white p-6 text-center shadow-[0_10px_28px_rgba(0,0,0,0.07)] ${
-                    pack.highlighted ? "border-2 border-[#e8d082]" : "border-[#eee]"
+                  className={`rounded-[18px] p-6 text-center ${
+                    pack.highlighted ? "glow-card border-2 border-[#e8d082]" : "glow-card"
                   }`}
                 >
                   <h3 className="text-xl font-black">{pack.title}</h3>
@@ -406,7 +450,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               ].map((review) => (
                 <article
                   key={review.name}
-                  className="rounded-[18px] border border-[#eee] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.07)]"
+                  className="glow-card rounded-[18px] p-6"
                 >
                   <div className="text-4xl font-black text-[#C1950E]">“</div>
                   <div className="mt-2">
@@ -491,12 +535,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           </section>
 
           <section id="cta" className="mx-auto max-w-[1100px] px-4 py-24 text-center">
-            <div className="rounded-[24px] bg-[#12130F] px-6 py-12 text-white shadow-[0_14px_34px_rgba(0,0,0,0.12)]">
+            <div className="relative overflow-hidden rounded-[24px] bg-[#12130F] px-6 py-12 text-white shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(40%_50%_at_10%_0%,_rgba(227,192,74,0.25),_transparent_70%)]" />
               <MotionReveal>
-                <h2 className="text-3xl sm:text-4xl font-black tracking-tight">Prêt à réserver votre date ?</h2>
+                <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+                  Prêt à faire briller votre date ?
+                </h2>
               </MotionReveal>
               <p className="mt-3 text-sm text-[#f0f0f0]">
-                Remplissez le formulaire pour recevoir nos offres par e-mail.
+                Dites-nous votre lieu, votre date, votre ambiance — on vous envoie une proposition claire.
               </p>
               <div className="mt-5 flex justify-center">
                     <a className={`${primaryButton} openLead`} href="#">
