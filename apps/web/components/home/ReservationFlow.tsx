@@ -46,8 +46,20 @@ const copy = {
     availabilityError: "Impossible de verifier la disponibilite pour l'instant. Merci de reessayer.",
     step2Title: "2. L'ambiance que vous voulez offrir.",
     step2Desc: "Choisissez l'univers qui correspond a votre mariage. On s'adapte a votre deco.",
-    step3Title: "3. Votre reception, votre energie.",
-    step3Desc:
+    step3Title: "3. Votre theme de couleur.",
+    step3Desc: "Choisissez le style visuel du cadre photo, on le declinera a votre nom.",
+    themeClassic: "Ivoire & chic",
+    themeGold: "Dorures champagne",
+    themeRose: "Romance rose",
+    themeMinimal: "Minimal noir & blanc",
+    themeEditorial: "Editorial moderne",
+    themeGroupElegant: "Élégant",
+    themeGroupGlam: "Glam",
+    themeGroupRomance: "Romance",
+    themeGroupMinimal: "Minimal",
+    themeGroupCorporate: "Corporate",
+    step4Title: "4. Votre reception, votre energie.",
+    step4Desc:
       "Cela nous aide a dimensionner le flux et garantir une experience fluide et premium.",
     guestsLabel: "Nombre d'invites",
     guestsPlaceholder: "Ex: 120",
@@ -55,16 +67,16 @@ const copy = {
     priorityA: "Une ambiance elegante qui rassemble",
     priorityB: "Des photos premium a garder",
     priorityC: "Un souvenir qui fait parler",
-    step4Title: "4. Choisissez votre pack.",
-    step4Desc: "Prix promo valables pour une reservation directe aujourd'hui.",
+    step5Title: "5. Choisissez votre pack.",
+    step5Desc: "Prix promo valables pour une reservation directe aujourd'hui.",
     frameTitle: "Cadres photo personnalises",
     frameDesc: "Choisissez un style, on l'adapte a vos noms, votre date et votre theme.",
     step4More: "Besoin de plus d'impressions ?",
     step4MoreDesc:
       "Laissez votre email et votre numero pour une proposition sur-mesure.",
     step4MoreCta: "Cliquez ici pour demander",
-    step5Title: "5. Finalisez votre reservation.",
-    step5Desc: "Acompte de 180€ aujourd'hui. Solde le jour J.",
+    step6Title: "6. Finalisez votre reservation.",
+    step6Desc: "Acompte de 180€ aujourd'hui. Solde le jour J.",
     nameLabel: "Prenom et nom",
     emailLabel: "Email",
     phoneLabel: "Telephone",
@@ -146,23 +158,35 @@ const copy = {
     availabilityError: "Beschikbaarheid kan nu niet gecontroleerd worden. Probeer opnieuw.",
     step2Title: "2. De sfeer die u wil geven.",
     step2Desc: "Kies de stijl die bij uw huwelijk past. Wij passen ons aan.",
-    step3Title: "3. Uw receptie, uw energie.",
-    step3Desc: "Zo houden we het tempo vlot en de ervaring premium.",
+    step3Title: "3. Uw kleurthema.",
+    step3Desc: "Kies de visuele stijl van het fotokader. Wij personaliseren alles.",
+    themeClassic: "Ivoor & chic",
+    themeGold: "Champagne goud",
+    themeRose: "Romantisch roze",
+    themeMinimal: "Minimal zwart-wit",
+    themeEditorial: "Modern editorial",
+    themeGroupElegant: "Elegant",
+    themeGroupGlam: "Glamour",
+    themeGroupRomance: "Romantisch",
+    themeGroupMinimal: "Minimal",
+    themeGroupCorporate: "Corporate",
+    step4Title: "4. Uw receptie, uw energie.",
+    step4Desc: "Zo houden we het tempo vlot en de ervaring premium.",
     guestsLabel: "Aantal gasten",
     guestsPlaceholder: "Bijv. 120",
     priorityLabel: "Wat telt het meest",
     priorityA: "Een elegante sfeer die verbindt",
     priorityB: "Premium foto's om te bewaren",
     priorityC: "Een herinnering die blijft",
-    step4Title: "4. Kies uw pakket.",
-    step4Desc: "Promo-prijzen voor directe reservatie vandaag.",
+    step5Title: "5. Kies uw pakket.",
+    step5Desc: "Promo-prijzen voor directe reservatie vandaag.",
     frameTitle: "Gepersonaliseerde fotokaders",
     frameDesc: "Kies een stijl, wij passen het aan met namen, datum en thema.",
     step4More: "Meer afdrukken nodig?",
     step4MoreDesc: "Laat uw e-mail en telefoon achter voor een voorstel op maat.",
     step4MoreCta: "Klik hier om aan te vragen",
-    step5Title: "5. Rond uw reservatie af.",
-    step5Desc: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
+    step6Title: "6. Rond uw reservatie af.",
+    step6Desc: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
     nameLabel: "Voornaam en naam",
     emailLabel: "E-mail",
     phoneLabel: "Telefoon",
@@ -274,6 +298,28 @@ export function ReservationFlow() {
     [lang]
   );
 
+  const themeGroups = useMemo(() => {
+    const items = [
+      { id: "classic", label: t("themeClassic"), image: "/images/(2).png", group: t("themeGroupElegant") },
+      { id: "gold", label: t("themeGold"), image: "/images/43.png", group: t("themeGroupGlam") },
+      { id: "rose", label: t("themeRose"), image: "/images/10.png", group: t("themeGroupRomance") },
+      { id: "minimal", label: t("themeMinimal"), image: "/images/111.png", group: t("themeGroupMinimal") },
+      { id: "editorial", label: t("themeEditorial"), image: "/images/Hilton - 29.11.2025.png", group: t("themeGroupCorporate") }
+    ].map((item) => ({ ...item, image: encodeURI(item.image) }));
+
+    const groups = new Map<string, typeof items>();
+    items.forEach((item) => {
+      const existing = groups.get(item.group) ?? [];
+      existing.push(item);
+      groups.set(item.group, existing);
+    });
+
+    return Array.from(groups.entries()).map(([groupLabel, groupItems]) => ({
+      label: groupLabel,
+      items: groupItems
+    }));
+  }, [lang]);
+
   const optionChoices = useMemo(
     () => [
       { code: "RED_CARPET", title: t("optionRed"), desc: t("optionRedDesc") },
@@ -339,6 +385,7 @@ export function ReservationFlow() {
   const [availability, setAvailability] = useState<AvailabilityState>("idle");
   const [remaining, setRemaining] = useState<number | null>(null);
   const [vibe, setVibe] = useState("");
+  const [theme, setTheme] = useState("");
   const [guests, setGuests] = useState("");
   const [priority, setPriority] = useState("");
   const [packCode, setPackCode] = useState<PackCode | "">("");
@@ -350,6 +397,8 @@ export function ReservationFlow() {
   const [waitlistPhone, setWaitlistPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [zoomImage, setZoomImage] = useState("");
+  const [zoomLabel, setZoomLabel] = useState("");
 
   const transportFee = zone === "BE" ? 90 : 110;
   const selectedPack = packs.find((pack) => pack.code === packCode) ?? null;
@@ -357,9 +406,10 @@ export function ReservationFlow() {
 
   const canContinueStep1 = Boolean(eventType && eventDate && location && availability === "available");
   const canContinueStep2 = Boolean(vibe);
-  const canContinueStep3 = Boolean(guests && priority);
-  const canContinueStep4 = Boolean(packCode);
-  const canContinueStep5 = Boolean(contactName && contactEmail && contactPhone);
+  const canContinueStep3 = Boolean(theme);
+  const canContinueStep4 = Boolean(guests && priority);
+  const canContinueStep5 = Boolean(packCode);
+  const canContinueStep6 = Boolean(contactName && contactEmail && contactPhone);
 
   const toggleOption = (code: string) => {
     setOptions((prev) => (prev.includes(code) ? prev.filter((item) => item !== code) : [...prev, code]));
@@ -439,6 +489,16 @@ export function ReservationFlow() {
       .replace("{{guests}}", guests || "[invites]")
   );
 
+  const openZoom = (image: string, label: string) => {
+    setZoomImage(image);
+    setZoomLabel(label);
+  };
+
+  const closeZoom = () => {
+    setZoomImage("");
+    setZoomLabel("");
+  };
+
   return (
     <section className="mx-auto max-w-[1100px] px-4 py-16">
       <header className="text-center">
@@ -455,10 +515,10 @@ export function ReservationFlow() {
         <div className="flow-card rounded-3xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-sm font-black text-[#12130F]">
-              {t("stepLabel")} {step} / 5
+              {t("stepLabel")} {step} / 6
             </div>
             <div className="flex h-2 w-40 overflow-hidden rounded-full bg-[#f2ead2]">
-              <div className="flow-progress h-full" style={{ width: `${(step / 5) * 100}%` }} />
+              <div className="flow-progress h-full" style={{ width: `${(step / 6) * 100}%` }} />
             </div>
           </div>
 
@@ -616,6 +676,58 @@ export function ReservationFlow() {
             <div className="flow-step mt-6 space-y-4">
               <h2 className="text-2xl font-black">{t("step3Title")}</h2>
               <p className="text-sm text-[#666]">{t("step3Desc")}</p>
+              <div className="space-y-5">
+                {themeGroups.map((group) => (
+                  <div key={group.label}>
+                    <p className="text-sm font-black text-[#C1950E]">{group.label}</p>
+                    <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {group.items.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={`rounded-2xl border p-3 text-left transition ${
+                            theme === item.id
+                              ? "border-[#C1950E] shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
+                              : "border-[#eee]"
+                          }`}
+                          onClick={() => setTheme(item.id)}
+                        >
+                          <div className="relative h-[150px] overflow-hidden rounded-xl bg-white">
+                            <Image src={item.image} alt={item.label} fill className="object-contain p-2" />
+                          </div>
+                          <div className="mt-3 flex items-center justify-between gap-2">
+                            <span className="text-sm font-black">{item.label}</span>
+                            <span
+                              className="text-xs font-semibold text-[#C1950E]"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openZoom(item.image, item.label);
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  openZoom(item.image, item.label);
+                                }
+                              }}
+                            >
+                              Zoom
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="flow-step mt-6 space-y-4">
+              <h2 className="text-2xl font-black">{t("step4Title")}</h2>
+              <p className="text-sm text-[#666]">{t("step4Desc")}</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="text-sm font-semibold" htmlFor="guests">
@@ -649,10 +761,10 @@ export function ReservationFlow() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div className="flow-step mt-6 space-y-4">
-              <h2 className="text-2xl font-black">{t("step4Title")}</h2>
-              <p className="text-sm text-[#666]">{t("step4Desc")}</p>
+              <h2 className="text-2xl font-black">{t("step5Title")}</h2>
+              <p className="text-sm text-[#666]">{t("step5Desc")}</p>
               <div className="grid gap-4 lg:grid-cols-3">
                 {packs.map((pack) => (
                   <button
@@ -748,10 +860,10 @@ export function ReservationFlow() {
             </div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div className="flow-step mt-6 space-y-4">
-              <h2 className="text-2xl font-black">{t("step5Title")}</h2>
-              <p className="text-sm text-[#666]">{t("step5Desc")}</p>
+              <h2 className="text-2xl font-black">{t("step6Title")}</h2>
+              <p className="text-sm text-[#666]">{t("step6Desc")}</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="text-sm font-semibold" htmlFor="name">
@@ -825,7 +937,7 @@ export function ReservationFlow() {
             >
               {t("back")}
             </button>
-            {step < 5 && (
+            {step < 6 && (
               <button
                 type="button"
                 className="btn btn-gold flow-cta"
@@ -833,18 +945,19 @@ export function ReservationFlow() {
                   (step === 1 && !canContinueStep1) ||
                   (step === 2 && !canContinueStep2) ||
                   (step === 3 && !canContinueStep3) ||
-                  (step === 4 && !canContinueStep4)
+                  (step === 4 && !canContinueStep4) ||
+                  (step === 5 && !canContinueStep5)
                 }
-                onClick={() => setStep((prev) => Math.min(5, prev + 1))}
+                onClick={() => setStep((prev) => Math.min(6, prev + 1))}
               >
                 {t("next")}
               </button>
             )}
-            {step === 5 && (
+            {step === 6 && (
               <button
                 type="button"
                 className="btn btn-gold flow-cta"
-                disabled={!canContinueStep5 || !selectedPack || isSubmitting}
+                disabled={!canContinueStep6 || !selectedPack || isSubmitting}
                 onClick={handleCheckout}
               >
                 {isSubmitting ? t("redirecting") : t("payDeposit")}
@@ -877,6 +990,33 @@ export function ReservationFlow() {
           </div>
         </div>
       </div>
+
+      {zoomImage && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 px-4"
+          onClick={closeZoom}
+        >
+          <div
+            className="w-full max-w-3xl rounded-3xl bg-white p-4 shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-black">{zoomLabel}</p>
+              <button
+                type="button"
+                className="text-2xl font-semibold text-[#12130F]"
+                onClick={closeZoom}
+                aria-label="Fermer"
+              >
+                ×
+              </button>
+            </div>
+            <div className="relative mt-4 h-[520px] overflow-hidden rounded-2xl bg-[#fffaf0]">
+              <Image src={zoomImage} alt={zoomLabel} fill className="object-contain p-6" />
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
