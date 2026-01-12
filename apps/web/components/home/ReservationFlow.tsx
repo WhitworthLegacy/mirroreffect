@@ -509,6 +509,7 @@ const packs = useMemo(
   const [options, setOptions] = useState<string[]>([]);
   const [stanchionsEnabled, setStanchionsEnabled] = useState(false);
   const [stanchionsColor, setStanchionsColor] = useState<"GOLD" | "SILVER">("GOLD");
+  const [leadEmail, setLeadEmail] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
@@ -519,6 +520,7 @@ const packs = useMemo(
   const [zoomImage, setZoomImage] = useState("");
   const [zoomLabel, setZoomLabel] = useState("");
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [promoQueued, setPromoQueued] = useState(false);
 
   const story = strings.stories[Math.max(0, Math.min(step - 1, strings.stories.length - 1))];
   const testimonials = strings.testimonials;
@@ -548,7 +550,7 @@ const packs = useMemo(
   const canContinueStep1 = Boolean(eventType && eventDate && location && availability === "available");
   const canContinueStep2 = Boolean(vibe);
   const canContinueStep3 = Boolean(theme);
-  const canContinueStep4 = Boolean(guests && priority);
+  const canContinueStep4 = Boolean(guests && priority && leadEmail);
   const canContinueStep5 = Boolean(packCode);
   const canContinueStep6 = Boolean(contactName && contactEmail && contactPhone);
 
@@ -645,6 +647,28 @@ const packs = useMemo(
   const closeZoom = () => {
     setZoomImage("");
     setZoomLabel("");
+  };
+
+  const enqueuePromo = () => {
+    if (!leadEmail || promoQueued) return;
+    setPromoQueued(true);
+    void fetch("/api/public/promo-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: leadEmail,
+        locale: lang,
+        payload: {
+          date: eventDate || "",
+          location: location || "",
+          guests: guests || "",
+          theme: theme || "",
+          priority: priority || ""
+        }
+      })
+    }).catch(() => {
+      setPromoQueued(false);
+    });
   };
 
   return (
@@ -892,6 +916,20 @@ const packs = useMemo(
                     <option value="souvenir">{t("priorityC")}</option>
                   </select>
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="text-sm font-semibold" htmlFor="leadEmail">
+                    {t("step4EmailLabel")}
+                  </label>
+                  <input
+                    id="leadEmail"
+                    type="email"
+                    className={`${baseClass} mt-2`}
+                    placeholder="ex: hello@email.com"
+                    value={leadEmail}
+                    onChange={(event) => setLeadEmail(event.target.value)}
+                  />
+                  <p className="mt-2 text-xs text-[#8a6d1a]">{t("step4EmailDesc")}</p>
+                </div>
               </div>
             </div>
           )}
@@ -933,6 +971,11 @@ const packs = useMemo(
                   </button>
                 ))}
               </div>
+              {balancePrice !== null && (
+                <div className="rounded-2xl border border-[#f0e6c7] bg-white px-4 py-3 text-sm text-[#3a3a3a]">
+                  {t("recapBalance")}: <strong>{balancePrice}€</strong>
+                </div>
+              )}
 
               <div className="grid gap-3 sm:grid-cols-3">
                 {optionChoices.map((item) => {
@@ -1124,7 +1167,10 @@ const packs = useMemo(
                   (step === 4 && !canContinueStep4) ||
                   (step === 5 && !canContinueStep5)
                 }
-                onClick={() => setStep((prev) => Math.min(6, prev + 1))}
+                onClick={() => {
+                  if (step === 4) enqueuePromo();
+                  setStep((prev) => Math.min(6, prev + 1));
+                }}
               >
                 {t("next")}
               </button>

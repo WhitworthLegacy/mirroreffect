@@ -64,6 +64,13 @@ export async function POST(req: Request) {
       return Response.json({ error: "event_create_failed" }, { status: 500 });
     }
 
+    await supabase
+      .from("notification_queue")
+      .delete()
+      .eq("template_key", "B2C_PROMO_48H")
+      .eq("to_email", b.client_email)
+      .eq("status", "queued");
+
     // 3) créer payment Mollie (acompte fixe 180€)
     const apiKey = process.env.MOLLIE_API_KEY;
     if (!apiKey) return Response.json({ error: "missing_mollie_key" }, { status: 500 });
