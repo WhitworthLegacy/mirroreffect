@@ -205,8 +205,9 @@ const copy = {
 export function ReservationFlow() {
   const searchParams = useSearchParams();
   const lang = searchParams.get("lang") === "nl" ? "nl" : "fr";
-  const t = (key: keyof typeof copy.fr) => copy[lang][key] ?? copy.fr[key];
-  const proofItems = copy[lang].proofItems;
+  const strings = copy[lang];
+  const t = <K extends keyof typeof copy.fr>(key: K) => strings[key];
+  const proofItems = strings.proofItems;
 
   const packs = useMemo(
     () => [
@@ -281,9 +282,9 @@ export function ReservationFlow() {
   );
 
   const optionLabels: Record<string, string> = {
-    RED_CARPET: t("optionRed"),
-    STANCHIONS: t("optionStanchions"),
-    DIGITAL_ALBUM: t("optionAlbum")
+    RED_CARPET: strings.optionRed,
+    STANCHIONS: strings.optionStanchions,
+    DIGITAL_ALBUM: strings.optionAlbum
   };
   const eventTypeOptions = lang === "nl"
     ? [
