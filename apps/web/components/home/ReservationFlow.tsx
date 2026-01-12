@@ -348,7 +348,7 @@ export function ReservationFlow() {
   const searchParams = useSearchParams();
   const lang = searchParams.get("lang") === "nl" ? "nl" : "fr";
   const strings = copy[lang];
-  const t = (key: Exclude<keyof typeof copy.fr, "proofItems" | "stories">) => strings[key];
+  const t = (key: Exclude<keyof typeof copy.fr, "proofItems" | "stories" | "testimonials">) => strings[key];
   const proofItems = strings.proofItems;
 
   const packs = useMemo(
