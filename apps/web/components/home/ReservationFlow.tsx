@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type AvailabilityState = "idle" | "checking" | "available" | "unavailable" | "error";
@@ -48,6 +48,28 @@ const copy = {
         title: "Votre date est sur le point d'être réservée.",
         text:
           "On confirme votre acompte, on verrouille la date, et vous profitez d'un parcours sans friction."
+      }
+    ],
+    testimonials: [
+      {
+        quote:
+          "Mirror Effect est un concept testé lors de notre event à Liège : beaucoup de joie et de bonne humeur pour nos 214 invités.",
+        author: "Christian Bléser — CEO HD4You"
+      },
+      {
+        quote:
+          "Qualité au top, photos personnalisables, équipe disponible. À recommander.",
+        author: "Cools Florence — Mariage 21/09/2024"
+      },
+      {
+        quote:
+          "Un cadre original avec tapis rouge et barrières : on se sent comme des stars.",
+        author: "Amélie Schwanen"
+      },
+      {
+        quote:
+          "Le photobooth miroir, une expérience unique. Merci pour ce super moment.",
+        author: "Sabrina Leclergé"
       }
     ],
     stepLabel: "Etape",
@@ -193,6 +215,28 @@ const copy = {
           "We bevestigen het voorschot, reserveren uw datum en starten de voorbereiding."
       }
     ],
+    testimonials: [
+      {
+        quote:
+          "Een concept getest in Luik: veel vreugde en sfeer voor al onze gasten.",
+        author: "Christian Bléser — CEO HD4You"
+      },
+      {
+        quote:
+          "Topkwaliteit, personaliseerbare foto's en een beschikbaar team. Aanrader.",
+        author: "Cools Florence — Huwelijk 21/09/2024"
+      },
+      {
+        quote:
+          "Origineel kader met rode loper en paaltjes: je voelt je een ster.",
+        author: "Amélie Schwanen"
+      },
+      {
+        quote:
+          "Unieke ervaring met instant foto's. Bedankt voor dit moment.",
+        author: "Sabrina Leclergé"
+      }
+    ],
     stepLabel: "Stap",
     step1Title: "1. Uw datum, uw locatie, uw verhaal.",
     step1Desc: "We starten met het essentiële om beschikbaarheid te checken.",
@@ -306,7 +350,6 @@ export function ReservationFlow() {
   const strings = copy[lang];
   const t = (key: Exclude<keyof typeof copy.fr, "proofItems" | "stories">) => strings[key];
   const proofItems = strings.proofItems;
-  const story = strings.stories[Math.max(0, Math.min(step - 1, strings.stories.length - 1))];
 
   const packs = useMemo(
     () => [
@@ -420,6 +463,18 @@ export function ReservationFlow() {
   const [checkoutError, setCheckoutError] = useState("");
   const [zoomImage, setZoomImage] = useState("");
   const [zoomLabel, setZoomLabel] = useState("");
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
+
+  const story = strings.stories[Math.max(0, Math.min(step - 1, strings.stories.length - 1))];
+  const testimonials = strings.testimonials;
+  const currentTestimonial = testimonials[testimonialIndex % testimonials.length];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [testimonials.length]);
 
   const transportFee = 90;
   const selectedPack = packs.find((pack) => pack.code === packCode) ?? null;
@@ -970,8 +1025,9 @@ export function ReservationFlow() {
               height={640}
               className="h-[320px] w-full object-cover"
             />
-            <p className="mt-3 text-sm font-black">{t("proofQuote")}</p>
-            <p className="text-xs text-[#6b6b6b]">{t("proofAuthor")}</p>
+            <p className="mt-3 text-sm font-black">"{currentTestimonial.quote}"</p>
+            <p className="text-xs text-[#6b6b6b]">{currentTestimonial.author}</p>
+            <p className="mt-2 text-[11px] text-[#b08c1a]">Avis qui défilent automatiquement • 5s</p>
           </div>
           <div className="flow-card flow-glow rounded-3xl p-5 text-sm text-[#3d3d3d]">
             <div className="text-xs font-black uppercase tracking-[0.2em] text-[#C1950E]">
