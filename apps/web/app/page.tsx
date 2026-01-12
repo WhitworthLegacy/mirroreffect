@@ -52,6 +52,17 @@ const storyShots = [
   "/images/IMG_0481.jpg",
   "/images/IMG_0482.jpg"
 ];
+const galleryShots = [
+  "/images/IMG_0487.jpg",
+  "/images/IMG_0488.jpg",
+  "/images/IMG_0490.jpg",
+  "/images/IMG_0491.jpg",
+  "/images/IMG_0492.jpg",
+  "/images/IMG_0493.jpg",
+  "/images/IMG_0494.jpg",
+  "/images/IMG_0495.jpg",
+  "/images/IMG_0496.jpg"
+];
 
 export default function Page({ searchParams }: PageProps) {
   const mode = searchParams?.mode === "b2b" ? "b2b" : "b2c";
@@ -391,36 +402,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               <p className="mt-2 text-center text-sm text-[#666]">Mariages, anniversaires, baptêmes…</p>
             </MotionReveal>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {[
-                {
-                  src: "/images/IMG_0487.jpg",
-                  alt: "Invite posant devant le photobooth miroir pendant un mariage"
-                },
-                {
-                  src: "/images/IMG_0488.jpg",
-                  alt: "Moment complice capturé par le miroir photobooth MirrorEffect"
-                },
-                {
-                  src: "/images/IMG_0490.jpg",
-                  alt: "Souvenir photo élégant avec impressions instantanées MirrorEffect"
-                },
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/WhatsApp-Image-2025-10-12-at-15.21.06.jpeg",
-                  alt: "Moments de fête devant le miroir photobooth en Belgique"
-                },
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/WhatsApp-Image-2025-10-11-at-12.11.50.jpeg",
-                  alt: "Sourires partagés autour du photobooth miroir"
-                },
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/WhatsApp-Image-2025-10-12-at-15.21.06-1.jpeg",
-                  alt: "Expérience MirrorEffect lors d’un anniversaire"
-                }
-              ].map((item) => (
+              {galleryShots.map((src) => (
                 <Image
-                  key={item.src}
-                  src={item.src}
-                  alt={item.alt}
+                  key={src}
+                  src={src}
+                  alt="Souvenir photobooth miroir MirrorEffect"
                   width={520}
                   height={360}
                   sizes="(max-width: 768px) 100vw, 360px"
