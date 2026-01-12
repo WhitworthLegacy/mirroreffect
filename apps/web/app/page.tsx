@@ -211,9 +211,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                   </MotionReveal>
                   <MotionReveal delay={0.15}>
                     <div className="mt-5 flex flex-wrap gap-3">
-                      <a className={`${primaryButton} openLead`} href="#">
-                        💌 Recevoir mon offre personnalisée
-                      </a>
+                    <a className={primaryButton} href="/reservation">
+                      💌 Réserver maintenant
+                    </a>
                       <a className={ghostButton} href="#packs-b2c">
                         Voir nos packs
                       </a>
@@ -366,7 +366,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                   ))}
                 </div>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <a className={`${primaryButton} openLead`} href="#">
+                  <a className={primaryButton} href="/reservation">
                     Vérifier ma date
                   </a>
                   <a className={ghostButton} href="#packs-b2c">
@@ -500,8 +500,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     ))}
                   </div>
                   <div className="mt-4">
-                    <a className={`${pack.ctaClass} openLead`} href="#">
-                      Découvrir les offres
+                    <a className={pack.ctaClass} href="/reservation">
+                      Réserver ce pack
                     </a>
                   </div>
                 </article>
@@ -680,8 +680,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 Dites-nous votre lieu, votre date, votre ambiance — on vous envoie une proposition claire.
               </p>
               <div className="mt-5 flex justify-center">
-                    <a className={`${primaryButton} openLead`} href="#">
-                      Découvrir les offres
+                    <a className={primaryButton} href="/reservation">
+                      Démarrer ma réservation
                     </a>
               </div>
             </div>
@@ -1066,7 +1066,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         </p>
       </footer>
 
-      <LeadModal mode={mode} />
+      {mode === "b2b" && <LeadModal mode="b2b" />}
     </main>
   );
 }

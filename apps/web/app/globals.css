@@ -126,6 +126,38 @@
   .tilt-right {
     transform: rotate(2deg);
   }
+
+  .seo-content .sub {
+    margin-top: 0.5rem;
+    color: #6b6b6b;
+  }
+
+  .seo-content .card,
+  .seo-content .case,
+  .seo-content article {
+    margin-top: 1rem;
+    border-radius: 16px;
+    border: 1px solid #f0e6c7;
+    background: #ffffff;
+    padding: 1rem;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+  }
+
+  .seo-content ul,
+  .seo-content ol {
+    margin-left: 1rem;
+    margin-top: 0.5rem;
+    list-style-position: outside;
+  }
+
+  .seo-content li + li {
+    margin-top: 0.25rem;
+  }
+
+  .seo-content .excerpt {
+    margin-top: 0.4rem;
+    color: #6b6b6b;
+  }
 }
 
 @keyframes float-orb {
