@@ -12,11 +12,13 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   const [status, setStatus] = useState<GuardStatus>("checking");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (pathname === "/health" || pathname === "/login") {
-    return <>{children}</>;
-  }
+  const isPublicRoute = pathname === "/health" || pathname === "/login";
 
   useEffect(() => {
+    if (isPublicRoute) {
+      return;
+    }
+
     let isMounted = true;
 
     async function checkSession() {
@@ -55,16 +57,20 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isPublicRoute]);
 
   useEffect(() => {
-    if (status === "unauth") {
+    if (!isPublicRoute && status === "unauth") {
       const timeout = setTimeout(() => {
         router.replace("/login");
       }, 800);
       return () => clearTimeout(timeout);
     }
-  }, [status, router]);
+  }, [status, router, isPublicRoute]);
+
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
 
   if (status === "authed") {
     return <>{children}</>;
