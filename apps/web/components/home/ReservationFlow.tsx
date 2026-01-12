@@ -15,9 +15,9 @@ const mailto = (subject: string, body: string) =>
 
 const copy = {
   fr: {
-    badge: "Reservation directe en ligne",
-    title: "Votre photobooth miroir, reserve en quelques minutes.",
-    subtitle: "Un parcours emotionnel et clair, avec acompte de 180€ puis solde le jour J.",
+    badge: "Réservation directe en ligne",
+    title: "Votre photobooth miroir, réservé en quelques minutes.",
+    subtitle: "Un parcours émotionnel et clair, avec acompte de 180€ puis solde le jour J.",
     stories: [
       {
         title: "Le miroir qui fait parler tout le mariage.",
@@ -74,29 +74,29 @@ const copy = {
     ],
     stepLabel: "Etape",
     step1Title: "1. Votre date, votre lieu, votre histoire.",
-    step1Desc: "On commence par l'essentiel pour verifier la disponibilite.",
-    eventTypeLabel: "Type d'evenement",
-    eventDateLabel: "Date de l'evenement",
+    step1Desc: "On commence par l'essentiel pour verifier la disponibilité.",
+    eventTypeLabel: "Type d'événement",
+    eventDateLabel: "Date de l'événement",
     locationLabel: "Lieu (ville + salle)",
     locationPlaceholder: "Bruxelles, Chateau...",
     zoneLabel: "Zone",
     zoneBe: "Belgique",
     zoneFr: "Nord de la France",
-    checkAvailability: "Verifier la disponibilite",
-    checking: "Verification...",
-    redirecting: "Redirection...",
+    checkAvailability: "Vérifier la disponibilité",
+    checking: "Vérification...",
+    redirecting: "Rédirection...",
     available: "Disponible pour votre date.",
     remaining: "Il reste",
     mirrors: "miroir(s).",
     unavailableTitle:
-      "Cette date est deja reservee. Laissez-nous vos coordonnees pour la liste d'attente ou recevoir des alternatives.",
+      "Cette date est déjà réservée. Laissez-nous vos coordonnées pour la liste d'attente ou recevoir des alternatives.",
     waitlistEmail: "Votre email",
     waitlistPhone: "Votre telephone",
     waitlistCta: "Rejoindre la liste d'attente",
     partnersCta: "Voir nos partenaires",
-    availabilityError: "Impossible de verifier la disponibilite pour l'instant. Merci de reessayer.",
+    availabilityError: "Impossible de vérifier la disponibilité pour l'instant. Merci de réessayer.",
     step2Title: "2. L'ambiance que vous voulez offrir.",
-    step2Desc: "Choisissez l'univers qui correspond a votre mariage. On s'adapte a votre deco.",
+    step2Desc: "Choisissez l'univers qui correspond à votre mariage. On s'adapte à votre déco.",
     step3Title: "3. Votre thème de couleur.",
     step3Desc: "Choisissez la palette principale. On adaptera le cadre et l'écran à vos couleurs.",
     themeTitle: "Palette de votre mariage",
@@ -111,14 +111,14 @@ const copy = {
     themeGroupRomance: "Romance",
     themeGroupMinimal: "Minimal",
     themeGroupCorporate: "Corporate",
-    step4Title: "4. Votre reception, votre energie.",
+    step4Title: "4. Votre réception, votre énergie.",
     step4Desc:
-      "Cela nous aide a dimensionner le flux et garantir une experience fluide et premium.",
-    guestsLabel: "Nombre d'invites",
+      "Cela nous aide à dimensionner le flux et garantir une expérience fluide et premium.",
+    guestsLabel: "Nombre d'invités",
     guestsPlaceholder: "Ex: 120",
     priorityLabel: "Ce qui compte le plus",
-    priorityA: "Une ambiance elegante qui rassemble",
-    priorityB: "Des photos premium a garder",
+    priorityA: "Une ambiance élégante qui rassemble",
+    priorityB: "Des photos premium à garder",
     priorityC: "Un souvenir qui fait parler",
     step5Title: "5. Choisissez votre pack.",
     step5Desc: "Prix promo valables pour une réservation directe aujourd'hui.",
@@ -128,11 +128,11 @@ const copy = {
     frameDesc: "Voici des idées, ne vous inquiétez pas : on personnalise tout pour vous !",
     step4More: "Besoin de plus d'impressions ?",
     step4MoreDesc:
-      "Laissez votre email et votre numero pour une proposition sur-mesure.",
+      "Laissez votre email et votre numéro pour une proposition sur-mesure.",
     step4MoreCta: "Cliquez ici pour demander",
     step6Title: "6. Finalisez votre reservation.",
     step6Desc: "Acompte de 180€ aujourd'hui. Solde le jour J.",
-    nameLabel: "Prenom et nom",
+    nameLabel: "Prénom et nom",
     emailLabel: "Email",
     phoneLabel: "Telephone",
     recapTitle: "Recapitulatif",
@@ -141,18 +141,19 @@ const copy = {
     recapTransport: "Transport",
     transportNote: "Frais de transport fixes: 90€",
     recapTotal: "Total",
+    recapBalance: "Solde restant",
     recapDeposit: "Acompte aujourd'hui: 180€",
-    checkoutError: "Une erreur est survenue. Merci de reessayer.",
+    checkoutError: "Une erreur est survenue. Merci de réessayer.",
     back: "Retour",
     next: "Continuer",
     payDeposit: "Payer l'acompte de 180€",
-    proofQuote: "\"Le miroir a immediatement reuni nos invites.\"",
+    proofQuote: "\"Le miroir a immediatement réuni nos invites.\"",
     proofAuthor: "Cools Florence — Mariage 21/09/2024",
     proofTitle: "Pourquoi ca marche",
     proofItems: [
       "Miroir premium + animation qui attire tout le monde.",
-      "Equipe dediee, rassurante, reactive depuis 2017.",
-      "Cadre personnalise, tirages immediats, galerie elegante."
+      "Equipe dédiée, rassurante, réactive depuis 2017.",
+      "Cadre personnalisé, tirages immediats, galerie élégante."
     ],
     optionRed: "Tapis rouge",
     optionStanchions: "Potelets + cordes",
@@ -164,9 +165,9 @@ const copy = {
     vibeGold: "Glamour dore",
     vibeRomance: "Romance classique",
     vibeParty: "Soiree festive",
-    packDiscoveryDesc: "Parfait pour une reception intime.",
+    packDiscoveryDesc: "Parfait pour une réception intime.",
     packEssentialDesc: "Le favori des mariages.",
-    packPremiumDesc: "Pour une scenographie genereuse.",
+    packPremiumDesc: "Pour une scénographie généreuse.",
     packDiscoveryName: "Découverte",
     packEssentialName: "Essentiel",
     packPremiumName: "Premium",
@@ -176,16 +177,16 @@ const copy = {
     includeFrame: "Cadre personnalisé",
     includeRedCarpet: "Tapis rouge",
     includeStanchions: "Potelets + cordes",
-    frameClassic: "Classique elegant",
+    frameClassic: "Classique élégant",
     frameGold: "Dorures & glamour",
     frameRomance: "Romance florale",
     frameMinimal: "Minimal chic",
     availabilityEmailSubject: "Liste d'attente — MirrorEffect",
     availabilityEmailBody:
-      "Bonjour,\n\nLa date {{date}} n'est pas disponible. Nous souhaitons rejoindre la liste d'attente.\n\nNom: {{name}}\nEmail: {{email}}\nTelephone: {{phone}}\nLieu: {{location}}\n\nMerci !",
+      "Bonjour,\n\nLa date {{date}} n'est pas disponible. Nous souhaitons rejoindre la liste d'attente.\n\nNom: {{name}}\nEmail: {{email}}\nTéléphone: {{phone}}\nLieu: {{location}}\n\nMerci !",
     impressionsEmailSubject: "Demande impressions supplémentaires — MirrorEffect",
     impressionsEmailBody:
-      "Bonjour,\n\nNous souhaitons un pack avec plus d'impressions.\n\nNom: {{name}}\nEmail: {{email}}\nTelephone: {{phone}}\nDate: {{date}}\nLieu: {{location}}\nNombre d'invites: {{guests}}\n\nMerci !",
+      "Bonjour,\n\nNous souhaitons un pack avec plus d'impressions.\n\nNom: {{name}}\nEmail: {{email}}\nTéléphone: {{phone}}\nDate: {{date}}\nLieu: {{location}}\nNombre d'invités: {{guests}}\n\nMerci !",
     imageAlt: "Souvenir photobooth miroir MirrorEffect"
   },
   nl: {
@@ -249,7 +250,7 @@ const copy = {
     stepLabel: "Stap",
     step1Title: "1. Uw datum, uw locatie, uw verhaal.",
     step1Desc: "We starten met het essentiële om beschikbaarheid te checken.",
-    eventTypeLabel: "Type evenement",
+    eventTypeLabel: "Type événement",
     eventDateLabel: "Datum van het evenement",
     locationLabel: "Locatie (stad + zaal)",
     locationPlaceholder: "Brussel, kasteel...",
@@ -313,6 +314,7 @@ const copy = {
     recapTransport: "Transport",
     transportNote: "Transportkosten vast: €90",
     recapTotal: "Totaal",
+    recapBalance: "Resterend saldo",
     recapDeposit: "Voorschot vandaag: €180",
     checkoutError: "Er ging iets mis. Probeer opnieuw.",
     back: "Terug",
@@ -540,6 +542,8 @@ const packs = useMemo(
   const transportFee = 90;
   const selectedPack = packs.find((pack) => pack.code === packCode) ?? null;
   const totalPrice = selectedPack ? selectedPack.promo + transportFee : null;
+  const depositAmount = 180;
+  const balancePrice = totalPrice !== null ? Math.max(0, totalPrice - depositAmount) : null;
 
   const canContinueStep1 = Boolean(eventType && eventDate && location && availability === "available");
   const canContinueStep2 = Boolean(vibe);
