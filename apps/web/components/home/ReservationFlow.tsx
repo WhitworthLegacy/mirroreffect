@@ -18,9 +18,38 @@ const copy = {
     badge: "Reservation directe en ligne",
     title: "Votre photobooth miroir, reserve en quelques minutes.",
     subtitle: "Un parcours emotionnel et clair, avec acompte de 180€ puis solde le jour J.",
-    storyTitle: "Le miroir qui fait parler tout le mariage.",
-    storyText:
-      "Chaque couple veut un moment qui rassemble, qui fait rire, qui devient un souvenir qu'on garde et qu'on montre. Notre miroir cree ce moment-la.",
+    stories: [
+      {
+        title: "Le miroir qui fait parler tout le mariage.",
+        text:
+          "Chaque couple veut un moment qui rassemble, qui fait rire, qui devient un souvenir qu'on garde et qu'on montre. Notre miroir crée ce moment-là."
+      },
+      {
+        title: "Un instant signature pour vos invités.",
+        text:
+          "Une animation élégante qui attire naturellement les regards, libère les sourires et crée des photos que l'on adore partager."
+      },
+      {
+        title: "Le cadre photo qui raconte votre histoire.",
+        text:
+          "Couleurs, prénoms, date, ambiance : on personnalise pour que chaque photo porte votre signature."
+      },
+      {
+        title: "Une expérience fluide et rassurante.",
+        text:
+          "Notre équipe gère tout avec discrétion pour que vous profitiez du moment, sans stress."
+      },
+      {
+        title: "La montée en valeur qui change tout.",
+        text:
+          "Quand l'expérience est premium, le souvenir devient précieux. C'est ce que vos proches garderont."
+      },
+      {
+        title: "Votre date est sur le point d'être réservée.",
+        text:
+          "On confirme votre acompte, on verrouille la date, et vous profitez d'un parcours sans friction."
+      }
+    ],
     stepLabel: "Etape",
     step1Title: "1. Votre date, votre lieu, votre histoire.",
     step1Desc: "On commence par l'essentiel pour verifier la disponibilite.",
@@ -68,7 +97,8 @@ const copy = {
     priorityB: "Des photos premium a garder",
     priorityC: "Un souvenir qui fait parler",
     step5Title: "5. Choisissez votre pack.",
-    step5Desc: "Prix promo valables pour une reservation directe aujourd'hui.",
+    step5Desc: "Prix promo valables pour une réservation directe aujourd'hui.",
+    depositLine: "Acompte de 180€ aujourd'hui. Solde le jour J.",
     frameTitle: "Idees de cadres photo",
     frameDesc: "Voici des idees, ne vous inquietez pas on personnalise tout pour vous !",
     step4More: "Besoin de plus d'impressions ?",
@@ -112,9 +142,9 @@ const copy = {
     packDiscoveryDesc: "Parfait pour une reception intime.",
     packEssentialDesc: "Le favori des mariages.",
     packPremiumDesc: "Pour une scenographie genereuse.",
-    packDiscoveryName: "200 impressions",
-    packEssentialName: "400 impressions",
-    packPremiumName: "800 impressions",
+    packDiscoveryName: "Découverte",
+    packEssentialName: "Essentiel",
+    packPremiumName: "Premium",
     frameClassic: "Classique elegant",
     frameGold: "Dorures & glamour",
     frameRomance: "Romance florale",
@@ -131,9 +161,38 @@ const copy = {
     badge: "Direct online reserveren",
     title: "Uw spiegel photobooth, in enkele minuten gereserveerd.",
     subtitle: "Emotioneel en duidelijk parcours, met voorschot van €180 en saldo op de dag zelf.",
-    storyTitle: "De spiegel die uw huwelijk doet schitteren.",
-    storyText:
-      "Elk koppel wil dat ene moment dat iedereen samenbrengt en doet glimlachen. Onze spiegel maakt dat moment.",
+    stories: [
+      {
+        title: "De spiegel die uw huwelijk doet schitteren.",
+        text:
+          "Elk koppel wil dat ene moment dat iedereen samenbrengt en doet glimlachen. Onze spiegel maakt dat moment."
+      },
+      {
+        title: "Een signature moment voor uw gasten.",
+        text:
+          "Een elegante animatie die iedereen aantrekt en spontane, prachtige foto's oplevert."
+      },
+      {
+        title: "Het fotokader vertelt uw verhaal.",
+        text:
+          "Kleuren, namen, datum en stijl: we personaliseren alles tot in de details."
+      },
+      {
+        title: "Vlot, geruststellend en professioneel.",
+        text:
+          "Ons team regelt alles discreet zodat u zorgeloos geniet."
+      },
+      {
+        title: "Premium beleving verhoogt de waarde.",
+        text:
+          "Hoe mooier de beleving, hoe waardevoller de herinnering. Dat blijft hangen."
+      },
+      {
+        title: "Uw datum wordt nu vastgelegd.",
+        text:
+          "We bevestigen het voorschot, reserveren uw datum en starten de voorbereiding."
+      }
+    ],
     stepLabel: "Stap",
     step1Title: "1. Uw datum, uw locatie, uw verhaal.",
     step1Desc: "We starten met het essentiële om beschikbaarheid te checken.",
@@ -181,6 +240,7 @@ const copy = {
     priorityC: "Een herinnering die blijft",
     step5Title: "5. Kies uw pakket.",
     step5Desc: "Promo-prijzen voor directe reservatie vandaag.",
+    depositLine: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
     frameTitle: "Voorbeelden van fotokaders",
     frameDesc: "Enkele ideeen, geen zorgen: wij personaliseren alles voor u.",
     step4More: "Meer afdrukken nodig?",
@@ -223,9 +283,9 @@ const copy = {
     packDiscoveryDesc: "Perfect voor intieme recepties.",
     packEssentialDesc: "Favoriet bij huwelijken.",
     packPremiumDesc: "Voor een rijke scenografie.",
-    packDiscoveryName: "200 prints",
-    packEssentialName: "400 prints",
-    packPremiumName: "800 prints",
+    packDiscoveryName: "Découverte",
+    packEssentialName: "Essentiel",
+    packPremiumName: "Premium",
     frameClassic: "Klassiek elegant",
     frameGold: "Goud & glamour",
     frameRomance: "Romantisch floral",
@@ -244,8 +304,9 @@ export function ReservationFlow() {
   const searchParams = useSearchParams();
   const lang = searchParams.get("lang") === "nl" ? "nl" : "fr";
   const strings = copy[lang];
-  const t = (key: Exclude<keyof typeof copy.fr, "proofItems">) => strings[key];
+  const t = (key: Exclude<keyof typeof copy.fr, "proofItems" | "stories">) => strings[key];
   const proofItems = strings.proofItems;
+  const story = strings.stories[Math.max(0, Math.min(step - 1, strings.stories.length - 1))];
 
   const packs = useMemo(
     () => [
@@ -486,8 +547,8 @@ export function ReservationFlow() {
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C1950E]">
               Story
             </p>
-            <h2 className="mt-2 text-lg font-black">{t("storyTitle")}</h2>
-            <p className="mt-2 text-sm text-[#5a5a5a]">{t("storyText")}</p>
+            <h2 className="mt-2 text-lg font-black">{story.title}</h2>
+            <p className="mt-2 text-sm text-[#5a5a5a]">{story.text}</p>
           </div>
 
           {step === 1 && (
@@ -657,7 +718,7 @@ export function ReservationFlow() {
                         <Image src={item.image} alt={item.label} fill className="object-contain p-2" />
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-2">
-                        <span className="text-sm font-black">{item.label}</span>
+                        <span className="text-sm font-black">&nbsp;</span>
                         <span
                           className="text-xs font-semibold text-[#C1950E]"
                           onClick={(event) => {
@@ -724,6 +785,7 @@ export function ReservationFlow() {
             <div className="flow-step mt-6 space-y-4">
               <h2 className="text-2xl font-black">{t("step5Title")}</h2>
               <p className="text-sm text-[#666]">{t("step5Desc")}</p>
+              <p className="text-xs font-semibold text-[#C1950E]">{t("depositLine")}</p>
               <div className="grid gap-4 lg:grid-cols-3">
                 {packs.map((pack) => (
                   <button
@@ -738,6 +800,7 @@ export function ReservationFlow() {
                   >
                     <h3 className="text-lg font-black">{pack.name}</h3>
                     <p className="mt-1 text-xs text-[#6b6b6b]">{pack.description}</p>
+                    <p className="mt-1 text-[11px] text-[#9a9a9a]">+ 90€ frais de transport</p>
                     <div className="mt-3 flex items-baseline gap-2">
                       <span className="text-2xl font-black text-[#12130F]">{pack.promo}€</span>
                       <span className="text-xs text-[#9a9a9a] line-through">{pack.original}€</span>
@@ -794,6 +857,7 @@ export function ReservationFlow() {
             <div className="flow-step mt-6 space-y-4">
               <h2 className="text-2xl font-black">{t("step6Title")}</h2>
               <p className="text-sm text-[#666]">{t("step6Desc")}</p>
+              <p className="text-xs font-semibold text-[#C1950E]">{t("depositLine")}</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="text-sm font-semibold" htmlFor="name">
