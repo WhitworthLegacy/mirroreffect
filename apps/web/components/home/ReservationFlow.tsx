@@ -18,6 +18,9 @@ const copy = {
     badge: "Reservation directe en ligne",
     title: "Votre photobooth miroir, reserve en quelques minutes.",
     subtitle: "Un parcours emotionnel et clair, avec acompte de 180€ puis solde le jour J.",
+    storyTitle: "Le miroir qui fait parler tout le mariage.",
+    storyText:
+      "Chaque couple veut un moment qui rassemble, qui fait rire, qui devient un souvenir qu'on garde et qu'on montre. Notre miroir cree ce moment-la.",
     stepLabel: "Etape",
     step1Title: "1. Votre date, votre lieu, votre histoire.",
     step1Desc: "On commence par l'essentiel pour verifier la disponibilite.",
@@ -45,14 +48,17 @@ const copy = {
     step2Desc: "Choisissez l'univers qui correspond a votre mariage. On s'adapte a votre deco.",
     step3Title: "3. Votre reception, votre energie.",
     step3Desc:
-      "Cela nous aide a dimensionner l'experience et garantir un rendu premium.",
+      "Cela nous aide a dimensionner le flux et garantir une experience fluide et premium.",
     guestsLabel: "Nombre d'invites",
     guestsPlaceholder: "Ex: 120",
-    budgetLabel: "Budget",
-    budgetLow:
-      "MirrorEffect est une experience premium a partir de 500€. Pour un budget plus bas, nous pouvons recommander des partenaires.",
+    priorityLabel: "Ce qui compte le plus",
+    priorityA: "Une ambiance elegante qui rassemble",
+    priorityB: "Des photos premium a garder",
+    priorityC: "Un souvenir qui fait parler",
     step4Title: "4. Choisissez votre pack.",
     step4Desc: "Prix promo valables pour une reservation directe aujourd'hui.",
+    frameTitle: "Cadres photo personnalises",
+    frameDesc: "Choisissez un style, on l'adapte a vos noms, votre date et votre theme.",
     step4More: "Besoin de plus d'impressions ?",
     step4MoreDesc:
       "Laissez votre email et votre numero pour une proposition sur-mesure.",
@@ -96,10 +102,10 @@ const copy = {
     packDiscoveryName: "200 impressions",
     packEssentialName: "400 impressions",
     packPremiumName: "800 impressions",
-    budgetLt500: "Moins de 500€",
-    budget500: "500€ — 800€",
-    budget800: "800€ — 1 200€",
-    budget1200: "1 200€+",
+    frameClassic: "Classique elegant",
+    frameGold: "Dorures & glamour",
+    frameRomance: "Romance florale",
+    frameMinimal: "Minimal chic",
     availabilityEmailSubject: "Liste d'attente — MirrorEffect",
     availabilityEmailBody:
       "Bonjour,\n\nLa date {{date}} n'est pas disponible. Nous souhaitons rejoindre la liste d'attente.\n\nNom: {{name}}\nEmail: {{email}}\nTelephone: {{phone}}\nLieu: {{location}}\n\nMerci !",
@@ -112,6 +118,9 @@ const copy = {
     badge: "Direct online reserveren",
     title: "Uw spiegel photobooth, in enkele minuten gereserveerd.",
     subtitle: "Emotioneel en duidelijk parcours, met voorschot van €180 en saldo op de dag zelf.",
+    storyTitle: "De spiegel die uw huwelijk doet schitteren.",
+    storyText:
+      "Elk koppel wil dat ene moment dat iedereen samenbrengt en doet glimlachen. Onze spiegel maakt dat moment.",
     stepLabel: "Stap",
     step1Title: "1. Uw datum, uw locatie, uw verhaal.",
     step1Desc: "We starten met het essentiële om beschikbaarheid te checken.",
@@ -138,14 +147,17 @@ const copy = {
     step2Title: "2. De sfeer die u wil geven.",
     step2Desc: "Kies de stijl die bij uw huwelijk past. Wij passen ons aan.",
     step3Title: "3. Uw receptie, uw energie.",
-    step3Desc: "Zo dimensioneren we de beleving voor een premium resultaat.",
+    step3Desc: "Zo houden we het tempo vlot en de ervaring premium.",
     guestsLabel: "Aantal gasten",
     guestsPlaceholder: "Bijv. 120",
-    budgetLabel: "Budget",
-    budgetLow:
-      "MirrorEffect is een premium ervaring vanaf €500. Voor een lager budget kunnen we partners aanbevelen.",
+    priorityLabel: "Wat telt het meest",
+    priorityA: "Een elegante sfeer die verbindt",
+    priorityB: "Premium foto's om te bewaren",
+    priorityC: "Een herinnering die blijft",
     step4Title: "4. Kies uw pakket.",
     step4Desc: "Promo-prijzen voor directe reservatie vandaag.",
+    frameTitle: "Gepersonaliseerde fotokaders",
+    frameDesc: "Kies een stijl, wij passen het aan met namen, datum en thema.",
     step4More: "Meer afdrukken nodig?",
     step4MoreDesc: "Laat uw e-mail en telefoon achter voor een voorstel op maat.",
     step4MoreCta: "Klik hier om aan te vragen",
@@ -188,10 +200,10 @@ const copy = {
     packDiscoveryName: "200 prints",
     packEssentialName: "400 prints",
     packPremiumName: "800 prints",
-    budgetLt500: "Minder dan €500",
-    budget500: "€500 — €800",
-    budget800: "€800 — €1.200",
-    budget1200: "€1.200+",
+    frameClassic: "Klassiek elegant",
+    frameGold: "Goud & glamour",
+    frameRomance: "Romantisch floral",
+    frameMinimal: "Minimal chic",
     availabilityEmailSubject: "Wachtlijst — MirrorEffect",
     availabilityEmailBody:
       "Hallo,\n\nDe datum {{date}} is niet beschikbaar. We willen op de wachtlijst.\n\nNaam: {{name}}\nE-mail: {{email}}\nTelefoon: {{phone}}\nLocatie: {{location}}\n\nDank u!",
@@ -262,16 +274,6 @@ export function ReservationFlow() {
     [lang]
   );
 
-  const budgetOptions = useMemo(
-    () => [
-      { id: "lt500", label: t("budgetLt500"), min: 0 },
-      { id: "500-800", label: t("budget500"), min: 500 },
-      { id: "800-1200", label: t("budget800"), min: 800 },
-      { id: "1200+", label: t("budget1200"), min: 1200 }
-    ],
-    [lang]
-  );
-
   const optionChoices = useMemo(
     () => [
       { code: "RED_CARPET", title: t("optionRed"), desc: t("optionRedDesc") },
@@ -280,6 +282,37 @@ export function ReservationFlow() {
     ],
     [lang]
   );
+
+  const frameSets = useMemo(() => {
+    const frames = [
+      "/images/(2).png",
+      "/images/(3).png",
+      "/images/3.png",
+      "/images/4.png",
+      "/images/5.png",
+      "/images/6.png",
+      "/images/8.png",
+      "/images/9.png",
+      "/images/10.png",
+      "/images/11.png",
+      "/images/12.png",
+      "/images/13.png",
+      "/images/43.png",
+      "/images/44.png",
+      "/images/45.png",
+      "/images/46.png",
+      "/images/47.png",
+      "/images/111.png",
+      "/images/Hilton - 29.11.2025.png"
+    ].map((src) => encodeURI(src));
+
+    return [
+      { label: t("frameClassic"), images: frames.slice(0, 5) },
+      { label: t("frameGold"), images: frames.slice(5, 10) },
+      { label: t("frameRomance"), images: frames.slice(10, 15) },
+      { label: t("frameMinimal"), images: frames.slice(15, 19) }
+    ];
+  }, [lang]);
 
   const optionLabels: Record<string, string> = {
     RED_CARPET: strings.optionRed,
@@ -307,7 +340,7 @@ export function ReservationFlow() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const [vibe, setVibe] = useState("");
   const [guests, setGuests] = useState("");
-  const [budget, setBudget] = useState("500-800");
+  const [priority, setPriority] = useState("");
   const [packCode, setPackCode] = useState<PackCode | "">("");
   const [options, setOptions] = useState<string[]>([]);
   const [contactName, setContactName] = useState("");
@@ -322,14 +355,9 @@ export function ReservationFlow() {
   const selectedPack = packs.find((pack) => pack.code === packCode) ?? null;
   const totalPrice = selectedPack ? selectedPack.promo + transportFee : null;
 
-  const budgetOk = useMemo(() => {
-    const match = budgetOptions.find((item) => item.id === budget);
-    return (match?.min ?? 0) >= 500;
-  }, [budget, budgetOptions]);
-
   const canContinueStep1 = Boolean(eventType && eventDate && location && availability === "available");
   const canContinueStep2 = Boolean(vibe);
-  const canContinueStep3 = Boolean(guests && budgetOk);
+  const canContinueStep3 = Boolean(guests && priority);
   const canContinueStep4 = Boolean(packCode);
   const canContinueStep5 = Boolean(contactName && contactEmail && contactPhone);
 
@@ -432,6 +460,14 @@ export function ReservationFlow() {
             <div className="flex h-2 w-40 overflow-hidden rounded-full bg-[#f2ead2]">
               <div className="flow-progress h-full" style={{ width: `${(step / 5) * 100}%` }} />
             </div>
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-[#f0e6c7] bg-white px-5 py-4 text-left shadow-[0_14px_34px_rgba(0,0,0,0.08)]">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C1950E]">
+              Story
+            </p>
+            <h2 className="mt-2 text-lg font-black">{t("storyTitle")}</h2>
+            <p className="mt-2 text-sm text-[#5a5a5a]">{t("storyText")}</p>
           </div>
 
           {step === 1 && (
@@ -594,28 +630,22 @@ export function ReservationFlow() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold" htmlFor="budget">
-                    {t("budgetLabel")}
+                  <label className="text-sm font-semibold" htmlFor="priority">
+                    {t("priorityLabel")}
                   </label>
                   <select
-                    id="budget"
+                    id="priority"
                     className={`${baseClass} mt-2`}
-                    value={budget}
-                    onChange={(event) => setBudget(event.target.value)}
+                    value={priority}
+                    onChange={(event) => setPriority(event.target.value)}
                   >
-                    {budgetOptions.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.label}
-                      </option>
-                    ))}
+                    <option value="">{lang === "nl" ? "Selecteer..." : "Selectionnez..."}</option>
+                    <option value="ambiance">{t("priorityA")}</option>
+                    <option value="photos">{t("priorityB")}</option>
+                    <option value="souvenir">{t("priorityC")}</option>
                   </select>
                 </div>
               </div>
-              {!budgetOk && (
-                <div className="rounded-2xl border border-[#f2dede] bg-white px-4 py-3 text-sm text-[#5a3a3a]">
-                  {t("budgetLow")}
-                </div>
-              )}
             </div>
           )}
 
@@ -643,6 +673,35 @@ export function ReservationFlow() {
                     </div>
                   </button>
                 ))}
+              </div>
+
+              <div className="rounded-3xl border border-[#f0e6c7] bg-white px-5 py-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-black">{t("frameTitle")}</h3>
+                    <p className="mt-1 text-xs text-[#6b6b6b]">{t("frameDesc")}</p>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {frameSets.map((set) => (
+                    <div key={set.label} className="rounded-2xl border border-[#eee] bg-white p-4">
+                      <p className="text-sm font-black">{set.label}</p>
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        {set.images.map((src) => (
+                          <div key={src} className="overflow-hidden rounded-xl border border-[#f2ead2] bg-[#fffaf0]">
+                            <Image
+                              src={src}
+                              alt={t("imageAlt")}
+                              width={240}
+                              height={240}
+                              className="h-[90px] w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
