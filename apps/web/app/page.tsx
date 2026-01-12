@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Script from "next/script";
-import { Aleo } from "next/font/google";
 import { MotionReveal } from "@/components/home/MotionReveal";
 import { ModeSwitch } from "@/components/home/ModeSwitch";
 import { LeadModal } from "@/components/home/LeadModal";
-
-const aleo = Aleo({
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
-  display: "swap"
-});
 
 const canonicalUrl = "https://mirroreffect.co/";
 
@@ -56,7 +49,7 @@ export default function Page({ searchParams }: PageProps) {
   const mode = searchParams?.mode === "b2b" ? "b2b" : "b2c";
 
   return (
-    <main className={`${aleo.className} min-h-screen bg-white text-[#12130F]`}>
+    <main className="min-h-screen bg-white text-[#12130F]">
       <Script id="fb-pixel" strategy="afterInteractive">
         {`!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

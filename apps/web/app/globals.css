@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --night: #12130f;
+    --gold: #c1950e;
+    --gold-soft: #e3c04a;
+    --seasalt: #fbfbf7;
+    --silver: #cfcfcf;
+    --muted: #666666;
+    --border: #ebe7da;
+    --radius-xl: 26px;
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.08);
+  }
+
+  body {
+    font-family: var(--font-aleo), "Times New Roman", serif;
+    background: var(--seasalt);
+    color: var(--night);
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-black transition duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--gold)] focus-visible:ring-opacity-70;
+  }
+
+  .btn-gold {
+    @apply btn bg-gradient-to-r from-[color:var(--gold)] to-[color:var(--gold-soft)] text-[#14140f] shadow-[0_6px_18px_rgba(193,149,14,0.28)] hover:shadow-[0_10px_26px_rgba(193,149,14,0.35)];
+  }
+
+  .btn-dark {
+    @apply btn bg-gradient-to-r from-[#1a1b16] to-[#2a2b24] text-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_14px_36px_rgba(0,0,0,0.18)];
+  }
+
+  .btn-ghost {
+    @apply btn border border-white/70 bg-white/10 text-white hover:border-white/90 hover:bg-white/15;
+  }
+
+  .card-premium {
+    @apply rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.07)];
+  }
+
+  .section {
+    @apply mx-auto w-full max-w-[1100px] px-4 py-24;
+  }
+}
