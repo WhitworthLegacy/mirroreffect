@@ -13,6 +13,10 @@ export const metadata = {
   description: "Ops-first web platform"
 };
 
+export const viewport = {
+  themeColor: "#12130F"
+};
+
 export default function RootLayout({
   children
 }: {

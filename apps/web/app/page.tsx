@@ -18,7 +18,6 @@ export const metadata: Metadata = {
     index: true,
     follow: true
   },
-  themeColor: "#12130F",
   openGraph: {
     title: "MirrorEffect — Miroir Photobooth Premium pour Mariages & Événements",
     description:

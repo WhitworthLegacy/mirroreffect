@@ -1,4 +1,5 @@
 import { BookingSuccess } from "@/components/home/BookingSuccess";
+import { Suspense } from "react";
 
 export default function BookingSuccessPage() {
   return (
@@ -7,7 +8,9 @@ export default function BookingSuccessPage() {
         aria-hidden
         className="pointer-events-none absolute inset-0 sparkle-field opacity-40"
       />
-      <BookingSuccess />
+      <Suspense fallback={<div className="px-4 py-16 text-center text-sm text-[#666]">Chargement...</div>}>
+        <BookingSuccess />
+      </Suspense>
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import { ReservationFlow } from "@/components/home/ReservationFlow";
+import { Suspense } from "react";
 
 export default function ReservationPage() {
   return (
@@ -7,7 +8,9 @@ export default function ReservationPage() {
         aria-hidden
         className="pointer-events-none absolute inset-0 sparkle-field opacity-40"
       />
-      <ReservationFlow />
+      <Suspense fallback={<div className="px-4 py-16 text-center text-sm text-[#666]">Chargement...</div>}>
+        <ReservationFlow />
+      </Suspense>
     </main>
   );
 }
