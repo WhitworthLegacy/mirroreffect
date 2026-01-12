@@ -109,6 +109,23 @@
     background-image: linear-gradient(90deg, rgba(227, 192, 74, 0.05), rgba(227, 192, 74, 0.7), rgba(227, 192, 74, 0.05));
     filter: blur(0.2px);
   }
+
+  .polaroid-card {
+    background: #fdfcf8;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  }
+
+  .polaroid-card img {
+    border-radius: 16px;
+  }
+
+  .tilt-left {
+    transform: rotate(-2.2deg);
+  }
+
+  .tilt-right {
+    transform: rotate(2deg);
+  }
 }
 
 @keyframes float-orb {

@@ -45,6 +45,14 @@ const ghostButton = `${buttonBase} border border-white/70 bg-white/10 text-white
 const darkButton = `${buttonBase} bg-gradient-to-r from-[#1a1b16] to-[#2a2b24] text-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_14px_36px_rgba(0,0,0,0.18)]`;
 const b2bPrimaryButton = `${buttonBase} bg-[#CCCCCC] text-[#12130F] shadow-[0_6px_18px_rgba(0,0,0,0.18)] hover:shadow-[0_10px_26px_rgba(0,0,0,0.22)]`;
 
+const heroShots = ["/images/IMG_0478.jpg", "/images/IMG_0486.jpg", "/images/IMG_0489.jpg"];
+const storyShots = [
+  "/images/IMG_0479.jpg",
+  "/images/IMG_0480.jpg",
+  "/images/IMG_0481.jpg",
+  "/images/IMG_0482.jpg"
+];
+
 export default function Page({ searchParams }: PageProps) {
   const mode = searchParams?.mode === "b2b" ? "b2b" : "b2c";
 
@@ -215,14 +223,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
                 <div className="relative">
                   <div className="grid gap-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {heroShots.map((src, index) => (
+                        <div
+                          key={src}
+                          className={`polaroid-card rounded-2xl p-3 ${index % 2 === 0 ? "tilt-left" : "tilt-right"}`}
+                        >
+                          <Image
+                            src={src}
+                            alt="Instant miroir photobooth MirrorEffect"
+                            width={420}
+                            height={520}
+                            sizes="(max-width: 768px) 50vw, 260px"
+                            className="h-[200px] w-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
                     <div className="glass-card rounded-[18px] p-4 text-white">
                       <p className="text-xs font-black uppercase tracking-[0.2em] text-[#e3c04a]">
                         Effet wow garanti
                       </p>
                       <p className="mt-2 text-sm text-[#f4f4f4]">
-                        “Le miroir a réuni toutes les générations. On garde des photos pleines d’émotion.”
+                        “Le photobooth miroir, une expérience unique. Des photos instantanées qui ont ajouté une touche spéciale.”
                       </p>
-                      <p className="mt-2 text-xs text-[#d7d7d7]">Sarah & Mehdi — Bruxelles</p>
+                      <p className="mt-2 text-xs text-[#d7d7d7]">Sabrina Leclergé</p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {[
@@ -304,6 +329,60 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             </div>
           </section>
 
+          <section className="mx-auto max-w-[1100px] px-4 pb-24">
+            <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+              <div>
+                <MotionReveal>
+                  <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+                    Le moment qui fait vibrer tout le mariage.
+                  </h2>
+                </MotionReveal>
+                <MotionReveal delay={0.05}>
+                  <p className="mt-3 text-sm text-[#666]">
+                    On vous aide à créer l'effet wow sans stress. Installation discrète, équipe
+                    dédiée, miroir disponible 24h, et un rendu premium qui fait parler les invités.
+                  </p>
+                </MotionReveal>
+                <div className="mt-6 grid gap-4">
+                  {[
+                    "Depuis 2017 : l'expertise du miroir photobooth premium en Belgique.",
+                    "Cadre photo personnalisé, adapté à votre déco.",
+                    "Équipe réactive et rassurante, le jour J comme après."
+                  ].map((item) => (
+                    <div key={item} className="glow-card rounded-2xl px-5 py-4 text-sm text-[#3d3d3d]">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <a className={`${primaryButton} openLead`} href="#">
+                    Vérifier ma date
+                  </a>
+                  <a className={ghostButton} href="#packs-b2c">
+                    Voir les packs
+                  </a>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {storyShots.map((src, index) => (
+                  <div
+                    key={src}
+                    className={`polaroid-card rounded-2xl p-3 ${index % 2 === 0 ? "tilt-left" : "tilt-right"}`}
+                  >
+                    <Image
+                      src={src}
+                      alt="Souvenir photobooth miroir MirrorEffect"
+                      width={480}
+                      height={560}
+                      sizes="(max-width: 768px) 50vw, 320px"
+                      className="h-[220px] w-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
           <section className="mx-auto max-w-[1100px] px-4 py-24">
             <MotionReveal>
               <h2 className="text-center text-3xl sm:text-4xl font-black tracking-tight">Moments réels ✨</h2>
@@ -314,15 +393,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {[
                 {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/51d258c0-d87f-4276-b684-b5e5b16c33c8.jpg",
-                  alt: "Invités posant devant le photobooth miroir pendant un mariage"
+                  src: "/images/IMG_0487.jpg",
+                  alt: "Invite posant devant le photobooth miroir pendant un mariage"
                 },
                 {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/9cc68cb0-584f-4f49-a2b0-6b5cc73ee953.jpg",
-                  alt: "Instant complice capturé par le miroir photobooth MirrorEffect"
+                  src: "/images/IMG_0488.jpg",
+                  alt: "Moment complice capturé par le miroir photobooth MirrorEffect"
                 },
                 {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/5b912868-ba45-48f9-8f96-e5728fca60c6.jpg",
+                  src: "/images/IMG_0490.jpg",
                   alt: "Souvenir photo élégant avec impressions instantanées MirrorEffect"
                 },
                 {
@@ -472,22 +551,49 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 <strong>4,9/5</strong> sur 120+ avis
               </span>
             </div>
+            <div className="mb-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="polaroid-card rounded-3xl p-4">
+                <Image
+                  src="/images/IMG_0482.jpg"
+                  alt="Avis client sur le photobooth miroir MirrorEffect"
+                  width={640}
+                  height={760}
+                  sizes="(max-width: 1024px) 100vw, 520px"
+                  className="h-[360px] w-full object-cover"
+                />
+              </div>
+              <div className="glow-card rounded-3xl p-6">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C1950E]">
+                  Avis client vérifié
+                </p>
+                <h3 className="mt-3 text-xl font-black">
+                  "Qualité au top, photos personnalisables, équipe disponible."
+                </h3>
+                <p className="mt-3 text-sm text-[#444]">
+                  Cools Florence — "Nous avons loué le photobooth miroir pour notre mariage le 21/09/2024.
+                  Qualité au top, nous avons pu choisir et personnaliser le fond d'ecran des photos.
+                  Malgré quelques problèmes de communication, ils se sont montrés disponibles et ont
+                  répondu à nos attentes. A recommander."
+                </p>
+                <div className="mt-4 text-sm text-[#C1950E]">★★★★★ 5/5</div>
+              </div>
+            </div>
             <div className="grid gap-6 md:grid-cols-3">
               {[
                 {
-                  name: "Sarah & Mehdi — Bruxelles",
+                  name: "Christian Bléser — CEO HD4You",
                   quote:
-                    "Le miroir a réuni toutes les générations. On garde des photos pleines d’émotion."
+                    "Mirror Effect est un concept testé lors de notre event à Liège : beaucoup de joie et de bonne humeur pour nos 214 invités."
                 },
                 {
-                  name: "Anaïs — Namur",
+                  name: "Amélie Schwanen",
                   quote:
-                    "Décor soigné, équipe douce et pro. Les grands-parents ont participé avec plaisir."
+                    "Un cadre original avec tapis rouge et barrières : on se sent comme des stars. Personnel au top."
                 },
                 {
-                  name: "Lucas — Liège",
+                  name: "Virginie Perona",
                   quote:
-                    "Ambiance incroyable, tirages de qualité, et des souvenirs que tout le monde a adoré."
+                    "Service au top."
                 }
               ].map((review) => (
                 <article
