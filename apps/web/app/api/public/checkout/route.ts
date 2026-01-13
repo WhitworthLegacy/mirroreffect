@@ -120,7 +120,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         amount: { currency: "EUR", value: (deposit_cents / 100).toFixed(2) },
-        description: `MirrorEffect — Acompte — ${b.client_name} — ${b.event_date}`,
+        description: `${b.client_email}`,
         redirectUrl,
         webhookUrl: webhookUrl ?? undefined,
         metadata: {
