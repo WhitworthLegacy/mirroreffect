@@ -8,6 +8,7 @@ const CheckoutBodySchema = z.object({
   client_phone: z.string().min(6),
   event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 
+  event_id: z.string().uuid().optional(),
   zone_code: z.enum(["BE", "FR_NORD"]),
   // tu peux utiliser pack_id si tu préfères, mais code = plus simple pour test
   pack_code: z.enum(["DISCOVERY", "ESSENTIAL", "PREMIUM"]),
@@ -43,25 +44,54 @@ export async function POST(req: Request) {
     const total_cents = transport_fee_cents + pack_total_cents;
 
     // 2) créer event (doit matcher tes NOT NULL)
-    const { data: created, error: createErr } = await supabase
-      .from("events")
-      .insert({
-        event_type: "b2c",
-        language: b.language,
-        client_name: b.client_name,
-        client_email: b.client_email,
-        client_phone: b.client_phone,
-        event_date: b.event_date,
-        transport_fee_cents,
-        total_cents,
-        status: "active",
-      })
-      .select("id")
-      .single();
+    let eventId = b.event_id ?? null;
 
-    if (createErr || !created?.id) {
-      console.error("EVENT CREATE ERROR", createErr);
-      return Response.json({ error: "event_create_failed" }, { status: 500 });
+    if (eventId) {
+      const { error: updateErr } = await supabase
+        .from("events")
+        .update({
+          language: b.language,
+          client_name: b.client_name,
+          client_email: b.client_email,
+          client_phone: b.client_phone,
+          event_date: b.event_date,
+          transport_fee_cents,
+          total_cents,
+          deposit_cents: 18000,
+          balance_due_cents: total_cents - 18000,
+          status: "active",
+        })
+        .eq("id", eventId);
+
+      if (updateErr) {
+        console.error("EVENT UPDATE ERROR", updateErr);
+        return Response.json({ error: "event_update_failed" }, { status: 500 });
+      }
+    } else {
+      const { data: created, error: createErr } = await supabase
+        .from("events")
+        .insert({
+          event_type: "b2c",
+          language: b.language,
+          client_name: b.client_name,
+          client_email: b.client_email,
+          client_phone: b.client_phone,
+          event_date: b.event_date,
+          transport_fee_cents,
+          total_cents,
+          deposit_cents: 18000,
+          balance_due_cents: total_cents - 18000,
+          status: "active",
+        })
+        .select("id")
+        .single();
+
+      if (createErr || !created?.id) {
+        console.error("EVENT CREATE ERROR", createErr);
+        return Response.json({ error: "event_create_failed" }, { status: 500 });
+      }
+
+      eventId = created.id;
     }
 
     await supabase
@@ -80,7 +110,7 @@ export async function POST(req: Request) {
     const webhookUrl =
       (process.env.APP_URL ? `${process.env.APP_URL}/api/webhooks/mollie` : null);
 
-    const redirectUrl = `${process.env.APP_URL}/booking/success?event_id=${created.id}&lang=${b.language}`;
+    const redirectUrl = `${process.env.APP_URL}/booking/success?event_id=${eventId}&lang=${b.language}`;
 
     const res = await fetch("https://api.mollie.com/v2/payments", {
       method: "POST",
@@ -94,7 +124,7 @@ export async function POST(req: Request) {
         redirectUrl,
         webhookUrl: webhookUrl ?? undefined,
         metadata: {
-            event_id: created.id,     // 🔑 obligatoire pour le webhook
+            event_id: eventId,        // 🔑 obligatoire pour le webhook
             event_date: b.event_date, // pratique debug
             kind: "deposit",          // utile si plus tard tu fais solde
             env: process.env.APP_ENV ?? "dev",
@@ -114,14 +144,14 @@ export async function POST(req: Request) {
     await supabase.from("payments").insert({
         provider: "mollie",
         provider_payment_id: mollie.id,
-        event_id: created.id,
+        event_id: eventId,
         amount_cents: deposit_cents,
         status: "open",
         // paid_at null tant que pas payé
     });
 
     return Response.json({
-      event_id: created.id,
+      event_id: eventId,
       mollie_payment_id: mollie.id,
       checkout_url: mollie._links.checkout.href,
       deposit_cents,

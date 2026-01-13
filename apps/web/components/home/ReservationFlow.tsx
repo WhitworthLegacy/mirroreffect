@@ -48,6 +48,11 @@ const copy = {
         title: "Votre date est sur le point d'être réservée.",
         text:
           "On confirme votre acompte, on verrouille la date, et vous profitez d'un parcours sans friction."
+      },
+      {
+        title: "On finalise ensemble.",
+        text:
+          "Encore une étape et votre réservation est en route. Merci pour votre confiance."
       }
     ],
     testimonials: [
@@ -75,6 +80,10 @@ const copy = {
     stepLabel: "Etape",
     step1Title: "1. Votre date, votre lieu, votre histoire.",
     step1Desc: "On commence par l'essentiel pour verifier la disponibilité.",
+    step1FirstName: "Prénom",
+    step1LastName: "Nom",
+    step1Email: "E-mail",
+    step1Phone: "Téléphone",
     eventTypeLabel: "Type d'événement",
     eventDateLabel: "Date de l'événement",
     locationLabel: "Lieu (ville + salle)",
@@ -120,18 +129,23 @@ const copy = {
     priorityA: "Une ambiance élégante qui rassemble",
     priorityB: "Des photos premium à garder",
     priorityC: "Un souvenir qui fait parler",
-    step5Title: "5. Choisissez votre pack.",
-    step5Desc: "Prix promo valables pour une réservation directe aujourd'hui.",
+    step5Title: "5. Vos coordonnées.",
+    step5Desc: "Nous confirmons la réservation avec vos informations.",
+    step5FirstName: "Prénom",
+    step5LastName: "Nom",
+    step5Email: "E-mail",
+    step5Phone: "Téléphone",
+    step6Title: "6. Choisissez votre pack.",
+    step6Desc: "Prix promo valables pour une réservation directe aujourd'hui.",
     depositLine: "Acompte de 180€ aujourd'hui. Solde le jour J.",
     transportPackNote: "+ 90€ de frais de transport",
     frameTitle: "Idées de cadres photo",
     frameDesc: "Voici des idées, ne vous inquiétez pas : on personnalise tout pour vous !",
     step4More: "Besoin de plus d'impressions ?",
-    step4MoreDesc:
-      "Laissez votre email et votre numéro pour une proposition sur-mesure.",
+    step4MoreDesc: "Cliquez pour une proposition sur-mesure.",
     step4MoreCta: "Cliquez ici pour demander",
-    step6Title: "6. Finalisez votre reservation.",
-    step6Desc: "Acompte de 180€ aujourd'hui. Solde le jour J.",
+    step7Title: "7. Finalisez votre réservation.",
+    step7Desc: "Acompte de 180€ aujourd'hui. Solde le jour J.",
     nameLabel: "Prénom et nom",
     emailLabel: "Email",
     phoneLabel: "Telephone",
@@ -140,13 +154,13 @@ const copy = {
     recapOptions: "Options",
     recapTransport: "Transport",
     transportNote: "Frais de transport fixes: 90€",
-    recapTotal: "Total",
     recapBalance: "Solde restant",
     recapDeposit: "Acompte aujourd'hui: 180€",
     checkoutError: "Une erreur est survenue. Merci de réessayer.",
     back: "Retour",
     next: "Continuer",
     payDeposit: "Payer l'acompte de 180€",
+    step6Note: "Vos coordonnées saisies au début seront utilisées pour confirmer la réservation.",
     proofQuote: "\"Le miroir a immediatement réuni nos invites.\"",
     proofAuthor: "Cools Florence — Mariage 21/09/2024",
     proofTitle: "Pourquoi ca marche",
@@ -223,6 +237,11 @@ const copy = {
         title: "Uw datum wordt nu vastgelegd.",
         text:
           "We bevestigen het voorschot, reserveren uw datum en starten de voorbereiding."
+      },
+      {
+        title: "We ronden samen af.",
+        text:
+          "Nog één stap en uw reservatie is onderweg. Dank voor uw vertrouwen."
       }
     ],
     testimonials: [
@@ -250,6 +269,10 @@ const copy = {
     stepLabel: "Stap",
     step1Title: "1. Uw datum, uw locatie, uw verhaal.",
     step1Desc: "We starten met het essentiële om beschikbaarheid te checken.",
+    step1FirstName: "Voornaam",
+    step1LastName: "Naam",
+    step1Email: "E-mail",
+    step1Phone: "Telefoon",
     eventTypeLabel: "Type événement",
     eventDateLabel: "Datum van het evenement",
     locationLabel: "Locatie (stad + zaal)",
@@ -294,17 +317,23 @@ const copy = {
     priorityA: "Een elegante sfeer die verbindt",
     priorityB: "Premium foto's om te bewaren",
     priorityC: "Een herinnering die blijft",
-    step5Title: "5. Kies uw pakket.",
-    step5Desc: "Promo-prijzen voor directe reservatie vandaag.",
+    step5Title: "5. Uw gegevens.",
+    step5Desc: "We bevestigen de reservatie met uw gegevens.",
+    step5FirstName: "Voornaam",
+    step5LastName: "Naam",
+    step5Email: "E-mail",
+    step5Phone: "Telefoon",
+    step6Title: "6. Kies uw pakket.",
+    step6Desc: "Promo-prijzen voor directe reservatie vandaag.",
     depositLine: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
     transportPackNote: "+ €90 transportkosten",
     frameTitle: "Voorbeelden van fotokaders",
     frameDesc: "Enkele ideeën, geen zorgen: wij personaliseren alles voor u.",
     step4More: "Meer afdrukken nodig?",
-    step4MoreDesc: "Laat uw e-mail en telefoon achter voor een voorstel op maat.",
+    step4MoreDesc: "Klik voor een voorstel op maat.",
     step4MoreCta: "Klik hier om aan te vragen",
-    step6Title: "6. Rond uw reservatie af.",
-    step6Desc: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
+    step7Title: "7. Rond uw reservatie af.",
+    step7Desc: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
     nameLabel: "Voornaam en naam",
     emailLabel: "E-mail",
     phoneLabel: "Telefoon",
@@ -320,6 +349,7 @@ const copy = {
     back: "Terug",
     next: "Verder",
     payDeposit: "Voorschot €180 betalen",
+    step6Note: "Uw gegevens van het begin worden gebruikt om de reservatie te bevestigen.",
     proofQuote: "\"De spiegel bracht onze gasten meteen samen.\"",
     proofAuthor: "Cools Florence — Huwelijk 21/09/2024",
     proofTitle: "Waarom dit werkt",
@@ -505,13 +535,14 @@ const packs = useMemo(
   const [theme, setTheme] = useState("");
   const [guests, setGuests] = useState("");
   const [priority, setPriority] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
   const [packCode, setPackCode] = useState<PackCode | "">("");
   const [options, setOptions] = useState<string[]>([]);
   const [stanchionsEnabled, setStanchionsEnabled] = useState(false);
   const [stanchionsColor, setStanchionsColor] = useState<"GOLD" | "SILVER">("GOLD");
   const [leadEmail, setLeadEmail] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistPhone, setWaitlistPhone] = useState("");
@@ -521,6 +552,9 @@ const packs = useMemo(
   const [zoomLabel, setZoomLabel] = useState("");
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [promoQueued, setPromoQueued] = useState(false);
+  const [eventId, setEventId] = useState<string | null>(null);
+  const [isSavingIntent, setIsSavingIntent] = useState(false);
+  const [intentError, setIntentError] = useState("");
 
   const story = strings.stories[Math.max(0, Math.min(step - 1, strings.stories.length - 1))];
   const testimonials = strings.testimonials;
@@ -547,12 +581,18 @@ const packs = useMemo(
   const depositAmount = 180;
   const balancePrice = totalPrice !== null ? Math.max(0, totalPrice - depositAmount) : null;
 
-  const canContinueStep1 = Boolean(eventType && eventDate && location && availability === "available");
+  const canContinueStep1 = Boolean(
+    eventType &&
+      eventDate &&
+      location &&
+      availability === "available"
+  );
   const canContinueStep2 = Boolean(vibe);
   const canContinueStep3 = Boolean(theme);
-  const canContinueStep4 = Boolean(guests && priority && leadEmail);
-  const canContinueStep5 = Boolean(packCode);
-  const canContinueStep6 = Boolean(contactName && contactEmail && contactPhone);
+  const canContinueStep4 = Boolean(guests && priority);
+  const canContinueStep5 = Boolean(firstName && lastName && leadEmail && contactPhone);
+  const canContinueStep6 = Boolean(packCode);
+  const canContinueStep7 = Boolean(leadEmail);
 
   const toggleOption = (code: string) => {
     setOptions((prev) => (prev.includes(code) ? prev.filter((item) => item !== code) : [...prev, code]));
@@ -594,13 +634,14 @@ const packs = useMemo(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           language: lang,
-          client_name: contactName,
-          client_email: contactEmail,
+          client_name: `${firstName} ${lastName}`.trim(),
+          client_email: leadEmail,
           client_phone: contactPhone,
           event_date: eventDate,
           zone_code: zone,
           pack_code: selectedPack.code,
-          options: optionsPayload
+          options: optionsPayload,
+          event_id: eventId ?? undefined
         })
       });
 
@@ -631,8 +672,8 @@ const packs = useMemo(
   const impressionsLink = mailto(
     t("impressionsEmailSubject"),
     t("impressionsEmailBody")
-      .replace("{{name}}", contactName || "[nom]")
-      .replace("{{email}}", contactEmail || "[email]")
+      .replace("{{name}}", `${firstName} ${lastName}`.trim() || "[nom]")
+      .replace("{{email}}", leadEmail || "[email]")
       .replace("{{phone}}", contactPhone || "[telephone]")
       .replace("{{date}}", eventDate || "[date]")
       .replace("{{location}}", location || "[lieu]")
@@ -659,6 +700,8 @@ const packs = useMemo(
         email: leadEmail,
         locale: lang,
         payload: {
+          first_name: firstName || "",
+          last_name: lastName || "",
           date: eventDate || "",
           location: location || "",
           guests: guests || "",
@@ -669,6 +712,48 @@ const packs = useMemo(
     }).catch(() => {
       setPromoQueued(false);
     });
+  };
+
+  const saveIntent = async () => {
+    if (!selectedPack || isSavingIntent) return;
+    setIsSavingIntent(true);
+    setIntentError("");
+
+    const stanchionsCode = stanchionsEnabled ? `STANCHIONS_${stanchionsColor}` : null;
+    const optionsPayload = stanchionsCode ? [...options, stanchionsCode] : options;
+
+    try {
+      const res = await fetch("/api/public/event-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id: eventId ?? undefined,
+          language: lang,
+          client_name: `${firstName} ${lastName}`.trim(),
+          client_email: leadEmail,
+          client_phone: contactPhone,
+          event_date: eventDate,
+          address: location,
+          pack_code: selectedPack.code,
+          options: optionsPayload,
+          transport_fee_cents: transportFee * 100,
+          total_cents: totalPrice ? totalPrice * 100 : 0,
+          deposit_cents: depositAmount * 100,
+          balance_due_cents: balancePrice !== null ? balancePrice * 100 : 0
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.event_id) {
+        setIntentError(t("checkoutError"));
+        setIsSavingIntent(false);
+        return;
+      }
+      setEventId(data.event_id);
+      setIsSavingIntent(false);
+    } catch {
+      setIntentError(t("checkoutError"));
+      setIsSavingIntent(false);
+    }
   };
 
   return (
@@ -687,10 +772,10 @@ const packs = useMemo(
         <div className="flow-card rounded-3xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-sm font-black text-[#12130F]">
-              {t("stepLabel")} {step} / 6
+              {t("stepLabel")} {step} / 7
             </div>
             <div className="flex h-2 w-40 overflow-hidden rounded-full bg-[#f2ead2]">
-              <div className="flow-progress h-full" style={{ width: `${(step / 6) * 100}%` }} />
+              <div className="flow-progress h-full" style={{ width: `${(step / 7) * 100}%` }} />
             </div>
           </div>
 
@@ -916,9 +1001,40 @@ const packs = useMemo(
                     <option value="souvenir">{t("priorityC")}</option>
                   </select>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="flow-step mt-6 space-y-4">
+              <h2 className="text-2xl font-black">{t("step5Title")}</h2>
+              <p className="text-sm text-[#666]">{t("step5Desc")}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-semibold" htmlFor="firstName">
+                    {t("step5FirstName")}
+                  </label>
+                  <input
+                    id="firstName"
+                    className={`${baseClass} mt-2`}
+                    value={firstName}
+                    onChange={(event) => setFirstName(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold" htmlFor="lastName">
+                    {t("step5LastName")}
+                  </label>
+                  <input
+                    id="lastName"
+                    className={`${baseClass} mt-2`}
+                    value={lastName}
+                    onChange={(event) => setLastName(event.target.value)}
+                  />
+                </div>
                 <div className="sm:col-span-2">
                   <label className="text-sm font-semibold" htmlFor="leadEmail">
-                    {t("step4EmailLabel")}
+                    {t("step5Email")}
                   </label>
                   <input
                     id="leadEmail"
@@ -928,16 +1044,27 @@ const packs = useMemo(
                     value={leadEmail}
                     onChange={(event) => setLeadEmail(event.target.value)}
                   />
-                  <p className="mt-2 text-xs text-[#8a6d1a]">{t("step4EmailDesc")}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-sm font-semibold" htmlFor="leadPhone">
+                    {t("step5Phone")}
+                  </label>
+                  <input
+                    id="leadPhone"
+                    className={`${baseClass} mt-2`}
+                    placeholder="+32 ..."
+                    value={contactPhone}
+                    onChange={(event) => setContactPhone(event.target.value)}
+                  />
                 </div>
               </div>
             </div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div className="flow-step mt-6 space-y-4">
-              <h2 className="text-2xl font-black">{t("step5Title")}</h2>
-              <p className="text-sm text-[#666]">{t("step5Desc")}</p>
+              <h2 className="text-2xl font-black">{t("step6Title")}</h2>
+              <p className="text-sm text-[#666]">{t("step6Desc")}</p>
               <p className="text-xs font-semibold text-[#C1950E]">{t("depositLine")}</p>
               <div className="grid gap-4 lg:grid-cols-3">
                 {packs.map((pack) => (
@@ -1054,20 +1181,6 @@ const packs = useMemo(
               <div className="rounded-2xl border border-[#e8d082] bg-white px-4 py-4 text-sm text-[#3a3a3a]">
                 <div className="font-black">{t("step4More")}</div>
                 <p className="mt-2 text-xs text-[#6b6b6b]">{t("step4MoreDesc")}</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <input
-                    className={baseClass}
-                    placeholder={t("emailLabel")}
-                    value={contactEmail}
-                    onChange={(event) => setContactEmail(event.target.value)}
-                  />
-                  <input
-                    className={baseClass}
-                    placeholder={t("phoneLabel")}
-                    value={contactPhone}
-                    onChange={(event) => setContactPhone(event.target.value)}
-                  />
-                </div>
                 <div className="mt-3">
                   <a className="btn btn-dark" href={impressionsLink}>
                     {t("step4MoreCta")}
@@ -1077,47 +1190,12 @@ const packs = useMemo(
             </div>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <div className="flow-step mt-6 space-y-4">
-              <h2 className="text-2xl font-black">{t("step6Title")}</h2>
-              <p className="text-sm text-[#666]">{t("step6Desc")}</p>
+              <h2 className="text-2xl font-black">{t("step7Title")}</h2>
+              <p className="text-sm text-[#666]">{t("step7Desc")}</p>
               <p className="text-xs font-semibold text-[#C1950E]">{t("depositLine")}</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <label className="text-sm font-semibold" htmlFor="name">
-                    {t("nameLabel")}
-                  </label>
-                  <input
-                    id="name"
-                    className={`${baseClass} mt-2`}
-                    value={contactName}
-                    onChange={(event) => setContactName(event.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold" htmlFor="email">
-                    {t("emailLabel")}
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    className={`${baseClass} mt-2`}
-                    value={contactEmail}
-                    onChange={(event) => setContactEmail(event.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold" htmlFor="phone">
-                    {t("phoneLabel")}
-                  </label>
-                  <input
-                    id="phone"
-                    className={`${baseClass} mt-2`}
-                    value={contactPhone}
-                    onChange={(event) => setContactPhone(event.target.value)}
-                  />
-                </div>
-              </div>
+              <p className="text-sm text-[#666]">{t("step6Note")}</p>
 
               <div className="rounded-2xl border border-[#eee] bg-white px-4 py-4 text-sm text-[#4a4a4a]">
                 <div className="font-black">{t("recapTitle")}</div>
@@ -1134,7 +1212,7 @@ const packs = useMemo(
                 </p>
                 <p className="text-xs text-[#6b6b6b]">{t("transportNote")}</p>
                 <p className="mt-2 font-black">
-                  {t("recapTotal")}: {totalPrice ? `${totalPrice}€` : "—"}
+                  {t("recapBalance")}: {balancePrice !== null ? `${balancePrice}€` : "—"}
                 </p>
                 <p className="text-xs text-[#6b6b6b]">{t("recapDeposit")}</p>
               </div>
@@ -1142,6 +1220,11 @@ const packs = useMemo(
               {checkoutError && (
                 <div className="rounded-2xl border border-[#f2dede] bg-white px-4 py-3 text-sm text-[#5a3a3a]">
                   {checkoutError}
+                </div>
+              )}
+              {intentError && (
+                <div className="rounded-2xl border border-[#f2dede] bg-white px-4 py-3 text-sm text-[#5a3a3a]">
+                  {intentError}
                 </div>
               )}
             </div>
@@ -1156,7 +1239,7 @@ const packs = useMemo(
             >
               {t("back")}
             </button>
-            {step < 6 && (
+            {step < 7 && (
               <button
                 type="button"
                 className="btn btn-gold flow-cta"
@@ -1165,21 +1248,25 @@ const packs = useMemo(
                   (step === 2 && !canContinueStep2) ||
                   (step === 3 && !canContinueStep3) ||
                   (step === 4 && !canContinueStep4) ||
-                  (step === 5 && !canContinueStep5)
+                  (step === 5 && !canContinueStep5) ||
+                  (step === 6 && !canContinueStep6)
                 }
                 onClick={() => {
-                  if (step === 4) enqueuePromo();
-                  setStep((prev) => Math.min(6, prev + 1));
+                  if (step === 5) enqueuePromo();
+                  if (step === 6) {
+                    void saveIntent();
+                  }
+                  setStep((prev) => Math.min(7, prev + 1));
                 }}
               >
                 {t("next")}
               </button>
             )}
-            {step === 6 && (
+            {step === 7 && (
               <button
                 type="button"
                 className="btn btn-gold flow-cta"
-                disabled={!canContinueStep6 || !selectedPack || isSubmitting}
+                disabled={!canContinueStep7 || !selectedPack || isSubmitting}
                 onClick={handleCheckout}
               >
                 {isSubmitting ? t("redirecting") : t("payDeposit")}
