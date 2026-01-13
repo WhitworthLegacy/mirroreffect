@@ -542,7 +542,6 @@ const packs = useMemo(
   const [options, setOptions] = useState<string[]>([]);
   const [stanchionsEnabled, setStanchionsEnabled] = useState(false);
   const [stanchionsColor, setStanchionsColor] = useState<"GOLD" | "SILVER">("GOLD");
-  const [leadEmail, setLeadEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistPhone, setWaitlistPhone] = useState("");
