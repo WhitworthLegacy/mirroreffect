@@ -1,4 +1,17 @@
 import blog from "./blog";
+import blog10Idees from "./blog-10-idees-photobooth-chic";
+import blog5Idees from "./blog-5-idees-mariage";
+import blogAnniversaire from "./blog-anniversaire";
+import blogAvantApres from "./blog-avant-apres-cadre";
+import blogBapteme from "./blog-bapteme";
+import blogImpressions from "./blog-impressions";
+import blogRgpd from "./blog-rgpd";
+import etudeBirmingham from "./etude-de-cas-birmingham";
+import etudeHilton from "./etude-de-cas-hilton";
+import merciForm from "./merci-form";
+import merciPaiement from "./merci-pour-votre-paiement";
+import nlBedanktForm from "./nl-bedankt-form";
+import nlBlog10Idees from "./nl-blog-10-idees";
 import nlBlog from "./nl__blog";
 import nl from "./nl";
 import photoboothEntreprise from "./photobooth-entreprise";
@@ -19,12 +32,32 @@ export type SeoPage = {
     description: string;
   };
   h1: string;
-  sections: ReadonlyArray<{ heading: string; html: string }>;
-  faqs: ReadonlyArray<{ question: string; answer: string }>;
+  sections?: ReadonlyArray<{ heading: string; html: string }>;
+  faqs?: ReadonlyArray<{ question: string; answer: string }>;
+  layout?: "default" | "raw";
+  rawHtml?: string;
+  leadMode?: "b2c" | "b2b";
+  robots?: {
+    index?: boolean;
+    follow?: boolean;
+  };
 };
 
 export const seoPages: SeoPage[] = [
   blog,
+  blog10Idees,
+  blog5Idees,
+  blogAnniversaire,
+  blogAvantApres,
+  blogBapteme,
+  blogImpressions,
+  blogRgpd,
+  etudeBirmingham,
+  etudeHilton,
+  merciForm,
+  merciPaiement,
+  nlBedanktForm,
+  nlBlog10Idees,
   nlBlog,
   nl,
   photoboothEntreprise,
