@@ -51,6 +51,7 @@ const storyShots = [
   "/images/IMG_0481.jpg",
   "/images/IMG_0482.jpg"
 ];
+const b2bHeroShots = ["/images/IMG_0487.jpg", "/images/IMG_0490.jpg", "/images/IMG_0492.jpg"];
 const galleryShots = [
   "/images/IMG_0487.jpg",
   "/images/IMG_0488.jpg",
@@ -177,7 +178,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                   fill
                   priority
                   sizes="(max-width: 768px) 100vw, 1100px"
-                  className="object-cover object-[50%_55%] brightness-[0.62] contrast-[1.05]"
+                  className="object-cover object-[50%_55%] brightness-[0.52] contrast-[1.05]"
                 />
                 <div className="absolute inset-0 hero-stage" />
                 <div className="absolute inset-x-0 top-14 h-[2px] sparkle-line opacity-50" />
@@ -688,40 +689,112 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         </div>
       ) : (
         <div id="page-b2b" data-mode="b2b">
-          <section className="mx-auto mt-6 max-w-[1100px] px-4">
-            <div className="relative overflow-hidden rounded-[22px] border border-white/20 bg-gradient-to-b from-[#141510] to-[#0f100d] shadow-[0_30px_80px_rgba(0,0,0,0.25)]">
-              <div className="absolute inset-0 bg-[radial-gradient(80%_60%_at_10%_20%,_rgba(255,255,255,0.06),_transparent_60%)]" />
-              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="px-7 py-10 text-white">
-                  <span className="inline-flex rounded-full bg-[#CCCCCC] px-3 py-1 text-xs font-black text-[#12130F] shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
-                    B2B • RGPD • Facturation
-                  </span>
-                  <h1 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight leading-tight sm:text-4xl">
-                    Photobooth Miroir pour <em className="border-b-2 border-[#CCCCCC] not-italic">événements d’entreprise</em>
-                  </h1>
-                  <p className="mt-3 text-sm text-[#e8e8e8]">
-                    Soirées corporate, team building, salons, activations retail. Nous livrons une expérience
-                    premium, sans friction.
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <a className={`${b2bPrimaryButton} openLead`} href="#">
-                      Demander un devis
-                    </a>
-                    <a className={ghostButton} href="#refs-b2b">
-                      Références & cas
-                    </a>
+          <section className="mx-auto mt-8 max-w-[1200px] px-4 pb-20">
+            <div className="relative overflow-hidden rounded-[30px] gold-frame">
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/IMG_0494.jpg"
+                  alt="Photobooth miroir MirrorEffect en événement d’entreprise"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, 1100px"
+                  className="object-cover object-[50%_55%] brightness-[0.55] contrast-[1.05]"
+                />
+                <div className="absolute inset-0 hero-stage" />
+                <div className="absolute inset-x-0 top-14 h-[2px] sparkle-line opacity-40" />
+              </div>
+
+              <div className="absolute -left-20 -top-16 h-48 w-48 rounded-full bg-[radial-gradient(circle,_rgba(227,192,74,0.4)_0%,_transparent_60%)] opacity-60 hero-orb" />
+              <div className="absolute -bottom-24 right-6 h-56 w-56 rounded-full bg-[radial-gradient(circle,_rgba(193,149,14,0.45)_0%,_transparent_62%)] opacity-50 hero-orb-delayed" />
+
+              <div className="relative z-10 grid gap-8 px-6 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-14">
+                <div>
+                  <MotionReveal>
+                    <span className="inline-flex rounded-full bg-[#CCCCCC] px-3 py-1 text-xs font-black text-[#12130F] shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
+                      B2B • RGPD • Facturation
+                    </span>
+                  </MotionReveal>
+                  <MotionReveal delay={0.05}>
+                    <h1 className="mt-4 text-[clamp(28px,6vw,50px)] font-black leading-tight text-white">
+                      Le photobooth miroir qui transforme vos{" "}
+                      <span className="text-shimmer">événements d’entreprise</span>
+                      en contenus premium.
+                    </h1>
+                  </MotionReveal>
+                  <MotionReveal delay={0.1}>
+                    <p className="mt-4 max-w-xl text-sm text-[#efefef] sm:text-base">
+                      Salons, activations retail, soirées corporate. MirrorEffect attire le flux,
+                      capture les contacts, et laisse une empreinte visuelle haut de gamme.
+                    </p>
+                  </MotionReveal>
+                  <MotionReveal delay={0.15}>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <a className={`${b2bPrimaryButton} openLead`} href="#">
+                        Demander un devis
+                      </a>
+                      <a className={ghostButton} href="#refs-b2b">
+                        Références & cas
+                      </a>
+                    </div>
+                  </MotionReveal>
+                  <div className="mt-5 flex flex-wrap gap-3 text-xs text-[#e8e8e8]">
+                    {[
+                      "🧾 Contrats & facturation pro",
+                      "🧠 Captation RGPD-friendly",
+                      "🇧🇪 FR/NL • Belgique"
+                    ].map((item) => (
+                      <span key={item} className="rounded-full border border-white/20 px-3 py-1">
+                        {item}
+                      </span>
+                    ))}
                   </div>
-                  <div className="mt-3 text-xs text-[#cfcfcf]">Réponse instantanée • FR/NL • Belgique & Nord de la France</div>
                 </div>
-                <div className="relative min-h-[420px] bg-black">
-                  <Image
-                    src="https://mirroreffect.co/wp-content/uploads/2020/04/DSC06553.jpg"
-                    alt="Photobooth miroir MirrorEffect pour événement d’entreprise"
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 500px"
-                    className="object-cover brightness-90 contrast-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#12130F]/60" />
+
+                <div className="relative">
+                  <div className="grid gap-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {b2bHeroShots.map((src, index) => (
+                        <div
+                          key={src}
+                          className={`polaroid-card rounded-2xl p-3 ${index % 2 === 0 ? "tilt-left" : "tilt-right"}`}
+                        >
+                          <Image
+                            src={src}
+                            alt="Photobooth miroir MirrorEffect en corporate"
+                            width={420}
+                            height={520}
+                            sizes="(max-width: 768px) 50vw, 260px"
+                            className="h-[200px] w-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="glass-card rounded-[18px] p-4 text-white">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#e3c04a]">
+                        Impact immédiat
+                      </p>
+                      <p className="mt-2 text-sm text-[#f4f4f4]">
+                        “Un point d’attraction naturel, du contenu partageable, et des invités qui
+                        restent pour l’expérience.”
+                      </p>
+                      <p className="mt-2 text-xs text-[#d7d7d7]">Équipe événementielle • Bruxelles</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        "📣 Branding 360°",
+                        "📥 Capture de leads",
+                        "🖼️ Tirages brandés",
+                        "🚀 Setup rapide"
+                      ].map((item) => (
+                        <div key={item} className="glass-card rounded-2xl px-4 py-3 text-xs text-white">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="rounded-[18px] border border-white/25 bg-white/10 px-4 py-3 text-xs text-white">
+                      ⭐️ 150+ événements corporate — ROI immédiat
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -773,36 +846,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               <p className="mt-2 text-center text-sm text-[#666]">Set-ups corporate, salons & activations.</p>
             </MotionReveal>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {[
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/DSC04961.jpg",
-                  alt: "Activation corporate avec photobooth miroir MirrorEffect"
-                },
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/10-1-1.png",
-                  alt: "Stand événementiel équipé du miroir photobooth"
-                },
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/9cc68cb0-584f-4f49-a2b0-6b5cc73ee953.jpg",
-                  alt: "Souvenir corporate avec galerie digitale MirrorEffect"
-                },
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2022/08/DSC06760-2.jpg",
-                  alt: "Miroir photobooth premium pour soirée d’entreprise"
-                },
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2022/08/DSC06548.jpg",
-                  alt: "Expérience photobooth en salon professionnel"
-                },
-                {
-                  src: "https://mirroreffect.co/wp-content/uploads/2020/04/DSC06421.jpg",
-                  alt: "Dispositif MirrorEffect lors d’un événement corporate"
-                }
-              ].map((item) => (
+              {galleryShots.map((src) => (
                 <Image
-                  key={item.src}
-                  src={item.src}
-                  alt={item.alt}
+                  key={src}
+                  src={src}
+                  alt="Galerie professionnelle MirrorEffect"
                   width={520}
                   height={360}
                   sizes="(max-width: 768px) 100vw, 360px"

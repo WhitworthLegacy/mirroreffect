@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/events", label: "Events" },
-  { href: "/availability", label: "Disponibilités" },
+  { href: "/availability", label: "Disponibilites" },
   { href: "/payments", label: "Paiements" },
   { href: "/inventory", label: "Inventaire" },
   { href: "/crm", label: "CRM" },
@@ -22,9 +22,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
-        <h1>MirrorEffect</h1>
-        <nav>
+      <div className="admin-content">{children}</div>
+      <nav className="admin-bottom-nav" aria-label="Admin navigation">
+        <div className="nav-grid">
           {NAV_ITEMS.map((item) => (
             <a
               key={item.href}
@@ -34,9 +34,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               {item.label}
             </a>
           ))}
-        </nav>
-      </aside>
-      <div className="admin-content">{children}</div>
+        </div>
+      </nav>
     </div>
   );
 }

@@ -77,26 +77,28 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <main style={{ padding: "2.5rem", fontFamily: "system-ui, sans-serif" }}>
-      {status === "checking" && <p>Chargement de la session...</p>}
-      {status === "unauth" && (
-        <>
-          <h1>Session requise</h1>
-          <p>Redirection vers la page de connexion...</p>
-        </>
-      )}
-      {status === "misconfigured" && (
-        <>
-          <h1>Configuration manquante</h1>
-          <p>Variables NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY absentes.</p>
-        </>
-      )}
-      {status === "error" && (
-        <>
-          <h1>Erreur de session</h1>
-          <p>{errorMessage ?? "Impossible de verifier la session."}</p>
-        </>
-      )}
+    <main className="admin-page" style={{ paddingTop: "3rem" }}>
+      <div className="admin-card" style={{ maxWidth: 520, margin: "0 auto" }}>
+        {status === "checking" && <p>Chargement de la session...</p>}
+        {status === "unauth" && (
+          <>
+            <h1>Session requise</h1>
+            <p>Redirection vers la page de connexion...</p>
+          </>
+        )}
+        {status === "misconfigured" && (
+          <>
+            <h1>Configuration manquante</h1>
+            <p>Variables NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY absentes.</p>
+          </>
+        )}
+        {status === "error" && (
+          <>
+            <h1>Erreur de session</h1>
+            <p>{errorMessage ?? "Impossible de verifier la session."}</p>
+          </>
+        )}
+      </div>
     </main>
   );
 }

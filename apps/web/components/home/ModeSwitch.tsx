@@ -62,8 +62,7 @@ export function ModeSwitch({ showLanguage = false, className, label }: ModeSwitc
               <option value="fr" data-url="/">
                 🇫🇷 FR
               </option>
-              {/* TODO: activer lorsque /nl existe */}
-              <option value="nl" data-url="/nl/" disabled>
+              <option value="nl" data-url="/nl/">
                 🇧🇪 NL
               </option>
             </select>

@@ -1,62 +1,16 @@
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
-
-type EventRow = {
-  id: string;
-  event_date: string;
-  client_name: string | null;
-  client_email: string | null;
-  client_phone: string | null;
-  status: string | null;
-  total_cents: number | null;
-  balance_due_cents: number | null;
-  pack_id: string | null;
-  address: string | null;
-};
-
-type PackRow = {
-  id: string;
-  name?: string | null;
-  code?: string | null;
-};
-
-function formatCurrency(cents: number | null | undefined) {
-  const value = (cents ?? 0) / 100;
-  return new Intl.NumberFormat("fr-BE", {
-    style: "currency",
-    currency: "EUR"
-  }).format(value);
-}
-
-function formatDate(dateString: string | null | undefined) {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return dateString;
-  return date.toLocaleDateString("fr-BE");
-}
+import { getAdminSnapshot } from "@/lib/adminData";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 export default async function Page() {
-  let events: EventRow[] = [];
-  let packs: PackRow[] = [];
   let eventsError: string | null = null;
+  let events = [];
+  let packs = [];
 
   try {
-    const supabase = createSupabaseServerClient();
-    const { data: eventsData, error: eventsFetchError } = await supabase
-      .from("events")
-      .select(
-        "id, event_date, client_name, client_email, client_phone, status, total_cents, balance_due_cents, pack_id, address"
-      )
-      .order("event_date", { ascending: true })
-      .limit(20);
-
-    if (eventsFetchError) {
-      eventsError = eventsFetchError.message;
-    } else {
-      events = eventsData ?? [];
-    }
-
-    const { data: packsData } = await supabase.from("packs").select("id, name, code");
-    packs = packsData ?? [];
+    const snapshot = await getAdminSnapshot();
+    events = snapshot.events;
+    packs = snapshot.packs;
+    eventsError = snapshot.error;
   } catch (error) {
     eventsError = error instanceof Error ? error.message : "Impossible de charger les donnees.";
   }
@@ -85,7 +39,7 @@ export default async function Page() {
   const leadCandidates = events.filter((event) => !event.pack_id);
 
   return (
-    <main>
+    <main className="admin-page">
       <header style={{ marginBottom: 24 }}>
         <h1>Dashboard MirrorEffect</h1>
         <p className="admin-muted">

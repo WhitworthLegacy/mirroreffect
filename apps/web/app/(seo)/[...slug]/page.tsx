@@ -117,6 +117,66 @@ export default function SeoPage({ params }: PageProps) {
           </div>
         </div>
       </section>
+
+      <footer className="mt-20 border-t-4 border-transparent bg-gradient-to-b from-white to-[#f9f9f9] px-4 py-16 shadow-[0_-2px_20px_rgba(0,0,0,0.05)]">
+        <div className="mx-auto grid max-w-[1100px] gap-7 text-center text-sm text-[#12130F] md:grid-cols-[2fr_1fr_1fr_1fr] md:text-left">
+          <div>
+            <p className="font-semibold text-[#C1950E]">Zones desservies :</p>
+            <p>
+              Anvers, Gand, Charleroi, Liège, Bruxelles, Schaerbeek, Anderlecht, Bruges, Namur, Mons,
+              Louvain, La Louvière, Tournai, Seraing, Mouscron, Verviers, Mechelen, Kortrijk,
+              Saint-Nicolas.
+            </p>
+            <p className="mt-3">MirrorEffect — Photobooth Miroir premium pour particuliers & entreprises.</p>
+          </div>
+          <div>
+            <strong className="text-[#C1950E]">Contact</strong>
+            <p className="mt-2">
+              <a href="mailto:mirror@mirroreffect.co">mirror@mirroreffect.co</a>
+              <br />
+              <a href="tel:+32460242430">+32 460 24 24 30</a>
+            </p>
+          </div>
+          <div>
+            <strong className="text-[#C1950E]">Liens</strong>
+            <p className="mt-2 space-y-1">
+              <a href="/">Home</a>
+              <br />
+              <a href="/blog">Blog</a>
+              <br />
+              <a href="/photobooth-mariage">Photobooth mariage</a>
+              <br />
+              <a href="/photobooth-entreprise">Photobooth entreprise</a>
+              <br />
+              <a href="/photobooth-miroir-bruxelles">Photobooth Miroir — Bruxelles</a>
+              <br />
+              <a href="/photobooth-miroir-brabant-wallon">Photobooth Miroir — Brabant Wallon</a>
+              <br />
+              <a href="/photobooth-miroir-wallonie">Photobooth Miroir — Wallonie</a>
+              <br />
+              <a href="/spiegel-photobooth-vlaams-brabant">Spiegel Photobooth — Vlaams-Brabant</a>
+              <br />
+              <a href="/spiegel-photobooth-vlaanderen">Spiegel Photobooth — Vlaanderen</a>
+            </p>
+          </div>
+          <div>
+            <strong className="text-[#C1950E]">Légal</strong>
+            <p className="mt-2 space-y-1">
+              <a href="/mentions-legales">Mentions légales</a>
+              <br />
+              <a href="/politique-de-confidentialite">Politique de confidentialité</a>
+              <br />
+              <a href="/conditions-generales">Conditions générales</a>
+              <br />
+              <a href="/cookies">Gestion des cookies</a>
+            </p>
+          </div>
+        </div>
+        <p className="mt-12 text-center text-xs text-[#777]">
+          © {new Date().getFullYear()} MirrorEffect —{" "}
+          <span className="text-[#C1950E]">Photobooth Miroir</span>. Tous droits réservés.
+        </p>
+      </footer>
     </main>
   );
 }
