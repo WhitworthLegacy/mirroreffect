@@ -129,3 +129,42 @@ body {
   font-size: 22px;
   font-weight: 700;
 }
+
+.admin-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-inline-form input {
+  min-width: 220px;
+  flex: 1 1 220px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #efe7d2;
+  background: #fff;
+}
+
+.admin-inline-form button {
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c1950e 0%, #e3c04a 100%);
+  color: #14140f;
+  font-weight: 700;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.admin-inline-form span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-inline-form span.ok {
+  color: #1a7f37;
+}
+
+.admin-inline-form span.error {
+  color: #b42318;
+}

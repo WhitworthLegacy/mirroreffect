@@ -1,3 +1,4 @@
+import EventAddressEditor from "@/components/EventAddressEditor";
 import { getAdminSnapshot } from "@/lib/adminData";
 import { formatCurrency, formatDate } from "@/lib/format";
 
@@ -22,6 +23,7 @@ export default async function EventsPage() {
               <th>Statut</th>
               <th>Total</th>
               <th>Solde</th>
+              <th>Adresse / Recalcul</th>
             </tr>
           </thead>
           <tbody>
@@ -34,11 +36,14 @@ export default async function EventsPage() {
                 <td>{event.status || "—"}</td>
                 <td>{formatCurrency(event.total_cents)}</td>
                 <td>{formatCurrency(event.balance_due_cents)}</td>
+                <td>
+                  <EventAddressEditor eventId={event.id} initialAddress={event.address} />
+                </td>
               </tr>
             ))}
             {events.length === 0 && (
               <tr>
-                <td colSpan={7} className="admin-muted">
+                <td colSpan={8} className="admin-muted">
                   Aucun event disponible.
                 </td>
               </tr>
