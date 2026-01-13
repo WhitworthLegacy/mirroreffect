@@ -662,8 +662,8 @@ const packs = useMemo(
     t("availabilityEmailSubject"),
     t("availabilityEmailBody")
       .replace("{{date}}", eventDate || "[date]")
-      .replace("{{name}}", contactName || "[nom]")
-      .replace("{{email}}", waitlistEmail || contactEmail || "[email]")
+      .replace("{{name}}", `${firstName} ${lastName}`.trim() || "[nom]")
+      .replace("{{email}}", waitlistEmail || leadEmail || "[email]")
       .replace("{{phone}}", waitlistPhone || contactPhone || "[telephone]")
       .replace("{{location}}", location || "[lieu]")
   );
