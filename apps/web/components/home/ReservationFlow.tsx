@@ -470,18 +470,18 @@ const packs = useMemo(
 
   const frameImages = useMemo(
     () => [
-      "/images/(2).png",
-      "/images/(3).png",
-      "/images/3.png",
-      "/images/4.png",
-      "/images/5.png",
-      "/images/6.png",
-      "/images/8.png",
-      "/images/9.png",
-      "/images/10.png",
-      "/images/11.png",
-      "/images/12.png",
-      "/images/13.png"
+      "/images/templates/(2).png",
+      "/images/templates/(3).png",
+      "/images/templates/3.png",
+      "/images/templates/4.png",
+      "/images/templates/5.png",
+      "/images/templates/6.png",
+      "/images/templates/8.png",
+      "/images/templates/9.png",
+      "/images/templates/10.png",
+      "/images/templates/11.png",
+      "/images/templates/12.png",
+      "/images/templates/13.png"
     ].map((src) => encodeURI(src)),
     []
   );

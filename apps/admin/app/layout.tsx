@@ -1,4 +1,6 @@
+import "./globals.css";
 import AdminGuard from "./admin-guard";
+import AdminShell from "./admin-shell";
 
 export const metadata = {
   title: "MirrorEffect Admin",
@@ -13,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AdminGuard>{children}</AdminGuard>
+        <AdminGuard>
+          <AdminShell>{children}</AdminShell>
+        </AdminGuard>
       </body>
     </html>
   );
