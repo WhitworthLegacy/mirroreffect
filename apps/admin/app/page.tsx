@@ -1,10 +1,10 @@
-import { getAdminSnapshot } from "@/lib/adminData";
+import { getAdminSnapshot, type EventRow, type PackRow } from "@/lib/adminData";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export default async function Page() {
   let eventsError: string | null = null;
-  let events = [];
-  let packs = [];
+  let events: EventRow[] = [];
+  let packs: PackRow[] = [];
 
   try {
     const snapshot = await getAdminSnapshot();
