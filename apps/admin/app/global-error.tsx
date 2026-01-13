@@ -18,9 +18,9 @@ export default function GlobalError({
       <body>
         <main style={{ padding: "2.5rem", fontFamily: "system-ui, sans-serif" }}>
           <h1>Erreur critique</h1>
-          <p>Un probleme est survenu. Rechargez la page.</p>
+          <p>Un problème est survenu. Rechargez la page.</p>
           <button type="button" onClick={() => reset()}>
-            Reessayer
+            Réessayer
           </button>
         </main>
       </body>

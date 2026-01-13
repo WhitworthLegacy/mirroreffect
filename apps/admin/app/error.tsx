@@ -18,7 +18,7 @@ export default function Error({
       <h1>Une erreur est survenue</h1>
       <p>Essayez de recharger la page.</p>
       <button type="button" onClick={() => reset()}>
-        Reessayer
+        Réessayer
       </button>
     </main>
   );
