@@ -18,7 +18,7 @@ export default async function Page() {
   const packMap = new Map<string, string>();
   packs.forEach((pack) => {
     if (!pack.id) return;
-    const label = pack.name || pack.code || "Pack";
+    const label = pack.name_fr || pack.code || "Pack";
     packMap.set(pack.id, label);
   });
 

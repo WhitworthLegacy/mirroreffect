@@ -2,7 +2,9 @@ import { getAdminSnapshot } from "@/lib/adminData";
 
 export default async function InventoryPage() {
   const { events, packs, error } = await getAdminSnapshot();
-  const packMap = new Map(packs.map((pack) => [pack.id, pack.name || pack.code || "Pack"]));
+  const packMap = new Map(
+    packs.map((pack) => [pack.id, pack.name_fr || pack.code || "Pack"])
+  );
   const packStats = events.reduce<Record<string, number>>((acc, event) => {
     const key = event.pack_id ?? "unknown";
     acc[key] = (acc[key] ?? 0) + 1;

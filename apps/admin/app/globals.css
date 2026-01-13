@@ -79,6 +79,167 @@ body {
   font-size: 18px;
 }
 
+.admin-calendar {
+  margin-top: 20px;
+}
+
+.admin-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-calendar-title {
+  text-transform: capitalize;
+  font-weight: 800;
+}
+
+.admin-calendar-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-calendar-label {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b6b6b;
+}
+
+.admin-calendar-day {
+  border: 1px solid #efe7d2;
+  border-radius: 14px;
+  padding: 10px;
+  min-height: 70px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.admin-calendar-day.is-outside {
+  opacity: 0.5;
+}
+
+.admin-calendar-day.is-selected {
+  border-color: #c1950e;
+  box-shadow: 0 10px 24px rgba(193, 149, 14, 0.2);
+}
+
+.admin-calendar-date {
+  font-weight: 700;
+}
+
+.admin-calendar-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #14140f;
+  background: linear-gradient(90deg, #c1950e 0%, #e3c04a 100%);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.admin-chip {
+  border: none;
+  border-radius: 999px;
+  background: rgba(18, 19, 15, 0.1);
+  padding: 6px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-sheet {
+  margin-top: 20px;
+  overflow-x: auto;
+  border: 1px solid #efe7d2;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.admin-sheet table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1400px;
+  font-size: 13px;
+}
+
+.admin-sheet th,
+.admin-sheet td {
+  border-bottom: 1px solid #f0ede4;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-sheet th {
+  position: sticky;
+  top: 0;
+  background: #fbf7ec;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  z-index: 1;
+}
+
+.admin-sheet input,
+.admin-sheet select {
+  width: 100%;
+  border: 1px solid #efe7d2;
+  border-radius: 10px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  background: #fff;
+}
+
+.admin-sheet .is-dirty {
+  border-color: #c1950e;
+  box-shadow: 0 0 0 1px rgba(193, 149, 14, 0.4);
+}
+
+.admin-sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  align-items: center;
+}
+
+.admin-sheet-actions .admin-chip {
+  background: rgba(193, 149, 14, 0.15);
+}
+
+.admin-sheet-actions .admin-chip.primary {
+  background: linear-gradient(90deg, #c1950e 0%, #e3c04a 100%);
+  color: #14140f;
+}
+
+.admin-sheet-row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-sheet-row-actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #12130f;
+  color: #fff;
+  font-size: 11px;
+}
+
+.admin-sheet-row-actions button.secondary {
+  background: rgba(18, 19, 15, 0.1);
+  color: #12130f;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
