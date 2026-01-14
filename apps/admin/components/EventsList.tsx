@@ -35,7 +35,7 @@ export default function EventsList({ events, packs }: Props) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Date event</th>
+              <th>Date événement</th>
               <th>Nom client</th>
               <th>Pack choisi</th>
               <th>Adresse</th>
@@ -53,7 +53,7 @@ export default function EventsList({ events, packs }: Props) {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={4} className="admin-muted">
-                  Aucun event pour le moment.
+                  Aucun événement pour le moment.
                 </td>
               </tr>
             )}

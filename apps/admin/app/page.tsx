@@ -9,7 +9,7 @@ export default async function Page() {
     events = snapshot.events;
     eventsError = snapshot.error;
   } catch (error) {
-    eventsError = error instanceof Error ? error.message : "Impossible de charger les donnees.";
+    eventsError = error instanceof Error ? error.message : "Impossible de charger les données.";
   }
 
   const totalRevenue = events.reduce((sum, event) => sum + (event.total_cents ?? 0), 0);
@@ -61,23 +61,23 @@ export default async function Page() {
       <header style={{ marginBottom: 24 }}>
         <h1>Dashboard MirrorEffect</h1>
         <p className="admin-muted">
-          Vue d&apos;ensemble des performances et metriques cles.
+          Vue d&apos;ensemble des performances et métriques clés.
         </p>
       </header>
 
       <section className="admin-kpi">
         <div className="admin-kpi-card">
-          <h3>Evenements a venir</h3>
+          <h3>Événements à venir</h3>
           <p>{upcomingEvents.length}</p>
           <span className="admin-muted" style={{ fontSize: '0.875rem' }}>
-            {pastEvents.length} passes
+            {pastEvents.length} passés
           </span>
         </div>
         <div className="admin-kpi-card">
           <h3>Chiffre d&apos;affaires</h3>
           <p>{formatCurrency(totalRevenue)}</p>
           <span className="admin-muted" style={{ fontSize: '0.875rem' }}>
-            {events.length} evenements
+            {events.length} événements
           </span>
         </div>
         <div className="admin-kpi-card">
@@ -91,7 +91,7 @@ export default async function Page() {
           <h3>Taux de paiement</h3>
           <p>{paymentCompletionRate.toFixed(0)}%</p>
           <span className="admin-muted" style={{ fontSize: '0.875rem' }}>
-            {formatCurrency(totalPaid)} encaisses
+            {formatCurrency(totalPaid)} encaissés
           </span>
         </div>
       </section>
@@ -135,7 +135,7 @@ export default async function Page() {
 
         {/* Status Distribution */}
         <div className="admin-card">
-          <h2>Statut des evenements</h2>
+          <h2>Statut des événements</h2>
           <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -251,7 +251,7 @@ export default async function Page() {
 
         {/* Leads */}
         <div className="admin-card">
-          <h2>Leads a convertir</h2>
+          <h2>Leads à convertir</h2>
           <div style={{ textAlign: 'center', padding: '32px 0' }}>
             <div style={{ fontSize: '3rem', fontWeight: 900, lineHeight: 1 }}>
               {leadCandidates.length}

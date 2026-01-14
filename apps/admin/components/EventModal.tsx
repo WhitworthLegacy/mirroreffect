@@ -144,7 +144,7 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
         <div className="admin-modal-header">
           <div>
             <h2>{draft.client_name || "Event"}</h2>
-            <p className="admin-muted">{draft.event_date || "Date a definir"}</p>
+            <p className="admin-muted">{draft.event_date || "Date à définir"}</p>
           </div>
           <button type="button" className="admin-chip" onClick={onClose}>
             Fermer

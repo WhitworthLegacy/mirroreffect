@@ -43,7 +43,7 @@ export default function CrmList({ events, packs }: Props) {
             {leads.length === 0 && (
               <tr>
                 <td colSpan={4} className="admin-muted">
-                  Aucun lead a relancer.
+                  Aucun lead à relancer.
                 </td>
               </tr>
             )}

@@ -153,7 +153,7 @@ export default function EventsSheet({ events, packs }: Props) {
     { key: "balance_due_cents", label: "Solde (€)", type: "currency", scope: "event" },
     { key: "balance_status", label: "Statut solde", type: "select", scope: "event", options: BALANCE_STATUSES },
     { key: "status", label: "Statut", type: "select", scope: "event", options: STATUSES },
-    { key: "student_name", label: "Etudiant", type: "text", scope: "finance" },
+    { key: "student_name", label: "Étudiant", type: "text", scope: "finance" },
     { key: "student_hours", label: "Heures étudiant", type: "number", scope: "finance" },
     { key: "student_rate_cents", label: "Taux étudiant €/h", type: "currency", scope: "finance" },
     { key: "km_one_way", label: "KM (aller)", type: "number", scope: "finance" },

@@ -11,7 +11,7 @@ type StudentStats = {
   events: EventRow[];
 };
 
-export default async function EtudiantPage() {
+export default async function ÉtudiantPage() {
   let error: string | null = null;
   let events: EventRow[] = [];
 
@@ -20,7 +20,7 @@ export default async function EtudiantPage() {
     events = snapshot.events;
     error = snapshot.error;
   } catch (err) {
-    error = err instanceof Error ? err.message : "Impossible de charger les donnees.";
+    error = err instanceof Error ? err.message : "Impossible de charger les données.";
   }
 
   // Filter events with student assignments
@@ -71,7 +71,7 @@ export default async function EtudiantPage() {
   return (
     <main className="admin-page">
       <header style={{ marginBottom: 24 }}>
-        <h1>Etudiants & Freelances</h1>
+        <h1>Étudiants & Freelances</h1>
         <p className="admin-muted">
           Performance et statistiques des collaborateurs.
         </p>
@@ -83,7 +83,7 @@ export default async function EtudiantPage() {
           <p>{totalStudents}</p>
         </div>
         <div className="admin-kpi-card">
-          <h3>Events assignes</h3>
+          <h3>Events assignés</h3>
           <p>{totalEventsAssigned}</p>
         </div>
         <div className="admin-kpi-card">
@@ -137,7 +137,7 @@ export default async function EtudiantPage() {
           <div className="admin-card">
             <h2>Aucune donnee</h2>
             <p className="admin-muted">
-              Aucun etudiant assigne pour le moment.
+              Aucun étudiant assigné pour le moment.
             </p>
           </div>
         )}
@@ -146,15 +146,15 @@ export default async function EtudiantPage() {
       {/* Recent events by student */}
       <section style={{ marginTop: 32 }}>
         <div className="admin-card">
-          <h2>Derniers events assignes</h2>
+          <h2>Derniers événements assignés</h2>
           <table className="admin-table">
             <thead>
               <tr>
                 <th>Date</th>
                 <th>Client</th>
-                <th>Etudiant</th>
+                <th>Étudiant</th>
                 <th>Heures</th>
-                <th>Remuneration</th>
+                <th>Rémunération</th>
               </tr>
             </thead>
             <tbody>
@@ -173,7 +173,7 @@ export default async function EtudiantPage() {
               {eventsWithStudents.length === 0 && (
                 <tr>
                   <td colSpan={5} className="admin-muted">
-                    Aucun event assigne.
+                    Aucun événement assigné.
                   </td>
                 </tr>
               )}

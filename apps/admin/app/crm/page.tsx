@@ -12,7 +12,7 @@ export default async function CrmPage() {
     packs = snapshot.packs;
     error = snapshot.error;
   } catch (err) {
-    error = err instanceof Error ? err.message : "Impossible de charger les donnees.";
+    error = err instanceof Error ? err.message : "Impossible de charger les données.";
   }
 
   return (
