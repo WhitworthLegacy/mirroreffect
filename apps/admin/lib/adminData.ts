@@ -20,7 +20,7 @@ export type EventRow = {
   on_site_contact: string | null;
   created_at: string | null;
   updated_at: string | null;
-  event_finance?: EventFinanceRow[] | null;
+  event_finance?: EventFinanceRow[] | EventFinanceRow | null;
 };
 
 export type PackRow = {

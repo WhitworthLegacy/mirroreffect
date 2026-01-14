@@ -1,8 +1,19 @@
 import EventsSheet from "@/components/EventsSheet";
-import { getAdminSnapshot } from "@/lib/adminData";
+import { getAdminSnapshot, type EventRow, type PackRow } from "@/lib/adminData";
 
 export default async function EventsPage() {
-  const { events, packs, error } = await getAdminSnapshot();
+  let events: EventRow[] = [];
+  let packs: PackRow[] = [];
+  let error: string | null = null;
+
+  try {
+    const snapshot = await getAdminSnapshot();
+    events = snapshot.events;
+    packs = snapshot.packs;
+    error = snapshot.error;
+  } catch (err) {
+    error = err instanceof Error ? err.message : "Impossible de charger les donnees.";
+  }
 
   return (
     <main className="admin-page">

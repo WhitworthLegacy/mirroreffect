@@ -53,7 +53,8 @@ const financeDefaults: EventFinanceRow = {
 };
 
 function getFinanceFromEvent(event: EventRow): EventFinanceRow {
-  const [finance] = event.event_finance ?? [];
+  const financeData = event.event_finance ?? null;
+  const finance = Array.isArray(financeData) ? financeData[0] : financeData;
   return { ...financeDefaults, ...(finance ?? {}) };
 }
 
@@ -288,11 +289,15 @@ export default function EventsSheet({ events, packs }: Props) {
         });
       }
 
-      await fetch("/api/events", {
+      const res = await fetch("/api/events", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ updates })
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || "Erreur sauvegarde");
+      }
 
       setDirtyRows((prev) => {
         const next = { ...prev };
@@ -367,11 +372,16 @@ export default function EventsSheet({ events, packs }: Props) {
     if (!row) return;
     const address = row.event.address ?? "";
     if (!address) return;
-    await fetch("/api/events/recalculate", {
+    const res = await fetch("/api/events/recalculate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ event_id: id, address })
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setSaveState("error");
+      setSaveMessage(data?.error || "Erreur recalcul");
+    }
   };
 
   const renderCellInput = (row: SheetRow, column: Column) => {

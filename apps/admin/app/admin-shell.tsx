@@ -7,9 +7,7 @@ const NAV_ITEMS = [
   { href: "/events", label: "Events" },
   { href: "/availability", label: "Disponibilites" },
   { href: "/payments", label: "Paiements" },
-  { href: "/inventory", label: "Inventaire" },
-  { href: "/crm", label: "CRM" },
-  { href: "/notifications", label: "Alertes" }
+  { href: "/crm", label: "CRM" }
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
