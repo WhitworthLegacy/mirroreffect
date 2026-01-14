@@ -22,8 +22,10 @@ import photoboothMiroirCharleroi from "./photobooth-miroir-charleroi";
 import photoboothMiroirLiege from "./photobooth-miroir-liege";
 import photoboothMiroirNamur from "./photobooth-miroir-namur";
 import photoboothMiroirWallonie from "./photobooth-miroir-wallonie";
+import photoboothMiroirEntrepriseBruxelles from "./photobooth-miroir-entreprise-bruxelles";
 import spiegelPhotoboothVlaamsBrabant from "./spiegel-photobooth-vlaams-brabant";
 import spiegelPhotoboothVlaanderen from "./spiegel-photobooth-vlaanderen";
+import spiegelFotoboothBedrijfBrussel from "./spiegel-fotobooth-bedrijf-brussel";
 
 export type SeoPage = {
   slug: string;
@@ -68,8 +70,10 @@ export const seoPages: SeoPage[] = [
   photoboothMiroirLiege,
   photoboothMiroirNamur,
   photoboothMiroirWallonie,
+  photoboothMiroirEntrepriseBruxelles,
   spiegelPhotoboothVlaamsBrabant,
-  spiegelPhotoboothVlaanderen
+  spiegelPhotoboothVlaanderen,
+  spiegelFotoboothBedrijfBrussel
 ];
 
 export const normalizeSlug = (slug: string) => slug.replace(/^\/+|\/+$/g, "");

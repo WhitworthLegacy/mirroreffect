@@ -604,7 +604,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             </MotionReveal>
             <div className="mt-8 space-y-4">
               {[
-                "Devis instantané : vous recevez nos offres par e-mail.",
+                "Disponibilité instantanée : vous réservez directement sur notre site.",
                 "Réservation : on bloque la date (avec un petit acompte).",
                 "Personnalisation : création du cadre photo à vos couleurs.",
                 "Jour J : installation discrète, tirages instantanés.",

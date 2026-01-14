@@ -83,6 +83,6 @@ const page = {
   </section>
 </div>
 `
-};
+} as const;
 
 export default page;
