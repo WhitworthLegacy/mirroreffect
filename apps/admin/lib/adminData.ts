@@ -49,7 +49,13 @@ export type EventFinanceRow = {
   [key: string]: unknown;
 };
 
-export async function getAdminSnapshot() {
+export type AdminSnapshot = {
+  events: EventRow[];
+  packs: PackRow[];
+  error: string | null;
+};
+
+export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   const supabase = createSupabaseServerClient();
   const { data: eventsData, error: eventsError } = await supabase
     .from<EventRow>("events")
@@ -84,9 +90,12 @@ export async function getAdminSnapshot() {
     .from<PackRow>("packs")
     .select("id, code, name_fr, name_nl, price_current_cents, price_original_cents, impressions_included");
 
+  const events = (eventsData ?? []) as unknown as EventRow[];
+  const packs = (packsData ?? []) as unknown as PackRow[];
+
   return {
-    events: eventsData ?? [],
-    packs: packsData ?? [],
+    events,
+    packs,
     error: eventsError?.message ?? packsError?.message ?? null
   };
 }
