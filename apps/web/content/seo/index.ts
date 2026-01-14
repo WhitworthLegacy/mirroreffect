@@ -26,6 +26,8 @@ import photoboothMiroirEntrepriseBruxelles from "./photobooth-miroir-entreprise-
 import spiegelPhotoboothVlaamsBrabant from "./spiegel-photobooth-vlaams-brabant";
 import spiegelPhotoboothVlaanderen from "./spiegel-photobooth-vlaanderen";
 import spiegelFotoboothBedrijfBrussel from "./spiegel-fotobooth-bedrijf-brussel";
+import mentionsLegales from "./mentions-legales";
+import politiqueConfidentialite from "./politique-de-confidentialite";
 
 export type SeoPage = {
   slug: string;
@@ -73,7 +75,9 @@ export const seoPages: SeoPage[] = [
   photoboothMiroirEntrepriseBruxelles,
   spiegelPhotoboothVlaamsBrabant,
   spiegelPhotoboothVlaanderen,
-  spiegelFotoboothBedrijfBrussel
+  spiegelFotoboothBedrijfBrussel,
+  mentionsLegales,
+  politiqueConfidentialite
 ];
 
 export const normalizeSlug = (slug: string) => slug.replace(/^\/+|\/+$/g, "");

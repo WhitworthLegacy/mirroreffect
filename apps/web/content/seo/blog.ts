@@ -21,30 +21,22 @@ export default {
         </div>
       </section>
       <section class="intro">
-        <p>Ce blog rassemble nos meilleures pratiques pour la location de photobooth miroir en Belgique. Vous y trouverez des guides logistiques, des astuces de scénographie, des comparatifs de formats d’impression et des checklists pour préparer vos événements sans stress.</p>
-        <p>Que vous organisiez un mariage intime, un anniversaire chic, une soirée d’entreprise ou une activation de marque, l’animation photo est un levier d’engagement puissant. Elle crée un point de rencontre, renforce l’ambiance et laisse une trace tangible grâce aux tirages instantanés 10×15.</p>
-        <p>Nous publions également des études de cas pour comprendre ce qui fonctionne sur le terrain : flux d’invités, emplacement idéal, personnalisation du cadre photo, et stratégies de collecte d’emails en conformité RGPD.</p>
-        <p>Parcourez les articles par thèmes : inspiration mariage, événement corporate, idées déco, logistique d’impression, et conseils de personnalisation. Chaque article est conçu pour être actionnable, avec des recommandations simples et un vocabulaire clair.</p>
-        <p>MirrorEffect accompagne des lieux prestigieux, des domaines, des hôtels, des salles communales et des espaces événementiels dans toute la Belgique. Notre expérience se traduit ici par des contenus concrets, pensés pour vous faire gagner du temps et maximiser l’impact de votre animation photo.</p>
-        <ul>
-          <li>Inspiration photobooth mariage chic et élégant.</li>
-          <li>Conseils pour photobooth entreprise et événements B2B.</li>
-          <li>Guides pratiques : impressions, formats, flux et placement.</li>
-          <li>Personnalisation du cadre photo et cohérence visuelle.</li>
-        </ul>
-        <p>Si vous débutez, commencez par nos articles sur la mise en place : emplacement idéal, surface nécessaire (2,5 m × 2 m), et durée d’activation. Ces repères évitent les erreurs classiques et permettent d’optimiser la participation des invités dès les premières minutes.</p>
-        <p>Nous abordons aussi les choix esthétiques : arrière-plans texturés, éclairage doux, accessoires sobres et élégants. L’objectif est d’obtenir des photos flatteuses et un rendu premium, sans tomber dans le kitsch. Vous trouverez des idées adaptées aux mariages, aux anniversaires sophistiqués et aux soirées d’entreprise.</p>
-        <p>Pour les événements corporate, nous détaillons les bonnes pratiques de branding : cadre photo personnalisé, cohérence avec la charte graphique, et messages discrets qui renforcent l’image de marque. Une animation photo bien brandée crée du contenu partageable et prolonge la visibilité de l’événement.</p>
-        <p>La logistique est un point clé. Nous expliquons comment estimer le nombre de tirages, pourquoi le format 10×15 est souvent préférable, et quand choisir l’option illimitée. Ces décisions influencent directement l’ambiance et la satisfaction des invités.</p>
-        <p>Nos études de cas mettent en lumière des activations réussies dans des hôtels, des salons professionnels et des lieux d’exception. Vous y verrez comment un photobooth miroir peut fluidifier le flux, augmenter le temps de présence et créer un souvenir tangible pour chaque participant.</p>
-        <p>Nous partageons également des conseils pour le livre d’or photo : comment inciter les invités à laisser un message, comment organiser l’espace pour faciliter l’écriture, et quels accessoires privilégier pour un rendu harmonieux dans votre album souvenir.</p>
-        <p>Si votre priorité est la conversion, vous trouverez des articles sur la collecte d’emails en conformité RGPD, les mentions légales à afficher, et la manière d’obtenir un consentement clair sans nuire à l’expérience utilisateur. Le tout expliqué simplement, sans jargon inutile.</p>
-        <p>Notre promesse : des articles utiles, concrets et directement applicables. Chaque conseil est issu de notre expérience terrain, afin que votre animation photo soit aussi belle en réalité que sur les photos finales.</p>
-        <p>Nous partageons aussi des conseils pour optimiser la participation : annonce micro, signalétique discrète, ou présence d’un assistant pour guider les invités. Ces détails augmentent le nombre de photos prises et améliorent la fluidité du flux.</p>
-        <p>Enfin, nos articles abordent l’après-événement : galerie privée, partage des photos, et valorisation des souvenirs. Vous gagnez ainsi un contenu durable, prêt à être utilisé dans un album, sur les réseaux ou pour votre communication interne.</p>
-        <p>Considérez ce blog comme un guide permanent : il vous accompagne avant, pendant et après l’événement, pour que chaque photo soit un vrai souvenir premium.</p>
-        <p>Si vous avez une question spécifique, nos articles sont conçus pour vous orienter rapidement vers la bonne décision, sans perdre de temps dans la préparation.</p>
-        <p>Bonne lecture et belle préparation d’événement.</p>
+        <div class="glow-card premium-copy">
+          <div class="eyebrow">MirrorEffect • Conseils Premium</div>
+          <h2>Un salon d’inspiration pour les photobooth miroir exigeants</h2>
+          <p>Découvrez une bibliothèque de pratiques raffinées pour orchestrer votre animation photo miroir en Belgique. Nous partageons des guides logistiques, des moodboards scénographiques, des comparatifs de formats et des checklists pour préparer vos événements sans effort — toujours avec une tonalité premium et chaleureuse.</p>
+          <p>Qu’il s’agisse d’un mariage intime, d’un anniversaire sophistiqué, d’un événement d’entreprise ou d’une activation de marque, le photobooth miroir devient un levier d’engagement. Il crée un lieu de rencontre, prolonge votre ambiance et délivre des souvenirs tangibles grâce aux tirages instantanés 10×15.</p>
+          <p>Chaque article livre des insights actionnables : emplacement idéal, surface (2,5 m × 2 m), timing optimal, choix des accessoires, éclairage doux et cadre personnalisé qui s’accorde à vos couleurs. Nous approfondissons aussi la logistique : estimation des tirages, gestion du flux, options d’impression illimitée, accessibilité multilingue et collecte RGPD.</p>
+          <p>Nos études de cas détaillent les dispositifs sur le terrain : hôtels de prestige, salons professionnels, activations retail et événements institutionnels. Vous y découvrez comment un placement intelligent, une personnalisation soignée et une animation fluide génèrent un réel brand lift.</p>
+          <p>Considérez cette section comme un accompagnement à chaque étape : inspiration créative, repères opérationnels et idées pour prolonger l’expérience après l’événement (galerie privée, livre d’or photo, contenus à partager).</p>
+          <div class="premium-bullets">
+            <span>Inspiration mariage élégant, décoration raffinée, moodboards</span>
+            <span>Conseils corporate : framing, branding, collecte de leads RGPD</span>
+            <span>Guides pratiques : tirages 10×15, flux, emplacement, luminaires</span>
+            <span>Personnalisation complète : cadre, style, ton de la prise de vue</span>
+          </div>
+          <p class="note">Chaque texte est nourri de notre expérience terrain, pour que votre photobooth soit aussi mémorable que vos invités.</p>
+        </div>
       </section>
     </div>
     <section class="wrap">
