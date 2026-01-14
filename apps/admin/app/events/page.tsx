@@ -1,4 +1,4 @@
-import EventsSheet from "@/components/EventsSheet";
+import EventsList from "@/components/EventsList";
 import { getAdminSnapshot, type EventRow, type PackRow } from "@/lib/adminData";
 
 export default async function EventsPage() {
@@ -18,9 +18,9 @@ export default async function EventsPage() {
   return (
     <main className="admin-page">
       <h1>Events</h1>
-      <p className="admin-muted">Vue tableur avec edition rapide, filtres et calculs.</p>
+      <p className="admin-muted">Liste des events. Cliquez sur une ligne pour modifier.</p>
       {error && <p className="admin-muted">Erreur: {error}</p>}
-      <EventsSheet events={events} packs={packs} />
+      <EventsList events={events} packs={packs} />
     </main>
   );
 }

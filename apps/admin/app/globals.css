@@ -259,6 +259,97 @@ body {
   text-align: left;
 }
 
+.admin-list {
+  margin-top: 20px;
+  overflow-x: auto;
+  border: 1px solid #efe7d2;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.admin-row {
+  cursor: pointer;
+}
+
+.admin-row:hover {
+  background: #fbf7ec;
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 15, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 50;
+}
+
+.admin-modal {
+  width: min(960px, 100%);
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.admin-modal-header,
+.admin-modal-footer {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #f0ede4;
+}
+
+.admin-modal-footer {
+  border-bottom: none;
+  border-top: 1px solid #f0ede4;
+}
+
+.admin-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #3f3a2a;
+}
+
+.admin-field input,
+.admin-field select {
+  border: 1px solid #efe7d2;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-family: inherit;
+}
+
+@media (max-width: 720px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-modal-header,
+  .admin-modal-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .admin-muted {
   color: #6b6b6b;
 }

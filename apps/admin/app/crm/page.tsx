@@ -1,44 +1,26 @@
-import { getAdminSnapshot } from "@/lib/adminData";
+import CrmList from "@/components/CrmList";
+import { getAdminSnapshot, type EventRow, type PackRow } from "@/lib/adminData";
 
 export default async function CrmPage() {
-  const { events, error } = await getAdminSnapshot();
-  const leads = events.filter((event) => !event.pack_id);
+  let events: EventRow[] = [];
+  let packs: PackRow[] = [];
+  let error: string | null = null;
+
+  try {
+    const snapshot = await getAdminSnapshot();
+    events = snapshot.events;
+    packs = snapshot.packs;
+    error = snapshot.error;
+  } catch (err) {
+    error = err instanceof Error ? err.message : "Impossible de charger les donnees.";
+  }
 
   return (
     <main className="admin-page">
       <h1>CRM</h1>
       <p className="admin-muted">Leads, relances et qualification commerciale.</p>
       {error && <p className="admin-muted">Erreur: {error}</p>}
-
-      <div className="admin-card" style={{ marginTop: 20 }}>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Client</th>
-              <th>Email</th>
-              <th>Tel.</th>
-              <th>Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leads.map((event) => (
-              <tr key={event.id}>
-                <td>{event.client_name || "—"}</td>
-                <td>{event.client_email || "—"}</td>
-                <td>{event.client_phone || "—"}</td>
-                <td>{event.status || "—"}</td>
-              </tr>
-            ))}
-            {leads.length === 0 && (
-              <tr>
-                <td colSpan={4} className="admin-muted">
-                  Aucun lead a relancer.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <CrmList events={events} packs={packs} />
     </main>
   );
 }
