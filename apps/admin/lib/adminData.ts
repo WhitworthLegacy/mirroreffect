@@ -58,7 +58,7 @@ export type AdminSnapshot = {
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   const supabase = createSupabaseServerClient();
   const { data: eventsData, error: eventsError } = await supabase
-    .from<EventRow>("events")
+    .from("events")
     .select(
       [
         "id",
@@ -87,7 +87,7 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
     .limit(200);
 
   const { data: packsData, error: packsError } = await supabase
-    .from<PackRow>("packs")
+    .from("packs")
     .select("id, code, name_fr, name_nl, price_current_cents, price_original_cents, impressions_included");
 
   const events = (eventsData ?? []) as unknown as EventRow[];
