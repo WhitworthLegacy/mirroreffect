@@ -1,8 +1,12 @@
+import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
 
-const CSV_DIR = path.join(process.cwd(), "../../../files/csv");
+// Load environment variables from .env.local
+config({ path: path.join(__dirname, "../.env.local") });
+
+const CSV_DIR = path.join(__dirname, "../../../files/csv");
 
 const url = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -12,7 +16,6 @@ if (!url || !serviceKey) {
 }
 
 const supabase = createClient(url, serviceKey);
-
 function parseCSV(content: string): Record<string, string>[] {
   const lines = content.split("\n").filter(line => line.trim());
   if (lines.length === 0) return [];
