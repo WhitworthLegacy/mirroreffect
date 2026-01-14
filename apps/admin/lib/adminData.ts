@@ -52,7 +52,7 @@ export type EventFinanceRow = {
 export async function getAdminSnapshot() {
   const supabase = createSupabaseServerClient();
   const { data: eventsData, error: eventsError } = await supabase
-    .from("events")
+    .from<EventRow>("events")
     .select(
       [
         "id",
@@ -81,12 +81,12 @@ export async function getAdminSnapshot() {
     .limit(200);
 
   const { data: packsData, error: packsError } = await supabase
-    .from("packs")
+    .from<PackRow>("packs")
     .select("id, code, name_fr, name_nl, price_current_cents, price_original_cents, impressions_included");
 
   return {
-    events: (eventsData ?? []) as EventRow[],
-    packs: (packsData ?? []) as PackRow[],
+    events: eventsData ?? [],
+    packs: packsData ?? [],
     error: eventsError?.message ?? packsError?.message ?? null
   };
 }
