@@ -16,42 +16,54 @@ export default {
         <div class="content">
           <span class="ribbon">✨ Mariage & Inspiration</span>
           <h1>10 idées pour un coin photobooth chic au mariage</h1>
-          <p class="meta">Publié le 10 novembre 2025 • 8 min de lecture</p>
+          <p class="meta">Publié le 10 novembre 2025 • 10 min de lecture</p>
         </div>
       </header>
 
       <article class="prose">
         <p>Un photobooth, c’est plus qu’une borne : c’est un <strong>point de rencontre</strong>, un <strong>créateur d’ambiance</strong> et une <strong>machine à souvenirs</strong>. Voici 10 idées éprouvées par MirrorEffect pour sublimer votre <em>coin photobooth</em> au mariage – sans kitsch et avec élégance.</p>
+        <p>Le secret d’un photobooth miroir haut de gamme réside dans la cohérence : ambiance, matières, lumière, accessoires et branding. Quand chaque détail est pensé, le rendu visuel devient exceptionnel et les invités vivent une véritable expérience.</p>
 
         <h2>1) Mur fleuri & teintes pastel</h2>
         <p>Mur de fleurs (artificielles ou naturelles), tons blanc / rose poudré / champagne : rendu intemporel et romantique. Astuce : alternez 2 hauteurs de fleurs pour éviter l’effet “plat”.</p>
+        <p>Un mur fleuri crée immédiatement un décor photographique premium. Il apporte de la texture, de la profondeur et un style doux idéal pour les mariages élégants. Préférez des fleurs aux teintes harmonisées avec votre papeterie afin de garder une cohérence visuelle sur les tirages 10×15.</p>
+        <p>Ajoutez quelques feuillages ou touches dorées pour accentuer l’effet chic. Ce fond est parfait pour un photobooth miroir et fonctionne aussi bien en intérieur qu’en extérieur couvert.</p>
 
         <h2>2) Potelets dorés & mini tapis</h2>
         <p>Un simple duo potelets + cordon structure la file et donne un effet <em>red carpet</em>. <span class="note">Si votre palette est blanc/rose, remplacez le rouge par un beige.</span></p>
+        <p>Les potelets ont un double rôle : ils fluidifient l’accès au photobooth et renforcent le côté prestigieux. L’effet "entrée VIP" fonctionne à merveille pour encourager les invités à participer, surtout au début de la soirée.</p>
 
         <h2>3) Lumière douce (jamais trop blanche)</h2>
         <p>Préférez des LED chaudes (2700–3200K) et évitez les spots agressifs. <span class="note">La peau est plus flatteuse, les reflets du miroir aussi.</span></p>
+        <p>La lumière est votre meilleure alliée pour un photobooth miroir chic. Un éclairage doux évite les ombres dures et flatte toutes les carnations. Pensez à compléter avec des sources d’ambiance (guirlandes, bougies LED, lampes déco) pour un rendu chaleureux.</p>
 
         <h2>4) Cadre photo personnalisé</h2>
         <p>Noms, date, typographies assorties à vos menus / papeterie. Chez MirrorEffect, le <strong>cadre est validé</strong> avant l’événement pour un rendu 100% cohérent.</p>
+        <p>Un cadre photo sur mesure donne un aspect premium aux tirages. Il devient un souvenir à conserver et un rappel élégant de votre journée. Ajoutez un monogramme, une citation courte ou un motif subtil pour renforcer la personnalisation.</p>
 
         <h2>5) Micro coin lounge</h2>
         <p>Un fauteuil + 2 coussins + un petit tapis suffisent. Les invités se regroupent, échangent, rient… et la photo devient un moment convivial.</p>
+        <p>Le coin lounge apporte une atmosphère relax et sophistiquée. Les invités s’y installent naturellement, ce qui rend les photos plus spontanées et détendues. C’est idéal pour les couples qui souhaitent des clichés chaleureux et naturels.</p>
 
         <h2>6) Panneau “Prenez la pose !”</h2>
         <p>Un petit panneau d’invitation augmente la participation (surtout en début de soirée). Minimaliste, typographie claire.</p>
+        <p>Une signalétique élégante incite les invités à se diriger vers le photobooth. Un message simple comme "Prenez la pose" ou "Créez votre souvenir" suffit. Le style typographique doit rester cohérent avec votre thème.</p>
 
         <h2>7) Accessoires élégants (zéro kitsch)</h2>
         <p>Éventails, lunettes dorées, chapeaux sobres, pancartes minimalistes. <span class="note">Un set cohérent &gt; 20 accessoires disparates.</span></p>
+        <p>Les accessoires donnent du relief aux photos, mais la qualité prime sur la quantité. Un petit set raffiné, assorti à votre thème, crée un effet chic et intemporel. Les invités se sentent valorisés et les clichés gagnent en élégance.</p>
 
         <h2>8) Arrière-plan texturé</h2>
         <p>Velours, lin, voile, sequins clairs. La texture donne de la profondeur et capte joliment la lumière.</p>
+        <p>Un fond texturé améliore nettement le rendu photo. Le velours donne un aspect luxueux, le lin apporte une touche naturelle, et les sequins subtils ajoutent de la lumière sans tomber dans l'excès.</p>
 
         <h2>9) Palette couleur harmonisée</h2>
         <p>Répétez vos couleurs clés (fleurs, rubans, cadre). Le rendu final (galerie + tirages) paraît plus haut de gamme.</p>
+        <p>Une palette harmonisée renforce la cohérence visuelle : un même ton sur les fleurs, le cadre photo, les rubans ou le tapis crée une impression de luxe. C'est un détail subtil mais très efficace pour un photobooth miroir chic.</p>
 
         <h2>10) Cache technique discret</h2>
         <p>Paravent, plantes, ou rideau court pour cacher câbles et valises. L’œil ne doit voir que la magie du miroir ✨.</p>
+        <p>Le rendu premium passe aussi par l’invisible. En masquant les éléments techniques, vous créez une scène élégante et soignée. C'est un détail qui fait la différence entre un coin photo basique et un photobooth miroir haut de gamme.</p>
 
         <hr>
 
@@ -64,6 +76,8 @@ export default {
             <li>Bloquer un <strong>spot lumière douce</strong> (LEDs chaudes).</li>
             <li>Définir 5–6 <strong>accessoires élégants</strong> cohérents.</li>
             <li>Prévoir un <strong>panneau d’invitation</strong> “Prenez la pose!”.</li>
+            <li>Confirmer l’horaire de mise en place avec la salle.</li>
+            <li>Prévoir un point de passage fluide autour du photobooth.</li>
           </ul>
         </div>
 
@@ -72,11 +86,11 @@ export default {
 
         <h2>FAQ — Mariage & photobooth</h2>
         <h3>Combien d’impressions prévoir ?</h3>
-        <p>Pour 120 invités, comptez 400–800 tirages selon la durée et l’intensité de participation.</p>
+        <p>Pour 120 invités, comptez 400–800 tirages selon la durée et l’intensité de participation. Les formules illimitées sont idéales pour éviter les contraintes et laisser les invités profiter pleinement.</p>
         <h3>Le tapis est-il obligatoire ?</h3>
-        <p>Non. Si la déco est blanc/rose, on peut retirer le rouge ou opter pour une couleur neutre.</p>
+        <p>Non. Si la déco est blanc/rose, on peut retirer le rouge ou opter pour une couleur neutre. L’important est l’harmonie générale.</p>
         <h3>Peut-on récupérer les fichiers ?</h3>
-        <p>Oui : <strong>galerie privée</strong> J+1, téléchargements HD inclus.</p>
+        <p>Oui : <strong>galerie privée</strong> J+1, téléchargements HD inclus. Les fichiers HD sont parfaits pour un album mariage ou un partage sur les réseaux.</p>
 
         <div class="cta" id="demande">
           <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>

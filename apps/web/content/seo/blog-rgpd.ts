@@ -16,12 +16,17 @@ export default {
         <div class="content">
           <span class="ribbon">💼 Entreprise & Légal</span>
           <h1>RGPD & collecte d'emails : bonnes pratiques en événement</h1>
-          <p class="meta">Publié le 19 novembre 2025 • 7 min de lecture</p>
+          <p class="meta">Publié le 19 novembre 2025 • 10 min de lecture</p>
         </div>
       </header>
 
       <article class="prose">
         <p>Le photobooth miroir est un outil de <strong>lead generation</strong> redoutable en événement B2B. Il convertit l'animation en donnée. Cependant, la collecte d'emails, de numéros de téléphone ou d'images doit impérativement respecter le <strong>Règlement Général sur la Protection des Données (RGPD)</strong>. Voici les points essentiels pour une collecte <strong>clean et efficace</strong>.</p>
+        <p>Le respect du RGPD ne freine pas la performance : au contraire, il renforce la confiance et améliore la qualité des leads. Des participants bien informés et volontaires sont plus engagés, plus qualifiés et plus ouverts aux communications futures.</p>
+        <p>Ce guide vous aide à structurer votre collecte, sécuriser votre événement et valoriser votre image de marque, tout en restant conforme.</p>
+        <p>Dans un contexte B2B, cette approche est aussi un avantage concurrentiel : une marque qui gère les données de manière professionnelle inspire davantage de sérieux et de crédibilité.</p>
+        <p>Au final, la conformité RGPD devient un argument commercial : vos prospects savent que vous prenez leurs données au sérieux.</p>
+        <p>Si vous organisez des événements réguliers, ces bonnes pratiques constituent une base stable et réutilisable, ce qui simplifie vos futurs déploiements.</p>
 
         <h2>1. Le Consentement : La règle d'or</h2>
         <p>Le consentement doit être <strong>libre, spécifique, éclairé et univoque</strong>.</p>
@@ -34,6 +39,9 @@ export default {
         <div class="note">
           ✅ Le MirrorEffect intègre un formulaire de collecte où la case marketing est <strong>décochée par défaut</strong> (opt-in actif).
         </div>
+        <p>Cette logique d’opt-in actif est fondamentale. Elle évite les mauvaises surprises et garantit que vos communications marketing sont réellement attendues par les prospects.</p>
+        <p>Pour optimiser vos taux de conversion, privilégiez un message clair et court : “J’accepte de recevoir des communications de [Entreprise]”. Cela évite toute ambiguïté.</p>
+        <p>Enfin, documentez le consentement : date, événement, version du texte. Cette traçabilité vous protège en cas de demande ou de contrôle.</p>
 
         <h2>2. Les Mentions Légales : Être transparent</h2>
         <p>Les participants doivent pouvoir accéder à :</p>
@@ -44,6 +52,8 @@ export default {
           <li><strong>L'existence d'un droit de retrait et de rectification.</strong></li>
         </ul>
         <p>Une phrase claire suffit souvent, renvoyant vers la politique de confidentialité complète.</p>
+        <p>La transparence est aussi un facteur de conversion : un texte simple et lisible encourage davantage de participants à laisser leurs coordonnées.</p>
+        <p>Évitez les paragraphes juridiques complexes sur l’écran du photobooth : un résumé clair avec un lien vers votre politique suffit.</p>
 
         <h2>3. Le Rôle du DPA (Data Processing Agreement)</h2>
         <p>MirrorEffect agit en tant que <strong>Sous-Traitant</strong> car nous traitons les données pour votre compte. Votre entreprise est le <strong>Responsable du Traitement</strong>.</p>
@@ -54,6 +64,8 @@ export default {
           <li>La procédure en cas de violation.</li>
         </ul>
         <p><strong>Chez MirrorEffect, le DPA est systématiquement inclus dans nos contrats B2B</strong>.</p>
+        <p>Cette démarche vous protège juridiquement et clarifie les responsabilités en cas de contrôle ou de demande d’audit.</p>
+        <p>Elle rassure aussi vos services juridiques et IT, qui savent exactement comment les données sont collectées et traitées.</p>
 
         <h2>4. Gestion et Sécurité des Données</h2>
         <ul>
@@ -61,6 +73,13 @@ export default {
           <li><strong>Durée de conservation</strong> définie et respectée.</li>
           <li><strong>Portabilité</strong> des données sur demande.</li>
         </ul>
+        <p>Nous recommandons de définir en amont une durée de conservation claire (ex. 3 à 12 mois) et un plan d’archivage. Cela rassure les participants et simplifie vos procédures internes.</p>
+        <p>La sécurité inclut aussi l’accès restreint aux données : seules les personnes autorisées doivent consulter les listes d’emails.</p>
+        <p>En pratique, un transfert via lien sécurisé et une exportation chiffrée constituent des standards simples à mettre en place.</p>
+        <p>Nous recommandons aussi une suppression automatique des données une fois la durée de conservation atteinte, afin d’éviter toute accumulation inutile.</p>
+        <p>Cette démarche participe à une conformité durable et à une meilleure gouvernance des données.</p>
+        <p>Elle limite aussi les risques opérationnels en cas de demande de suppression.</p>
+        <p>Un process simple aujourd’hui évite des complications demain.</p>
 
         <hr>
 
@@ -71,11 +90,18 @@ export default {
             <li>Case opt-in décochée par défaut.</li>
             <li>Signer le DPA.</li>
             <li>Informer les participants de l’usage des emails.</li>
+            <li>Définir une durée de conservation claire.</li>
+            <li>Limiter l’accès aux données en interne.</li>
           </ul>
         </div>
+        <p>Cette checklist garantit une collecte propre, conforme et rassurante pour vos invités.</p>
+        <p>Elle évite les erreurs fréquentes et protège votre marque en cas d’audit ou de question d’un participant.</p>
 
         <h2>Logistique simple & fluide</h2>
         <p>L'activation du formulaire de collecte sur le MirrorEffect est rapide. Nous configurons l'écran d'accueil avec vos logos, vos questions et vos mentions légales.</p>
+        <p>Vous pouvez choisir les champs essentiels (nom, email, entreprise, fonction) et définir un wording clair pour maximiser la qualité des leads.</p>
+        <p>Un paramétrage soigné permet d’équilibrer conversion et conformité : moins de friction, plus de confiance.</p>
+        <p>Résultat : une collecte fluide, des leads qualifiés et une expérience respectueuse pour vos invités.</p>
 
         <h2>FAQ — Entreprise & Légal</h2>
         <h3>Pouvons-nous collecter autre chose que l'email ?</h3>
@@ -84,6 +110,10 @@ export default {
         <p>La photo peut être imprimée sans collecte d’email (option SMS possible).</p>
         <h3>Comment récupérer les fichiers ?</h3>
         <p>Nous fournissons la liste des emails et les photos associées via un lien sécurisé.</p>
+        <h3>Peut-on intégrer notre propre politique de confidentialité ?</h3>
+        <p>Oui, nous pouvons intégrer votre lien de politique pour une conformité totale avec vos procédures internes.</p>
+        <h3>Doit-on nommer un DPO pour ce type d’activation ?</h3>
+        <p>Pas nécessairement, mais il est recommandé d’identifier un référent interne pour centraliser les demandes liées aux données.</p>
 
         <div class="cta" id="demande">
           <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>

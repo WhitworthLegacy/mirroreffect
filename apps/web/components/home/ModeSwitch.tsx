@@ -19,6 +19,7 @@ export function ModeSwitch({ showLanguage = false, className, label }: ModeSwitc
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const mode = getMode(searchParams);
+  const isNl = pathname?.startsWith("/nl");
 
   useEffect(() => {
     if (!searchParams.get("mode")) {
@@ -50,7 +51,7 @@ export function ModeSwitch({ showLanguage = false, className, label }: ModeSwitc
             <select
               id="lang-switcher"
               className="h-10 cursor-pointer rounded-full border border-[#E6E6E6] bg-white px-4 text-sm font-semibold text-[#12130F]"
-              defaultValue="fr"
+              defaultValue={isNl ? "nl" : "fr"}
               onChange={(event) => {
                 const option = event.currentTarget.selectedOptions[0];
                 const targetPath = option?.dataset?.url;

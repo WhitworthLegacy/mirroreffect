@@ -16,15 +16,20 @@ export default {
         <div class="content">
           <span class="ribbon">💡 Conseils & Logistique</span>
           <h1>Combien d'impressions prévoir : 10×15 vs bandelettes</h1>
-          <p class="meta">Publié le 19 novembre 2025 • 5 min de lecture</p>
+          <p class="meta">Publié le 19 novembre 2025 • 10 min de lecture</p>
         </div>
       </header>
 
       <article class="prose">
         <p>L'une des questions les plus fréquentes lors de la location d'un photobooth concerne le papier : <strong>combien d'impressions inclure ?</strong> et <strong>quel format choisir ?</strong> Pour garantir que chaque invité reparte avec un souvenir, il est essentiel de bien estimer la quantité. Voici nos repères simples et pourquoi nous recommandons le tirage <strong>10x15 premium</strong>.</p>
+        <p>En réalité, la quantité d’impressions influence directement l’ambiance : plus les invités impriment, plus ils reviennent, se regroupent et créent des moments spontanés. À l’inverse, un nombre trop limité peut freiner la participation et réduire l’impact de l’animation.</p>
+        <p>Ce guide vous aide à anticiper les besoins, à choisir entre 10×15 et bandelettes, et à sécuriser votre événement sans stress.</p>
+        <p>En prenant ces décisions en amont, vous garantissez une animation fluide et un souvenir tangible pour chacun.</p>
+        <p>C’est un vrai plus pour l’expérience globale de vos invités.</p>
 
         <h2>1. L'estimation simple selon la jauge d'invités</h2>
         <p>L'expérience MirrorEffect nous a permis d'établir des fourchettes réalistes, basées sur l'intensité de participation. Prévoyez toujours large : il est préférable d'avoir de l'encre et du papier en réserve.</p>
+        <p>La participation dépend de plusieurs facteurs : emplacement de la borne, durée de l’animation, type d’événement (mariage, corporate, anniversaire) et ambiance générale. Un photobooth placé près du bar ou de la piste de danse génère mécaniquement plus de tirages.</p>
 
         <div class="callout">
           <p><strong>Règle générale :</strong> Comptez une moyenne de <strong>4 à 6 tirages</strong> par invité sur une durée de 3 à 4 heures d'activation.</p>
@@ -47,9 +52,11 @@ export default {
           </tbody>
         </table>
         <p><strong>Facteurs à considérer :</strong> Plus la borne est visible, que l'événement est long, ou que l'ambiance est festive, plus le nombre d'impressions augmente !</p>
+        <p>En pratique, un mariage avec 120 invités génère souvent 500 à 900 tirages, surtout si l’animation dure toute la soirée. Pour un événement corporate plus formel, les volumes peuvent être légèrement inférieurs.</p>
 
         <h2>2. Le match des formats : 10×15 vs Bandelettes</h2>
         <p>Historiquement, les photomatons utilisaient des <strong>bandelettes (strip photo)</strong>. Aujourd'hui, le <strong>10×15</strong> est le format premium privilégié par nos clients.</p>
+        <p>Le choix du format impacte la perception de l’animation : le 10×15 évoque un souvenir élégant et durable, tandis que la bandelette est plus ludique mais moins lisible pour les photos de groupe.</p>
 
         <h3>Pourquoi le tirage 10x15 est l'option premium</h3>
         <ul>
@@ -57,19 +64,23 @@ export default {
           <li><strong>Meilleur Souvenir :</strong> C'est le format d'une photo classique, idéal pour encadrer, coller dans un album ou accrocher au frigo.</li>
           <li><strong>Design :</strong> Il offre l'espace pour un cadre personnalisé élégant qui ne surcharge pas les visages.</li>
         </ul>
+        <p>Pour un mariage ou une soirée chic, le 10×15 donne immédiatement un rendu premium. Les invités le conservent plus facilement et le retrouvent parfois des années plus tard dans un album.</p>
 
         <div class="note">
           ⚠️ <strong>Attention aux bandelettes (5x15) :</strong> Bien que ludique, ce format est petit. Une photo de groupe y perd en clarté, et le cadre personnalisé devient illisible.
         </div>
+        <p>Les bandelettes restent intéressantes pour certains événements décontractés, mais elles sont moins adaptées aux photos familiales ou aux événements haut de gamme.</p>
 
         <h2>3. La logistique : tirages illimités</h2>
         <p>Pour la tranquillité d'esprit, nous recommandons souvent l'option <strong>tirages illimités</strong>. Elle retire toute limite psychologique pour vos invités et vous assure de ne jamais manquer de consommables.</p>
+        <p>Cette option est particulièrement appréciée lors des mariages, anniversaires et grandes soirées, où les invités ont envie de repartir avec plusieurs photos. Elle permet aussi d’imprimer plusieurs exemplaires pour les albums ou le livre d’or.</p>
         <p>Avec le MirrorEffect, vous avez la garantie :</p>
         <ul>
           <li><strong>Qualité Pro :</strong> Papier photo professionnel pour un rendu des couleurs éclatant.</li>
           <li><strong>Vitesse :</strong> Tirages en moins de 10 secondes pour éviter les files d'attente.</li>
           <li><strong>Format Grand Angle :</strong> Même pour des photos de groupe, le format 10x15 permet de voir tous les sourires !</li>
         </ul>
+        <p>Avec des tirages illimités, l’animation devient plus libre, plus spontanée et génère davantage de souvenirs, ce qui augmente la satisfaction globale des invités.</p>
 
         <hr>
 
@@ -80,11 +91,16 @@ export default {
             <li>Estimer la <strong>jauge d'invités</strong> pour choisir le pack d'impressions.</li>
             <li>Privilégier le format <strong>10x15</strong> pour l'élégance et la qualité.</li>
             <li>Si le budget le permet, choisir l'option <strong>Tirages Illimités</strong> pour le confort.</li>
+            <li>Prévoir un emplacement visible pour encourager la participation.</li>
+            <li>Valider le design du cadre photo pour un rendu harmonieux.</li>
           </ul>
         </div>
+        <p>Avec ces repères, vous évitez les mauvaises surprises et vous garantissez un souvenir pour chaque invité.</p>
 
         <h2>Logistique simple & fluide</h2>
         <p>Nous nous occupons de tout : livraison, installation, et mise à disposition des consommables selon le forfait choisi. Le papier photo de rechange est toujours inclus dans nos packs.</p>
+        <p>Notre équipe anticipe aussi un stock de sécurité pour éviter tout risque de rupture pendant l’événement. Vous profitez d’une animation fluide, sans stress, et vos invités repartent avec leurs photos.</p>
+        <p>Cette organisation permet de se concentrer sur l’essentiel : l’ambiance, les échanges et les souvenirs.</p>
 
         <h2>FAQ — Impressions Photobooth</h2>
         <h3>Est-ce que l'encre est comprise ?</h3>
@@ -93,6 +109,8 @@ export default {
         <p>Le MirrorEffect est configuré en amont pour le format 10x15 premium. Le changement de format en cours d'événement n'est pas possible techniquement.</p>
         <h3>Que se passe-t-il s'il me manque des tirages ?</h3>
         <p>Nous définissons ensemble un « stock de sécurité ». En cas de dépassement, la facture d'ajustement est claire et communiquée en toute transparence après l'événement.</p>
+        <h3>Les invités peuvent-ils repartir avec plusieurs impressions ?</h3>
+        <p>Oui, surtout avec l’option illimitée. Cela encourage les photos de groupe et les souvenirs partagés.</p>
 
         <div class="cta" id="demande">
           <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
