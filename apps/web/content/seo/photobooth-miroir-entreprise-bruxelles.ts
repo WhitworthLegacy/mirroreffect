@@ -19,9 +19,11 @@ export default {
   rawHtml: `
     <div class="wrap">
       <header class="hero-article">
+        <img src="/images/IMG_0493.jpg" alt="Photobooth miroir entreprise Bruxelles" />
+        <div class="overlay"></div>
         <div class="content">
-          <span class="ribbon">Bruxelles • Événement corporate</span>
-          <h1>Photobooth miroir d’entreprise à Bruxelles : l’animation premium qui valorise votre marque</h1>
+          <span class="ribbon">📍 Bruxelles • Corporate</span>
+          <h1>Photobooth miroir d'entreprise à Bruxelles : l'animation premium qui valorise votre marque</h1>
           <p class="meta">Bruxelles • Image & expérience • 9 min de lecture</p>
         </div>
       </header>

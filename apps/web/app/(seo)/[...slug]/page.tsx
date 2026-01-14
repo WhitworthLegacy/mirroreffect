@@ -177,6 +177,12 @@ export default function SeoPage({ params }: PageProps) {
                 <br />
                 <a href="/photobooth-miroir-wallonie">Photobooth Miroir — Wallonie</a>
                 <br />
+                <a href="/photobooth-miroir-charleroi">Photobooth Miroir — Charleroi</a>
+                <br />
+                <a href="/photobooth-miroir-liege">Photobooth Miroir — Liège</a>
+                <br />
+                <a href="/photobooth-miroir-namur">Photobooth Miroir — Namur</a>
+                <br />
                 <a href="/spiegel-photobooth-vlaams-brabant">Spiegel Photobooth — Vlaams-Brabant</a>
                 <br />
                 <a href="/spiegel-photobooth-vlaanderen">Spiegel Photobooth — Vlaanderen</a>
@@ -188,10 +194,6 @@ export default function SeoPage({ params }: PageProps) {
                 <a href="/mentions-legales">Mentions légales</a>
                 <br />
                 <a href="/politique-de-confidentialite">Politique de confidentialité</a>
-                <br />
-                <a href="/conditions-generales">Conditions générales</a>
-                <br />
-                <a href="/cookies">Gestion des cookies</a>
               </p>
             </div>
           </div>
@@ -371,6 +373,12 @@ export default function SeoPage({ params }: PageProps) {
               <br />
               <a href="/photobooth-miroir-wallonie">Photobooth Miroir — Wallonie</a>
               <br />
+              <a href="/photobooth-miroir-charleroi">Photobooth Miroir — Charleroi</a>
+              <br />
+              <a href="/photobooth-miroir-liege">Photobooth Miroir — Liège</a>
+              <br />
+              <a href="/photobooth-miroir-namur">Photobooth Miroir — Namur</a>
+              <br />
               <a href="/spiegel-photobooth-vlaams-brabant">Spiegel Photobooth — Vlaams-Brabant</a>
               <br />
               <a href="/spiegel-photobooth-vlaanderen">Spiegel Photobooth — Vlaanderen</a>
@@ -382,10 +390,6 @@ export default function SeoPage({ params }: PageProps) {
               <a href="/mentions-legales">Mentions légales</a>
               <br />
               <a href="/politique-de-confidentialite">Politique de confidentialité</a>
-              <br />
-              <a href="/conditions-generales">Conditions générales</a>
-              <br />
-              <a href="/cookies">Gestion des cookies</a>
             </p>
           </div>
         </div>

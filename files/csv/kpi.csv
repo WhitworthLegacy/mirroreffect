@@ -1,0 +1,18 @@
+Pack ,Prix ,Coût Variable ,Transport,Marge Unitaire ,Commission,Point Mort ,acompte,Nbre de pack /mois,Nbre d'acompte /mois,,Type de bonus,Condition,Paliers / Montants TVAC,,,,,,,,,,,,,,
+Pack Découverte ,239.6694215,23.12,74.38016529,290.9295868,35.0,2,123.9669421,,,,Bonus Conversion (%),Taux de conversion >= 8%,8% = 50€,,,,,,,,,,,,,,
+Pack Essentiel ,322.3140496,46.25,74.38016529,350.4442149,45.0,2,123.9669421,,,,,,10% = 100€,,,,,,,,,,,,,,
+Pack Premium,404.9586777,92.5,74.38016529,386.838843,55.0,2,123.9669421,,,,,,12% = 150€,,,,,,,,,,,,,,
+,,,,,,,,,,,Bonus Appels > 5 min,% appels > 5min (sur appels répondus),>=10% = 50€,,,,,,,,,,,,,,
+,,,,,,,,,,,,,>=15% = 75€,,,,,,,,,,,,,,
+,,,,,,,,,,,,,>=20% = 100€,,,,,,,,,,,,,,
+Bénéfice du mois,-441.64,,,,,,,,,,Bonus Callbacks,% de callbacks réalisés,>=80% = 25€,,,,,,,,,,,,,,
+,,,,,,,,,,,,,>=90% = 50€
+,,,,,,,,,,,,,=100% = 75€
+Poste,Montant,,,,,,,,,,,,
+Zen Facture,12.0,,,,,,,,,,,,
+Abonnement Gsm +Wifi,130.48,,,,,,,,,,,,
+Compta,150.0,,,,,,,,,,,,
+Garage,120.0,,,,,,,,,,,,
+Canva,9.16,,,,,,,,,,,,
+Chat gpt,20.0,,,,,,,,,,,,
+Total,441.64,,,,,,,,,,,,
