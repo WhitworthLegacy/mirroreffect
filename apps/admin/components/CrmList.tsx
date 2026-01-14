@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { EventRow, PackRow } from "@/lib/adminData";
-import EventModal from "@/components/EventModal";
+import CrmModal from "@/components/CrmModal";
 
 type Props = {
   events: EventRow[];
@@ -28,6 +28,7 @@ export default function CrmList({ events, packs }: Props) {
               <th>Client</th>
               <th>Email</th>
               <th>Tel.</th>
+              <th>Statut</th>
             </tr>
           </thead>
           <tbody>
@@ -36,11 +37,12 @@ export default function CrmList({ events, packs }: Props) {
                 <td>{event.client_name || "—"}</td>
                 <td>{event.client_email || "—"}</td>
                 <td>{event.client_phone || "—"}</td>
+                <td>{event.status || "new"}</td>
               </tr>
             ))}
             {leads.length === 0 && (
               <tr>
-                <td colSpan={3} className="admin-muted">
+                <td colSpan={4} className="admin-muted">
                   Aucun lead a relancer.
                 </td>
               </tr>
@@ -50,7 +52,7 @@ export default function CrmList({ events, packs }: Props) {
       </div>
 
       {selectedEvent && (
-        <EventModal
+        <CrmModal
           event={selectedEvent}
           packs={packs}
           onClose={() => setSelectedId(null)}

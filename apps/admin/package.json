@@ -5,7 +5,11 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "next lint",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "import:students": "tsx scripts/import-students.ts",
+    "extract:sheets": "python3 scripts/extract-all-sheets.py",
+    "db:migrate": "tsx scripts/run-migration.ts",
+    "import:all": "tsx scripts/analyze-and-import.ts"
   },
   "dependencies": {
     "@mirroreffect/core": "workspace:*",
@@ -19,6 +23,7 @@
     "@types/node": "^20.12.7",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
+    "tsx": "^4.7.0",
     "typescript": "^5.4.5"
   }
 }

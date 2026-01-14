@@ -138,3 +138,32 @@ export async function PATCH(request: Request) {
     );
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const body = (await request.json()) as { id: string };
+
+    if (!body?.id) {
+      return NextResponse.json({ error: "id missing" }, { status: 400 });
+    }
+
+    const supabase = createSupabaseServerClient();
+
+    // Delete finance data first (if exists)
+    await supabase.from("event_finance").delete().eq("event_id", body.id);
+
+    // Delete the event
+    const { error } = await supabase.from("events").delete().eq("id", body.id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
+}

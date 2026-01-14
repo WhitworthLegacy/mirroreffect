@@ -38,6 +38,7 @@ export default function EventsList({ events, packs }: Props) {
               <th>Date event</th>
               <th>Nom client</th>
               <th>Pack choisi</th>
+              <th>Adresse</th>
             </tr>
           </thead>
           <tbody>
@@ -46,11 +47,12 @@ export default function EventsList({ events, packs }: Props) {
                 <td>{event.event_date ? formatDate(event.event_date) : "—"}</td>
                 <td>{event.client_name || "—"}</td>
                 <td>{event.pack_id ? packMap.get(event.pack_id) || "Pack" : "—"}</td>
+                <td>{event.address || "—"}</td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={3} className="admin-muted">
+                <td colSpan={4} className="admin-muted">
                   Aucun event pour le moment.
                 </td>
               </tr>

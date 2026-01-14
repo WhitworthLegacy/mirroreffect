@@ -11,6 +11,7 @@ type Props = {
 };
 
 const PACK_OPTIONS = ["Découverte", "Essentiel", "Premium"];
+const CRM_STATUSES = ["new", "devis envoyé", "won", "lost"];
 
 function centsToInput(value: number | null | undefined) {
   if (value === null || value === undefined) return "";
@@ -29,7 +30,7 @@ function toDateInput(value: string | null) {
   return value ?? "";
 }
 
-export default function EventModal({ event, packs, onClose, onSaved }: Props) {
+export default function CrmModal({ event, packs, onClose, onSaved }: Props) {
   const [draft, setDraft] = useState<EventRow | null>(event);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +71,7 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) return;
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce lead ?")) return;
 
     setIsSaving(true);
     setError(null);
@@ -143,8 +144,8 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
       <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
         <div className="admin-modal-header">
           <div>
-            <h2>{draft.client_name || "Event"}</h2>
-            <p className="admin-muted">{draft.event_date || "Date a definir"}</p>
+            <h2>{draft.client_name || "Lead"}</h2>
+            <p className="admin-muted">{draft.status || "nouveau"}</p>
           </div>
           <button type="button" className="admin-chip" onClick={onClose}>
             Fermer
@@ -152,6 +153,19 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
         </div>
         <div className="admin-modal-body">
           <div className="admin-form-grid">
+            <label className="admin-field">
+              <span>Statut CRM</span>
+              <select
+                value={draft.status ?? "new"}
+                onChange={(e) => updateField("status", e.target.value)}
+              >
+                {CRM_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="admin-field">
               <span>Email</span>
               <input
