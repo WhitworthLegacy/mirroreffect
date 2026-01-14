@@ -95,7 +95,7 @@ export default {
         <p>Nous définissons ensemble un « stock de sécurité ». En cas de dépassement, la facture d'ajustement est claire et communiquée en toute transparence après l'événement.</p>
 
         <div class="cta" id="demande">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Demander une offre personnalisée</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
         </div>
 
         <section class="related">

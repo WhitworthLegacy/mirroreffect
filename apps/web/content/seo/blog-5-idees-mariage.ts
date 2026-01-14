@@ -59,7 +59,7 @@ export default {
         <p>Absolument. Il est parfait pour divertir les invités.</p>
 
         <div class="cta" id="demande">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Demander une offre Mariage</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
         </div>
 
         <section class="related">

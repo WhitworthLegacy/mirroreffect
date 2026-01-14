@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { LeadModal } from "@/components/home/LeadModal";
 import { getSeoPage, normalizeSlug, seoPages } from "@/content/seo";
 
@@ -199,7 +200,11 @@ export default function SeoPage({ params }: PageProps) {
             <span className="text-[#C1950E]">Photobooth Miroir</span>. Tous droits réservés.
           </p>
         </footer>
-        {page.leadMode && <LeadModal mode={page.leadMode} />}
+        {page.leadMode === "b2b" && (
+          <Suspense fallback={null}>
+            <LeadModal mode={page.leadMode} />
+          </Suspense>
+        )}
       </main>
     );
   }

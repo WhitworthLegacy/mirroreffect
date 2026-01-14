@@ -74,6 +74,8 @@ export default {
         <p>Deze content is bovendien waardevol voor uw communicatie: eventrapporten, interne nieuwsbrieven of LinkedIn-posts. Zo verlengt u het effect van de avond met authentieke beelden die uw merk positief uitlichten.</p>
         <p>Veel klanten waarderen ook eenvoudige indicatoren zoals aantal foto’s en piekmomenten. Dat geeft inzicht in de betrokkenheid en maakt het makkelijker om toekomstige events nog scherper te plannen.</p>
         <p>De prints kunnen bovendien als stijlvolle attentie dienen voor VIP-gasten, wat de klantenrelatie versterkt en uw service nog premiumer laat aanvoelen.</p>
+        <p>Die tastbare herinnering verlengt de beleving en maakt het event persoonlijker voor elke genodigde.</p>
+        <p>Een klein gebaar dat lang bijblijft.</p>
         <p>Zo is de spiegel fotobooth geen vrijblijvende animatie, maar een investering die waarde oplevert op korte en lange termijn.</p>
 
         <h2>Checklist voor de voorbereiding</h2>
@@ -96,7 +98,7 @@ export default {
         <p>Ja. Er wordt snel een private galerij online gezet waar gasten hun foto’s in HD kunnen downloaden.</p>
 
         <div class="cta">
-          <a href="#leadModal" class="btn btn-gold openLead">Demander une offre</a>
+          <a href="/reservation?lang=nl" class="btn btn-gold">Reserveer nu</a>
         </div>
       </article>
     </div>

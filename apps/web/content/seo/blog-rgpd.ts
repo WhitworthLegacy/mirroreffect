@@ -86,7 +86,7 @@ export default {
         <p>Nous fournissons la liste des emails et les photos associées via un lien sécurisé.</p>
 
         <div class="cta" id="demande">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Demander une offre B2B</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
         </div>
 
         <section class="related">

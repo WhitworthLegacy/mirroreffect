@@ -79,7 +79,7 @@ export default {
         <p>Oui : <strong>galerie privée</strong> J+1, téléchargements HD inclus.</p>
 
         <div class="cta" id="demande">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Demander une offre</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
         </div>
 
         <section class="related">

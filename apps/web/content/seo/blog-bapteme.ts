@@ -58,7 +58,7 @@ export default {
         <p>Nous livrons et installons le miroir dans votre salle ou à domicile.</p>
 
         <div class="cta" id="demande">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Demander une offre Baptême</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
         </div>
 
         <section class="related">

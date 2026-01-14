@@ -74,6 +74,8 @@ export default {
         <p>Enfin, ces contenus deviennent des supports utiles pour vos communications internes ou externes : rapports d’événement, newsletters ou publications LinkedIn. Vous capitalisez ainsi sur l’événement bien au-delà de la soirée, avec un contenu authentique et valorisant.</p>
         <p>De nombreux clients apprécient aussi la visibilité sur la participation : nombre de photos, moments de forte affluence, feedback des invités. Ces indicateurs simples offrent une lecture claire du succès de l’animation et facilitent la préparation des prochains événements.</p>
         <p>Les tirages peuvent également servir de cadeaux élégants pour vos invités VIP, ajoutant une touche d’attention qui valorise la relation client et renforce la perception de votre service.</p>
+        <p>Cette attention tangible prolonge l’expérience et laisse un souvenir personnel qui accompagne vos invités bien après la soirée.</p>
+        <p>Un geste simple qui marque durablement les esprits.</p>
         <p>En somme, le photobooth miroir n’est pas un simple divertissement. C’est un investissement qui génère de la valeur à court et long terme, en renforçant votre image et en créant des points de contact positifs avec vos publics.</p>
 
         <h2>Checklist de préparation</h2>
@@ -96,7 +98,7 @@ export default {
         <p>Oui. Une galerie privée est mise en ligne rapidement, avec téléchargement en HD pour vos invités.</p>
 
         <div class="cta">
-          <a href="#leadModal" class="btn btn-gold openLead">Demander une offre</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
         </div>
       </article>
     </div>

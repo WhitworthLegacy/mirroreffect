@@ -79,7 +79,7 @@ export default {
         <p>Ja: <strong>privégalerij</strong> D+1, inclusief HD-downloads.</p>
 
         <div class="cta" id="demande">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Vraag een offerte aan</a>
+          <a href="/reservation?lang=nl" class="btn btn-gold">Reserveer nu</a>
         </div>
 
         <section class="related">

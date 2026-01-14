@@ -54,7 +54,7 @@ export default {
         <p>Nos tarifs varient selon la durée et les options. Demandez un devis personnalisé pour obtenir le prix exact.</p>
 
         <div class="cta" id="demande">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Demander une offre Anniversaire</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
         </div>
 
         <section class="related">

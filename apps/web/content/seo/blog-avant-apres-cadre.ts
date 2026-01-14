@@ -79,7 +79,7 @@ export default {
         <p>Oui, nous avons une galerie d'inspiration avec des designs modernes, classiques et thématiques.</p>
 
         <div class="cta" id="demande">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Demander la galerie de templates</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
         </div>
 
         <section class="related">

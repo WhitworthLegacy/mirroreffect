@@ -76,7 +76,7 @@ export default {
         <p class="note">Besoin d’une <strong>animation photo premium</strong> pour votre hôtel ou vos soirées VIP ? Nous adaptons volumes, graphisme et logistique à vos objectifs.</p>
 
         <div class="cta">
-          <a href="#leadModal" class="btn btn-gold openLead">💌 Demander une offre</a>
+          <a href="/reservation?lang=fr" class="btn btn-gold">Réserver maintenant</a>
           <a class="btn btn-dark" href="/blog">Voir d’autres études de cas</a>
         </div>
 
