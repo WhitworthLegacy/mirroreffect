@@ -1,98 +1,102 @@
-import { getAdminSnapshot, type EventRow } from "@/lib/adminData";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { formatCurrency } from "@/lib/format";
 
-type StudentStats = {
+type StudentMonthlyStats = {
+  month: string;
+  student_name: string;
+  hours_raw: number | null;
+  hours_adjusted: number | null;
+  remuneration_cents: number | null;
+};
+
+type StudentSummary = {
   name: string;
-  totalEvents: number;
   totalHours: number;
-  totalRevenue: number;
-  totalKm: number;
-  totalFuelCost: number;
-  events: EventRow[];
+  totalHoursAdjusted: number;
+  totalRemuneration: number;
+  monthlyData: StudentMonthlyStats[];
 };
 
 export default async function ÉtudiantPage() {
   let error: string | null = null;
-  let events: EventRow[] = [];
+  let studentStats: StudentMonthlyStats[] = [];
 
   try {
-    const snapshot = await getAdminSnapshot();
-    events = snapshot.events;
-    error = snapshot.error;
+    const supabase = createSupabaseServerClient();
+    const { data, error: fetchError } = await supabase
+      .from("student_monthly_stats")
+      .select("*")
+      .order("month", { ascending: false });
+
+    if (fetchError) {
+      error = fetchError.message;
+    } else {
+      studentStats = data || [];
+    }
   } catch (err) {
     error = err instanceof Error ? err.message : "Impossible de charger les données.";
   }
 
-  // Filter events with student assignments
-  const eventsWithStudents = events.filter(event => {
-    const finance = Array.isArray(event.event_finance) ? event.event_finance[0] : event.event_finance;
-    return finance?.student_name;
-  });
+  // Group by student name
+  const studentMap = new Map<string, StudentSummary>();
 
-  // Calculate stats by student
-  const studentStatsMap = new Map<string, StudentStats>();
+  studentStats.forEach(stat => {
+    if (!stat.student_name) return;
 
-  eventsWithStudents.forEach(event => {
-    const finance = Array.isArray(event.event_finance) ? event.event_finance[0] : event.event_finance;
-    if (!finance?.student_name) return;
-
-    const studentName = finance.student_name;
-    const existing = studentStatsMap.get(studentName);
+    const existing = studentMap.get(stat.student_name);
+    const hours = stat.hours_adjusted || stat.hours_raw || 0;
+    const hoursRaw = stat.hours_raw || 0;
 
     if (existing) {
-      existing.totalEvents++;
-      existing.totalHours += finance.student_hours || 0;
-      existing.totalRevenue += finance.student_rate_cents || 0;
-      existing.totalKm += finance.km_total || 0;
-      existing.totalFuelCost += finance.fuel_cost_cents || 0;
-      existing.events.push(event);
+      existing.totalHours += hoursRaw;
+      existing.totalHoursAdjusted += hours;
+      existing.totalRemuneration += stat.remuneration_cents || 0;
+      existing.monthlyData.push(stat);
     } else {
-      studentStatsMap.set(studentName, {
-        name: studentName,
-        totalEvents: 1,
-        totalHours: finance.student_hours || 0,
-        totalRevenue: finance.student_rate_cents || 0,
-        totalKm: finance.km_total || 0,
-        totalFuelCost: finance.fuel_cost_cents || 0,
-        events: [event]
+      studentMap.set(stat.student_name, {
+        name: stat.student_name,
+        totalHours: hoursRaw,
+        totalHoursAdjusted: hours,
+        totalRemuneration: stat.remuneration_cents || 0,
+        monthlyData: [stat]
       });
     }
   });
 
-  const studentStats = Array.from(studentStatsMap.values()).sort((a, b) =>
-    b.totalEvents - a.totalEvents
+  const students = Array.from(studentMap.values()).sort((a, b) =>
+    b.totalRemuneration - a.totalRemuneration
   );
 
-  const totalStudents = studentStats.length;
-  const totalEventsAssigned = eventsWithStudents.length;
-  const totalHoursWorked = studentStats.reduce((sum, s) => sum + s.totalHours, 0);
-  const totalStudentCost = studentStats.reduce((sum, s) => sum + s.totalRevenue, 0);
+  const totalStudents = students.length;
+  const totalHours = students.reduce((sum, s) => sum + s.totalHoursAdjusted, 0);
+  const totalRemuneration = students.reduce((sum, s) => sum + s.totalRemuneration, 0);
+  const totalMonths = new Set(studentStats.map(s => s.month)).size;
 
   return (
     <main className="admin-page">
       <header style={{ marginBottom: 24 }}>
-        <h1>Étudiants & Freelances</h1>
+        <h1>Étudiants</h1>
         <p className="admin-muted">
-          Performance et statistiques des collaborateurs.
+          Performance et statistiques des étudiants.
         </p>
       </header>
 
       <section className="admin-kpi">
         <div className="admin-kpi-card">
-          <h3>Collaborateurs actifs</h3>
+          <h3>Étudiants actifs</h3>
           <p>{totalStudents}</p>
         </div>
         <div className="admin-kpi-card">
-          <h3>Events assignés</h3>
-          <p>{totalEventsAssigned}</p>
+          <h3>Mois de données</h3>
+          <p>{totalMonths}</p>
         </div>
         <div className="admin-kpi-card">
           <h3>Heures totales</h3>
-          <p>{totalHoursWorked.toFixed(1)}h</p>
+          <p>{totalHours.toFixed(1)}h</p>
         </div>
         <div className="admin-kpi-card">
-          <h3>Cout total</h3>
-          <p>{formatCurrency(totalStudentCost)}</p>
+          <h3>Rémunération totale</h3>
+          <p>{formatCurrency(totalRemuneration)}</p>
         </div>
       </section>
 
@@ -104,76 +108,64 @@ export default async function ÉtudiantPage() {
       )}
 
       <section className="admin-grid">
-        {/* Stats by student */}
-        {studentStats.map((student) => (
+        {students.map((student) => (
           <div key={student.name} className="admin-card">
             <h2>{student.name}</h2>
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className="admin-muted">Events</span>
-                <span style={{ fontWeight: 700 }}>{student.totalEvents}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className="admin-muted">Heures</span>
+                <span className="admin-muted">Heures brutes</span>
                 <span style={{ fontWeight: 700 }}>{student.totalHours.toFixed(1)}h</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className="admin-muted">Revenue</span>
-                <span style={{ fontWeight: 700 }}>{formatCurrency(student.totalRevenue)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className="admin-muted">Distance</span>
-                <span style={{ fontWeight: 700 }}>{student.totalKm} km</span>
+                <span className="admin-muted">Heures corrigées</span>
+                <span style={{ fontWeight: 700 }}>{student.totalHoursAdjusted.toFixed(1)}h</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid #eee' }}>
-                <span className="admin-muted">Essence</span>
-                <span style={{ fontWeight: 700 }}>{formatCurrency(student.totalFuelCost)}</span>
+                <span className="admin-muted">Rémunération</span>
+                <span style={{ fontWeight: 700 }}>{formatCurrency(student.totalRemuneration)}</span>
               </div>
             </div>
           </div>
         ))}
 
-        {studentStats.length === 0 && (
+        {students.length === 0 && (
           <div className="admin-card">
-            <h2>Aucune donnee</h2>
+            <h2>Aucune donnée</h2>
             <p className="admin-muted">
-              Aucun étudiant assigné pour le moment.
+              Aucun étudiant trouvé. Exécutez le script d'import pour charger les données.
             </p>
           </div>
         )}
       </section>
 
-      {/* Recent events by student */}
+      {/* Monthly breakdown */}
       <section style={{ marginTop: 32 }}>
         <div className="admin-card">
-          <h2>Derniers événements assignés</h2>
+          <h2>Détail mensuel</h2>
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Client</th>
+                <th>Mois</th>
                 <th>Étudiant</th>
                 <th>Heures</th>
+                <th>Heures corrigées</th>
                 <th>Rémunération</th>
               </tr>
             </thead>
             <tbody>
-              {eventsWithStudents.slice(0, 20).map((event) => {
-                const finance = Array.isArray(event.event_finance) ? event.event_finance[0] : event.event_finance;
-                return (
-                  <tr key={event.id}>
-                    <td>{formatDate(event.event_date)}</td>
-                    <td>{event.client_name || "—"}</td>
-                    <td style={{ fontWeight: 700 }}>{finance?.student_name || "—"}</td>
-                    <td>{finance?.student_hours ? `${finance.student_hours}h` : "—"}</td>
-                    <td>{formatCurrency(finance?.student_rate_cents)}</td>
-                  </tr>
-                );
-              })}
-              {eventsWithStudents.length === 0 && (
+              {studentStats.map((stat, idx) => (
+                <tr key={`${stat.month}-${stat.student_name}-${idx}`}>
+                  <td>{new Date(stat.month).toLocaleDateString('fr-BE', { year: 'numeric', month: 'long' })}</td>
+                  <td style={{ fontWeight: 700 }}>{stat.student_name}</td>
+                  <td>{stat.hours_raw ? `${stat.hours_raw}h` : "—"}</td>
+                  <td>{stat.hours_adjusted ? `${stat.hours_adjusted}h` : "—"}</td>
+                  <td>{formatCurrency(stat.remuneration_cents)}</td>
+                </tr>
+              ))}
+              {studentStats.length === 0 && (
                 <tr>
                   <td colSpan={5} className="admin-muted">
-                    Aucun événement assigné.
+                    Aucune donnée mensuelle.
                   </td>
                 </tr>
               )}
