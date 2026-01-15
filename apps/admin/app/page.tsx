@@ -1,7 +1,17 @@
 import { getAdminSnapshot, type EventRow } from "@/lib/adminData";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 
-export default async function Page() {
+type PeriodOption = "12months" | "year" | "quarter" | "month";
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string; year?: string }>;
+}) {
+  const params = await searchParams;
+  const selectedYear = params.year ? parseInt(params.year) : new Date().getFullYear();
+  const selectedPeriod = (params.period as PeriodOption) || "12months";
+
   let eventsError: string | null = null;
   let events: EventRow[] = [];
   try {
@@ -12,49 +22,111 @@ export default async function Page() {
     eventsError = error instanceof Error ? error.message : "Impossible de charger les données.";
   }
 
-  const totalRevenue = events.reduce((sum, event) => sum + (event.total_cents ?? 0), 0);
-  const totalPaid = events.reduce((sum, event) => sum + ((event.total_cents ?? 0) - (event.balance_due_cents ?? 0)), 0);
-  const totalBalance = events.reduce((sum, event) => sum + (event.balance_due_cents ?? 0), 0);
+  // Filter events by year for CA calculation
+  const eventsForYear = events.filter((event) => {
+    if (!event.event_date) return false;
+    return new Date(event.event_date).getFullYear() === selectedYear;
+  });
 
+  const totalRevenue = eventsForYear.reduce((sum, event) => sum + (event.total_cents ?? 0), 0);
+
+  // Upcoming events (future only)
   const upcomingEvents = events.filter((event) => {
     if (!event.event_date) return false;
     return new Date(event.event_date) >= new Date();
   });
-  const pastEvents = events.filter((event) => {
-    if (!event.event_date) return false;
-    return new Date(event.event_date) < new Date();
-  });
 
+  // Solde restant = only future events
+  const futureBalance = upcomingEvents.reduce((sum, event) => sum + (event.balance_due_cents ?? 0), 0);
   const urgentBalances = upcomingEvents.filter((event) => (event.balance_due_cents ?? 0) > 0);
+
   const leadCandidates = events.filter((event) => !event.pack_id);
 
-  // Calculate payment completion rate
-  const paymentCompletionRate = totalRevenue > 0 ? (totalPaid / totalRevenue) * 100 : 0;
+  // Get available years from data
+  const years = [...new Set(events.map(e => e.event_date ? new Date(e.event_date).getFullYear() : null).filter(Boolean))].sort((a, b) => (b ?? 0) - (a ?? 0));
+  if (!years.includes(selectedYear)) years.unshift(selectedYear);
 
-  // Events by status
-  const confirmedEvents = events.filter(e => e.status === 'confirmed').length;
-  const pendingEvents = events.filter(e => e.status === 'pending').length;
-  const cancelledEvents = events.filter(e => e.status === 'cancelled').length;
-
-  // Monthly revenue (last 6 months)
+  // Calculate chart data based on selected period
   const now = new Date();
-  const monthlyStats = Array.from({ length: 6 }, (_, i) => {
-    const monthDate = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-    const monthEvents = events.filter(event => {
-      if (!event.event_date) return false;
-      const eventDate = new Date(event.event_date);
-      return eventDate.getMonth() === monthDate.getMonth() &&
-             eventDate.getFullYear() === monthDate.getFullYear();
-    });
-    const revenue = monthEvents.reduce((sum, e) => sum + (e.total_cents ?? 0), 0);
-    return {
-      month: monthDate.toLocaleDateString('fr-FR', { month: 'short' }),
-      revenue,
-      count: monthEvents.length
-    };
-  });
+  let chartStats: { label: string; revenue: number; count: number }[] = [];
 
-  const maxMonthlyRevenue = Math.max(...monthlyStats.map(m => m.revenue), 1);
+  if (selectedPeriod === "12months") {
+    chartStats = Array.from({ length: 12 }, (_, i) => {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+      const monthEvents = events.filter(event => {
+        if (!event.event_date) return false;
+        const eventDate = new Date(event.event_date);
+        return eventDate.getMonth() === monthDate.getMonth() &&
+               eventDate.getFullYear() === monthDate.getFullYear();
+      });
+      const revenue = monthEvents.reduce((sum, e) => sum + (e.total_cents ?? 0), 0);
+      return {
+        label: monthDate.toLocaleDateString('fr-FR', { month: 'short' }),
+        revenue,
+        count: monthEvents.length
+      };
+    });
+  } else if (selectedPeriod === "year") {
+    chartStats = Array.from({ length: 12 }, (_, i) => {
+      const monthDate = new Date(selectedYear, i, 1);
+      const monthEvents = eventsForYear.filter(event => {
+        if (!event.event_date) return false;
+        return new Date(event.event_date).getMonth() === i;
+      });
+      const revenue = monthEvents.reduce((sum, e) => sum + (e.total_cents ?? 0), 0);
+      return {
+        label: monthDate.toLocaleDateString('fr-FR', { month: 'short' }),
+        revenue,
+        count: monthEvents.length
+      };
+    });
+  } else if (selectedPeriod === "quarter") {
+    const currentQuarter = Math.floor(now.getMonth() / 3);
+    const quarterStart = new Date(now.getFullYear(), currentQuarter * 3, 1);
+    chartStats = Array.from({ length: 3 }, (_, i) => {
+      const monthDate = new Date(quarterStart.getFullYear(), quarterStart.getMonth() + i, 1);
+      const monthEvents = events.filter(event => {
+        if (!event.event_date) return false;
+        const eventDate = new Date(event.event_date);
+        return eventDate.getMonth() === monthDate.getMonth() &&
+               eventDate.getFullYear() === monthDate.getFullYear();
+      });
+      const revenue = monthEvents.reduce((sum, e) => sum + (e.total_cents ?? 0), 0);
+      return {
+        label: monthDate.toLocaleDateString('fr-FR', { month: 'long' }),
+        revenue,
+        count: monthEvents.length
+      };
+    });
+  } else if (selectedPeriod === "month") {
+    // Weekly breakdown for current month
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const weeksInMonth = Math.ceil((new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()) / 7);
+    chartStats = Array.from({ length: weeksInMonth }, (_, i) => {
+      const weekStart = new Date(monthStart.getFullYear(), monthStart.getMonth(), 1 + i * 7);
+      const weekEnd = new Date(monthStart.getFullYear(), monthStart.getMonth(), Math.min(7 + i * 7, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()));
+      const weekEvents = events.filter(event => {
+        if (!event.event_date) return false;
+        const eventDate = new Date(event.event_date);
+        return eventDate >= weekStart && eventDate <= weekEnd;
+      });
+      const revenue = weekEvents.reduce((sum, e) => sum + (e.total_cents ?? 0), 0);
+      return {
+        label: `Sem ${i + 1}`,
+        revenue,
+        count: weekEvents.length
+      };
+    });
+  }
+
+  const maxChartRevenue = Math.max(...chartStats.map(m => m.revenue), 1);
+
+  const periodLabels: Record<PeriodOption, string> = {
+    "12months": "12 derniers mois",
+    "year": `Année ${selectedYear}`,
+    "quarter": "Ce trimestre",
+    "month": "Ce mois-ci",
+  };
 
   return (
     <main className="admin-page">
@@ -70,28 +142,42 @@ export default async function Page() {
           <h3>Événements à venir</h3>
           <p>{upcomingEvents.length}</p>
           <span className="admin-muted" style={{ fontSize: '0.875rem' }}>
-            {pastEvents.length} passés
+            {events.length - upcomingEvents.length} passés
           </span>
         </div>
         <div className="admin-kpi-card">
-          <h3>Chiffre d&apos;affaires</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <h3 style={{ margin: 0 }}>Chiffre d&apos;affaires</h3>
+            <select
+              defaultValue={selectedYear}
+              onChange={(e) => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('year', e.target.value);
+                window.location.href = url.toString();
+              }}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 4,
+                border: '1px solid #ddd',
+                fontSize: '0.75rem',
+                background: '#fff',
+              }}
+            >
+              {years.map(y => (
+                <option key={y} value={y!}>{y}</option>
+              ))}
+            </select>
+          </div>
           <p>{formatCurrency(totalRevenue)}</p>
           <span className="admin-muted" style={{ fontSize: '0.875rem' }}>
-            {events.length} événements
+            {eventsForYear.length} événements en {selectedYear}
           </span>
         </div>
         <div className="admin-kpi-card">
           <h3>Solde restant</h3>
-          <p>{formatCurrency(totalBalance)}</p>
+          <p>{formatCurrency(futureBalance)}</p>
           <span className="admin-muted" style={{ fontSize: '0.875rem' }}>
-            {urgentBalances.length} en attente
-          </span>
-        </div>
-        <div className="admin-kpi-card">
-          <h3>Taux de paiement</h3>
-          <p>{paymentCompletionRate.toFixed(0)}%</p>
-          <span className="admin-muted" style={{ fontSize: '0.875rem' }}>
-            {formatCurrency(totalPaid)} encaissés
+            {urgentBalances.length} événements futurs
           </span>
         </div>
       </section>
@@ -106,147 +192,55 @@ export default async function Page() {
       <section className="admin-grid">
         {/* Revenue Chart */}
         <div className="admin-card" style={{ gridColumn: 'span 2' }}>
-          <h2>Chiffre d&apos;affaires (6 derniers mois)</h2>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 200, marginTop: 24 }}>
-            {monthlyStats.map((stat, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <div style={{ fontSize: '0.75rem', color: '#666' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ margin: 0 }}>Chiffre d&apos;affaires</h2>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(["12months", "year", "quarter", "month"] as PeriodOption[]).map((period) => (
+                <a
+                  key={period}
+                  href={`?period=${period}&year=${selectedYear}`}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 4,
+                    fontSize: '0.75rem',
+                    textDecoration: 'none',
+                    backgroundColor: selectedPeriod === period ? '#333' : '#eee',
+                    color: selectedPeriod === period ? '#fff' : '#333',
+                  }}
+                >
+                  {period === "12months" && "12 mois"}
+                  {period === "year" && "Année"}
+                  {period === "quarter" && "Trimestre"}
+                  {period === "month" && "Mois"}
+                </a>
+              ))}
+            </div>
+          </div>
+          <p className="admin-muted" style={{ marginBottom: 16 }}>{periodLabels[selectedPeriod]}</p>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 200 }}>
+            {chartStats.map((stat, i) => (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{ fontSize: '0.65rem', color: '#666', textAlign: 'center' }}>
                   {formatCurrency(stat.revenue)}
                 </div>
                 <div
                   style={{
                     width: '100%',
                     backgroundColor: '#333',
-                    height: Math.max((stat.revenue / maxMonthlyRevenue) * 150, 4),
+                    height: Math.max((stat.revenue / maxChartRevenue) * 140, 4),
                     borderRadius: 4,
                     transition: 'height 0.3s ease'
                   }}
                 />
-                <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                  {stat.month}
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, textAlign: 'center' }}>
+                  {stat.label}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                <div style={{ fontSize: '0.65rem', color: '#666' }}>
                   {stat.count} ev.
                 </div>
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Status Distribution */}
-        <div className="admin-card">
-          <h2>Statut des événements</h2>
-          <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span>Confirmes</span>
-                <span style={{ fontWeight: 700 }}>{confirmedEvents}</span>
-              </div>
-              <div style={{ height: 8, backgroundColor: '#eee', borderRadius: 4, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${events.length > 0 ? (confirmedEvents / events.length) * 100 : 0}%`,
-                    height: '100%',
-                    backgroundColor: '#22c55e',
-                    transition: 'width 0.3s ease'
-                  }}
-                />
-              </div>
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span>En attente</span>
-                <span style={{ fontWeight: 700 }}>{pendingEvents}</span>
-              </div>
-              <div style={{ height: 8, backgroundColor: '#eee', borderRadius: 4, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${events.length > 0 ? (pendingEvents / events.length) * 100 : 0}%`,
-                    height: '100%',
-                    backgroundColor: '#f59e0b',
-                    transition: 'width 0.3s ease'
-                  }}
-                />
-              </div>
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span>Annules</span>
-                <span style={{ fontWeight: 700 }}>{cancelledEvents}</span>
-              </div>
-              <div style={{ height: 8, backgroundColor: '#eee', borderRadius: 4, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${events.length > 0 ? (cancelledEvents / events.length) * 100 : 0}%`,
-                    height: '100%',
-                    backgroundColor: '#ef4444',
-                    transition: 'width 0.3s ease'
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Progress */}
-        <div className="admin-card">
-          <h2>Progression paiements</h2>
-          <div style={{ marginTop: 24 }}>
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <div style={{ fontSize: '3rem', fontWeight: 900, lineHeight: 1 }}>
-                {paymentCompletionRate.toFixed(0)}%
-              </div>
-              <div className="admin-muted">de completion</div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className="admin-muted">Encaisses</span>
-                <span style={{ fontWeight: 700 }}>{formatCurrency(totalPaid)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className="admin-muted">Restant</span>
-                <span style={{ fontWeight: 700, color: '#ef4444' }}>{formatCurrency(totalBalance)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid #eee' }}>
-                <span style={{ fontWeight: 700 }}>Total</span>
-                <span style={{ fontWeight: 700 }}>{formatCurrency(totalRevenue)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Urgent Payments */}
-        <div className="admin-card" style={{ gridColumn: 'span 2' }}>
-          <h2>Paiements urgents ({urgentBalances.length})</h2>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Client</th>
-                <th>Total</th>
-                <th>Solde</th>
-              </tr>
-            </thead>
-            <tbody>
-              {urgentBalances.slice(0, 5).map((event) => (
-                <tr key={event.id}>
-                  <td>{formatDate(event.event_date)}</td>
-                  <td>{event.client_name || "—"}</td>
-                  <td>{formatCurrency(event.total_cents)}</td>
-                  <td style={{ color: '#ef4444', fontWeight: 700 }}>
-                    {formatCurrency(event.balance_due_cents)}
-                  </td>
-                </tr>
-              ))}
-              {urgentBalances.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="admin-muted">
-                    Aucun paiement urgent.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
 
         {/* Leads */}
@@ -264,7 +258,6 @@ export default async function Page() {
             Voir tous les leads →
           </a>
         </div>
-
       </section>
     </main>
   );

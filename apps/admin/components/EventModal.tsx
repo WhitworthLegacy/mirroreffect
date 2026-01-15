@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { EventRow, PackRow } from "@/lib/adminData";
+import type { EventRow, PackRow, EventFinanceRow } from "@/lib/adminData";
 
 type Props = {
   event: EventRow | null;
@@ -29,13 +29,24 @@ function toDateInput(value: string | null) {
   return value ?? "";
 }
 
+function getFinance(event: EventRow | null): EventFinanceRow {
+  if (!event?.event_finance) return {};
+  if (Array.isArray(event.event_finance)) {
+    return event.event_finance[0] || {};
+  }
+  return event.event_finance;
+}
+
 export default function EventModal({ event, packs, onClose, onSaved }: Props) {
   const [draft, setDraft] = useState<EventRow | null>(event);
+  const [finance, setFinance] = useState<EventFinanceRow>(() => getFinance(event));
   const [isSaving, setIsSaving] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setDraft(event);
+    setFinance(getFinance(event));
     setError(null);
   }, [event]);
 
@@ -63,9 +74,48 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
+  const updateFinance = <K extends keyof EventFinanceRow>(key: K, value: EventFinanceRow[K]) => {
+    setFinance((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose();
+    }
+  };
+
+  const handleRecalculate = async () => {
+    if (!draft?.address) {
+      setError("Veuillez entrer une adresse pour recalculer");
+      return;
+    }
+
+    setIsRecalculating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/events/recalculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: draft.id, address: draft.address })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || "Erreur recalcul");
+      }
+      const data = await res.json();
+      // Update finance with recalculated values
+      setFinance((prev) => ({
+        ...prev,
+        km_one_way: data.km_one_way,
+        km_total: data.km_total,
+        fuel_cost_cents: data.fuel_cost_cents,
+        student_hours: data.student_hours,
+        student_rate_cents: data.student_rate_cents
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur recalcul");
+    } finally {
+      setIsRecalculating(false);
     }
   };
 
@@ -98,7 +148,7 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
     setIsSaving(true);
     setError(null);
     try {
-      const payload: Record<string, unknown> = {
+      const eventPayload: Record<string, unknown> = {
         event_date: draft.event_date || null,
         event_type: draft.event_type,
         language: draft.language,
@@ -117,17 +167,37 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
         on_site_contact: draft.on_site_contact
       };
 
+      const financePayload: Record<string, unknown> = {
+        student_name: finance.student_name || null,
+        student_hours: finance.student_hours || null,
+        student_rate_cents: finance.student_rate_cents || null,
+        km_one_way: finance.km_one_way || null,
+        km_total: finance.km_total || null,
+        fuel_cost_cents: finance.fuel_cost_cents || null,
+        commercial_name: finance.commercial_name || null,
+        commercial_commission_cents: finance.commercial_commission_cents || null,
+        gross_margin_cents: finance.gross_margin_cents || null
+      };
+
       const res = await fetch("/api/events", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ updates: [{ id: draft.id, event: payload }] })
+        body: JSON.stringify({
+          updates: [{
+            id: draft.id,
+            event: eventPayload,
+            finance: financePayload
+          }]
+        })
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || "Erreur sauvegarde");
       }
 
-      onSaved(draft);
+      // Update draft with finance for callback
+      const updatedEvent = { ...draft, event_finance: finance };
+      onSaved(updatedEvent);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur sauvegarde");
@@ -137,6 +207,13 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
   };
 
   const selectedPackName = draft.pack_id ? packMap.get(draft.pack_id) : "";
+
+  // Calculate gross margin
+  const totalRevenue = (draft.total_cents || 0) + (draft.transport_fee_cents || 0);
+  const studentCost = (finance.student_hours || 0) * (finance.student_rate_cents || 1400);
+  const fuelCost = finance.fuel_cost_cents || 0;
+  const commercialCost = finance.commercial_commission_cents || 0;
+  const calculatedMargin = totalRevenue - studentCost - fuelCost - commercialCost;
 
   return (
     <div className="admin-modal-backdrop" role="dialog" aria-modal="true" onClick={handleBackdropClick}>
@@ -151,6 +228,7 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
           </button>
         </div>
         <div className="admin-modal-body">
+          {/* Section Client */}
           <div className="admin-form-grid">
             <label className="admin-field">
               <span>Email</span>
@@ -224,6 +302,11 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
                 onChange={(e) => updateField("zone_id", e.target.value)}
               />
             </label>
+          </div>
+
+          {/* Section Tarification */}
+          <h3 style={{ marginTop: 24, marginBottom: 12, fontSize: 14, fontWeight: 600, color: '#374151' }}>Tarification</h3>
+          <div className="admin-form-grid">
             <label className="admin-field">
               <span>Pack</span>
               <select
@@ -258,23 +341,6 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
               />
             </label>
             <label className="admin-field">
-              <span>Extra (€)</span>
-              <input
-                type="text"
-                value=""
-                onChange={() => {}}
-                placeholder="0"
-              />
-            </label>
-            <label className="admin-field">
-              <span>TOTAL (€)</span>
-              <input
-                type="text"
-                value={centsToInput(draft.total_cents)}
-                onChange={(e) => updateField("total_cents", inputToCents(e.target.value))}
-              />
-            </label>
-            <label className="admin-field">
               <span>Acompte (€)</span>
               <input
                 type="text"
@@ -290,16 +356,119 @@ export default function EventModal({ event, packs, onClose, onSaved }: Props) {
                 onChange={(e) => updateField("balance_due_cents", inputToCents(e.target.value))}
               />
             </label>
-            <label className="admin-field" style={{ gridColumn: 'span 2' }}>
-              <span>Lien Mollie</span>
+          </div>
+
+          {/* Section Finance & Logistique */}
+          <h3 style={{ marginTop: 24, marginBottom: 12, fontSize: 14, fontWeight: 600, color: '#374151', display: 'flex', alignItems: 'center', gap: 12 }}>
+            Finance & Logistique
+            <button
+              type="button"
+              className="admin-chip"
+              onClick={handleRecalculate}
+              disabled={isRecalculating || !draft.address}
+              style={{ fontSize: 12, padding: '4px 8px' }}
+            >
+              {isRecalculating ? "Calcul..." : "Recalculer KM"}
+            </button>
+          </h3>
+          <div className="admin-form-grid">
+            <label className="admin-field">
+              <span>KM aller</span>
+              <input
+                type="number"
+                step="0.1"
+                value={finance.km_one_way ?? ""}
+                onChange={(e) => updateFinance("km_one_way", e.target.value ? parseFloat(e.target.value) : null)}
+              />
+            </label>
+            <label className="admin-field">
+              <span>KM total</span>
+              <input
+                type="number"
+                step="0.1"
+                value={finance.km_total ?? ""}
+                onChange={(e) => updateFinance("km_total", e.target.value ? parseFloat(e.target.value) : null)}
+              />
+            </label>
+            <label className="admin-field">
+              <span>Coût essence (€)</span>
               <input
                 type="text"
-                value=""
-                onChange={() => {}}
-                placeholder="URL Mollie"
+                value={centsToInput(finance.fuel_cost_cents)}
+                onChange={(e) => updateFinance("fuel_cost_cents", inputToCents(e.target.value))}
+              />
+            </label>
+            <div style={{ gridColumn: 'span 1' }} />
+
+            <label className="admin-field">
+              <span>Étudiant</span>
+              <input
+                type="text"
+                value={finance.student_name ?? ""}
+                onChange={(e) => updateFinance("student_name", e.target.value || null)}
+                placeholder="Nom de l'étudiant"
+              />
+            </label>
+            <label className="admin-field">
+              <span>Heures</span>
+              <input
+                type="number"
+                step="0.5"
+                value={finance.student_hours ?? ""}
+                onChange={(e) => updateFinance("student_hours", e.target.value ? parseFloat(e.target.value) : null)}
+              />
+            </label>
+            <label className="admin-field">
+              <span>Taux horaire (€)</span>
+              <input
+                type="text"
+                value={centsToInput(finance.student_rate_cents)}
+                onChange={(e) => updateFinance("student_rate_cents", inputToCents(e.target.value))}
+                placeholder="14"
+              />
+            </label>
+            <label className="admin-field">
+              <span>Total étudiant (€)</span>
+              <input
+                type="text"
+                value={centsToInput(studentCost)}
+                disabled
+                style={{ backgroundColor: '#f3f4f6' }}
+              />
+            </label>
+
+            <label className="admin-field">
+              <span>Commercial</span>
+              <input
+                type="text"
+                value={finance.commercial_name ?? ""}
+                onChange={(e) => updateFinance("commercial_name", e.target.value || null)}
+                placeholder="Nom du commercial"
+              />
+            </label>
+            <label className="admin-field">
+              <span>Commission (€)</span>
+              <input
+                type="text"
+                value={centsToInput(finance.commercial_commission_cents)}
+                onChange={(e) => updateFinance("commercial_commission_cents", inputToCents(e.target.value))}
+              />
+            </label>
+            <label className="admin-field" style={{ gridColumn: 'span 2' }}>
+              <span>Marge brute (€)</span>
+              <input
+                type="text"
+                value={centsToInput(calculatedMargin)}
+                disabled
+                style={{
+                  backgroundColor: '#f3f4f6',
+                  fontWeight: 700,
+                  color: calculatedMargin >= 0 ? '#059669' : '#dc2626'
+                }}
               />
             </label>
           </div>
+
           {error && <p className="admin-muted" style={{ color: 'red', marginTop: 16 }}>{error}</p>}
         </div>
         <div className="admin-modal-footer">
