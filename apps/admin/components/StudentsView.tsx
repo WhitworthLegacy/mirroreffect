@@ -13,17 +13,8 @@ type StudentEvent = {
   total_cents: number | null;
 };
 
-type MonthlyTotal = {
-  month: string;
-  student_name: string;
-  total_hours: number;
-  total_remuneration_cents: number;
-  event_count: number;
-};
-
 type Props = {
   studentEvents: StudentEvent[];
-  monthlyTotals: MonthlyTotal[];
 };
 
 type EditingCell = {
@@ -31,7 +22,10 @@ type EditingCell = {
   field: "student_hours" | "student_rate_cents";
 } | null;
 
-export default function StudentsView({ studentEvents, monthlyTotals }: Props) {
+// Default student rate in cents (14€/h)
+const DEFAULT_RATE_CENTS = 1400;
+
+export default function StudentsView({ studentEvents }: Props) {
   const [activeTab, setActiveTab] = useState<"events" | "monthly">("events");
   const [events, setEvents] = useState(studentEvents);
   const [editingCell, setEditingCell] = useState<EditingCell>(null);
@@ -59,14 +53,51 @@ export default function StudentsView({ studentEvents, monthlyTotals }: Props) {
     });
   }, [events, selectedMonth, selectedStudent]);
 
-  // Filtered monthly totals
+  // Filtered monthly totals - recalculated from filtered events
   const filteredMonthlyTotals = useMemo(() => {
-    return monthlyTotals.filter(m => {
-      if (selectedMonth && m.month !== selectedMonth) return false;
-      if (selectedStudent && m.student_name !== selectedStudent) return false;
-      return true;
-    });
-  }, [monthlyTotals, selectedMonth, selectedStudent]);
+    // Group filtered events by month + student
+    const byMonthStudent: Record<string, { hours: number; remuneration: number; count: number }> = {};
+
+    for (const e of filteredEvents) {
+      const monthKey = e.event_date.substring(0, 7);
+      const key = `${monthKey}|${e.student_name}`;
+      if (!byMonthStudent[key]) {
+        byMonthStudent[key] = { hours: 0, remuneration: 0, count: 0 };
+      }
+      const rate = e.student_rate_cents ?? DEFAULT_RATE_CENTS;
+      byMonthStudent[key].hours += e.student_hours ?? 0;
+      byMonthStudent[key].remuneration += (e.student_hours ?? 0) * rate;
+      byMonthStudent[key].count += 1;
+    }
+
+    return Object.entries(byMonthStudent)
+      .map(([key, data]) => {
+        const [month, student_name] = key.split("|");
+        return {
+          month,
+          student_name,
+          total_hours: data.hours,
+          total_remuneration_cents: data.remuneration,
+          event_count: data.count,
+        };
+      })
+      .sort((a, b) => {
+        if (a.month !== b.month) return b.month.localeCompare(a.month);
+        return a.student_name.localeCompare(b.student_name);
+      });
+  }, [filteredEvents]);
+
+  // KPIs based on filtered data
+  const kpis = useMemo(() => {
+    const uniqueStudents = new Set(filteredEvents.map(e => e.student_name)).size;
+    const totalEvents = filteredEvents.length;
+    const totalHours = filteredEvents.reduce((sum, e) => sum + (e.student_hours ?? 0), 0);
+    const totalRemuneration = filteredEvents.reduce((sum, e) => {
+      const rate = e.student_rate_cents ?? DEFAULT_RATE_CENTS;
+      return sum + (e.student_hours ?? 0) * rate;
+    }, 0);
+    return { uniqueStudents, totalEvents, totalHours, totalRemuneration };
+  }, [filteredEvents]);
 
   const startEdit = (eventId: string, field: "student_hours" | "student_rate_cents", currentValue: number | null) => {
     setEditingCell({ eventId, field });
@@ -143,12 +174,32 @@ export default function StudentsView({ studentEvents, monthlyTotals }: Props) {
   };
 
   const formatRate = (cents: number | null) => {
-    if (cents === null) return "—";
+    if (cents === null) return "14,00 €/h";
     return (cents / 100).toFixed(2).replace(".", ",") + " €/h";
   };
 
   return (
     <>
+      {/* Dynamic KPIs */}
+      <section className="admin-kpi" style={{ marginBottom: 24 }}>
+        <div className="admin-kpi-card">
+          <h3>{selectedStudent ? "Étudiant" : "Étudiants actifs"}</h3>
+          <p>{selectedStudent || kpis.uniqueStudents}</p>
+        </div>
+        <div className="admin-kpi-card">
+          <h3>Événements</h3>
+          <p>{kpis.totalEvents}</p>
+        </div>
+        <div className="admin-kpi-card">
+          <h3>Heures totales</h3>
+          <p>{kpis.totalHours.toFixed(1)}h</p>
+        </div>
+        <div className="admin-kpi-card">
+          <h3>Rémunération totale</h3>
+          <p>{formatCurrency(kpis.totalRemuneration)}</p>
+        </div>
+      </section>
+
       {/* Tabs */}
       <div className="admin-tabs">
         <button
@@ -220,7 +271,8 @@ export default function StudentsView({ studentEvents, monthlyTotals }: Props) {
               </thead>
               <tbody>
                 {filteredEvents.map((event) => {
-                  const remuneration = (event.student_hours ?? 0) * (event.student_rate_cents ?? 0);
+                  const rate = event.student_rate_cents ?? DEFAULT_RATE_CENTS;
+                  const remuneration = (event.student_hours ?? 0) * rate;
                   const isEditingHours = editingCell?.eventId === event.event_id && editingCell?.field === "student_hours";
                   const isEditingRate = editingCell?.eventId === event.event_id && editingCell?.field === "student_rate_cents";
 
@@ -316,9 +368,7 @@ export default function StudentsView({ studentEvents, monthlyTotals }: Props) {
                     </td>
                     <td></td>
                     <td style={{ textAlign: "right" }}>
-                      {formatCurrency(
-                        filteredEvents.reduce((sum, e) => sum + (e.student_hours ?? 0) * (e.student_rate_cents ?? 0), 0)
-                      )}
+                      {formatCurrency(kpis.totalRemuneration)}
                     </td>
                   </tr>
                 </tfoot>
@@ -376,9 +426,7 @@ export default function StudentsView({ studentEvents, monthlyTotals }: Props) {
                       {filteredMonthlyTotals.reduce((sum, t) => sum + t.total_hours, 0).toFixed(1)}h
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      {formatCurrency(
-                        filteredMonthlyTotals.reduce((sum, t) => sum + t.total_remuneration_cents, 0)
-                      )}
+                      {formatCurrency(kpis.totalRemuneration)}
                     </td>
                   </tr>
                 </tfoot>

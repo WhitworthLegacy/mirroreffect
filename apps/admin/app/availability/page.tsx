@@ -6,8 +6,8 @@ export default async function AvailabilityPage() {
 
   return (
     <main className="admin-page">
-      <h1>Disponibilites</h1>
-      <p className="admin-muted">Planning des dates bloquees et capacites.</p>
+      <h1>Disponibilités</h1>
+      <p className="admin-muted">Planning des dates bloquées et capacités.</p>
       {error && <p className="admin-muted">Erreur: {error}</p>}
       <AvailabilityCalendar events={events} />
     </main>
