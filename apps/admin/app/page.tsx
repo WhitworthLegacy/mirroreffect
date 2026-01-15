@@ -148,25 +148,24 @@ export default async function Page({
         <div className="admin-kpi-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <h3 style={{ margin: 0 }}>Chiffre d&apos;affaires</h3>
-            <select
-              defaultValue={selectedYear}
-              onChange={(e) => {
-                const url = new URL(window.location.href);
-                url.searchParams.set('year', e.target.value);
-                window.location.href = url.toString();
-              }}
-              style={{
-                padding: '4px 8px',
-                borderRadius: 4,
-                border: '1px solid #ddd',
-                fontSize: '0.75rem',
-                background: '#fff',
-              }}
-            >
-              {years.map(y => (
-                <option key={y} value={y!}>{y}</option>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {years.slice(0, 4).map(y => (
+                <a
+                  key={y}
+                  href={`?period=${selectedPeriod}&year=${y}`}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    fontSize: '0.75rem',
+                    textDecoration: 'none',
+                    backgroundColor: selectedYear === y ? '#333' : '#eee',
+                    color: selectedYear === y ? '#fff' : '#333',
+                  }}
+                >
+                  {y}
+                </a>
               ))}
-            </select>
+            </div>
           </div>
           <p>{formatCurrency(totalRevenue)}</p>
           <span className="admin-muted" style={{ fontSize: '0.875rem' }}>
