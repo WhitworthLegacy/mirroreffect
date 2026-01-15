@@ -13,6 +13,8 @@ type Props = {
 export default function EventsList({ events, packs }: Props) {
   const [rows, setRows] = useState<EventRow[]>(() => events);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isNewEvent, setIsNewEvent] = useState(false);
+  const [search, setSearch] = useState("");
 
   const packMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -23,14 +25,60 @@ export default function EventsList({ events, packs }: Props) {
     return map;
   }, [packs]);
 
-  const selectedEvent = rows.find((row) => row.id === selectedId) ?? null;
+  const filteredRows = useMemo(() => {
+    if (!search.trim()) return rows;
+    const q = search.toLowerCase();
+    return rows.filter((event) =>
+      (event.client_name?.toLowerCase().includes(q)) ||
+      (event.address?.toLowerCase().includes(q)) ||
+      (event.event_date?.includes(q))
+    );
+  }, [rows, search]);
+
+  const selectedEvent = isNewEvent
+    ? { id: "new", event_date: "", client_name: "", client_email: "", client_phone: "" } as EventRow
+    : rows.find((row) => row.id === selectedId) ?? null;
 
   const handleSaved = (updated: EventRow) => {
-    setRows((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+    if (isNewEvent) {
+      setRows((prev) => [updated, ...prev]);
+      setIsNewEvent(false);
+    } else {
+      setRows((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+    }
+  };
+
+  const handleClose = () => {
+    setSelectedId(null);
+    setIsNewEvent(false);
   };
 
   return (
     <>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
+        <input
+          type="text"
+          placeholder="Rechercher (nom, adresse, date)..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '8px 12px',
+            borderRadius: 6,
+            border: '1px solid #ddd',
+            fontSize: '0.875rem',
+          }}
+        />
+        <button
+          type="button"
+          className="admin-chip primary"
+          onClick={() => setIsNewEvent(true)}
+          style={{ padding: '8px 16px' }}
+        >
+          + Ajouter
+        </button>
+      </div>
+
       <div className="admin-list">
         <table className="admin-table">
           <thead>
@@ -42,7 +90,7 @@ export default function EventsList({ events, packs }: Props) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((event) => (
+            {filteredRows.map((event) => (
               <tr key={event.id} onClick={() => setSelectedId(event.id)} className="admin-row">
                 <td>{event.event_date ? formatDate(event.event_date) : "—"}</td>
                 <td>{event.client_name || "—"}</td>
@@ -50,10 +98,10 @@ export default function EventsList({ events, packs }: Props) {
                 <td>{event.address || "—"}</td>
               </tr>
             ))}
-            {rows.length === 0 && (
+            {filteredRows.length === 0 && (
               <tr>
                 <td colSpan={4} className="admin-muted">
-                  Aucun événement pour le moment.
+                  {search ? "Aucun résultat." : "Aucun événement pour le moment."}
                 </td>
               </tr>
             )}
@@ -65,8 +113,9 @@ export default function EventsList({ events, packs }: Props) {
         <EventModal
           event={selectedEvent}
           packs={packs}
-          onClose={() => setSelectedId(null)}
+          onClose={handleClose}
           onSaved={handleSaved}
+          isNew={isNewEvent}
         />
       )}
     </>

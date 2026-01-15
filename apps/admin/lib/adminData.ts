@@ -18,6 +18,7 @@ export type EventRow = {
   pack_id: string | null;
   address: string | null;
   on_site_contact: string | null;
+  guest_count: number | null;
   created_at: string | null;
   updated_at: string | null;
   event_finance?: EventFinanceRow[] | EventFinanceRow | null;
@@ -78,6 +79,7 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
         "pack_id",
         "address",
         "on_site_contact",
+        "guest_count",
         "created_at",
         "updated_at",
         "event_finance(*)"

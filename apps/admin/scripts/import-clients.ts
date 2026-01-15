@@ -135,6 +135,9 @@ async function importClients() {
     const depositEuros = parseNumber(record["Acompte"]);
     const balanceEuros = parseNumber(record["Solde Restant"]);
 
+    // Parse guest count
+    const guestCount = parseNumber(record["Invités"]);
+
     // Create event
     const eventData = {
       event_date: eventDate,
@@ -149,6 +152,7 @@ async function importClients() {
       transport_fee_cents: eurosToCents(transportEuros),
       deposit_cents: eurosToCents(depositEuros),
       balance_due_cents: eurosToCents(balanceEuros),
+      guest_count: guestCount ? Math.round(guestCount) : null,
       status: balanceEuros === 0 ? "confirmed" : "pending",
       balance_status: balanceEuros === 0 ? "paid" : "partial",
     };

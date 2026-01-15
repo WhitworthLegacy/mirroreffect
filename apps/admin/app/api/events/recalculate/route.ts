@@ -68,11 +68,15 @@ export async function POST(request: Request) {
     const meters = element.distance?.value ?? 0;
     const durationSeconds = element.duration?.value ?? 0;
     const kmOneWay = roundTwo(meters / 1000);
-    const kmTotal = roundTwo(kmOneWay * 4);
-    const studentHours = roundTwo(durationSeconds / 3600);
+    const kmTotal = roundTwo(kmOneWay * 4); // Aller-retour x2
 
-    const studentRateCents = 1400;
-    const fuelCostCents = Math.round(kmTotal * 0.15 * 100);
+    // Heures étudiant = temps trajet aller-retour + 90 min installation
+    const travelTimeHours = (durationSeconds * 2) / 3600; // Aller-retour
+    const installationHours = 1.5; // 90 minutes
+    const studentHours = roundTwo(travelTimeHours + installationHours);
+
+    const studentRateCents = 1400; // 14€/h
+    const fuelCostCents = Math.round(kmTotal * 0.15 * 100); // 0.15€/km
 
     const { error: financeError } = await supabase.from("event_finance").upsert(
       {
