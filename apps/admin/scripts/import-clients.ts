@@ -123,6 +123,7 @@ async function importClients() {
 
   for (const record of records) {
     const eventDate = parseDate(record["Date Event"]);
+    const closingDate = parseDate(record["Date Closing"]) || parseDate(record["Date Signature"]);
 
     // Skip rows without event date
     if (!eventDate) {
@@ -141,6 +142,7 @@ async function importClients() {
     // Create event
     const eventData = {
       event_date: eventDate,
+      closing_date: closingDate,
       event_type: determineEventType(record["Type Event"]),
       language: record["Language"]?.toUpperCase() === "NL" ? "nl" : "fr",
       client_name: record["Nom"] || null,
