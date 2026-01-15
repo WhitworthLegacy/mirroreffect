@@ -167,15 +167,15 @@ export default function StudentModal({ stat, onClose, onSaved, onDeleted }: Prop
               />
             </label>
           </div>
-          {error && <p className="admin-muted" style={{ color: 'red', marginTop: 16 }}>{error}</p>}
+          {error && <p style={{ color: 'var(--danger)', marginTop: 16 }}>{error}</p>}
         </div>
         <div className="admin-modal-footer">
           <button
             type="button"
-            className="admin-chip"
+            className="admin-chip danger"
             onClick={handleDelete}
             disabled={isSaving}
-            style={{ marginRight: 'auto', backgroundColor: '#ef4444', color: 'white' }}
+            style={{ marginRight: 'auto' }}
           >
             Supprimer
           </button>

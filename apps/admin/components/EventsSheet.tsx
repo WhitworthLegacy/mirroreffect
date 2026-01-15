@@ -244,6 +244,7 @@ export default function EventsSheet({ events, packs }: Props) {
           pack_id: null,
           address: null,
           on_site_contact: null,
+          guest_count: null,
           created_at: null,
           updated_at: null
         },

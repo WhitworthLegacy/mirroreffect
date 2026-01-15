@@ -377,7 +377,7 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
           </div>
 
           {/* Section Tarification */}
-          <h3 style={{ marginTop: 24, marginBottom: 12, fontSize: 14, fontWeight: 600, color: '#374151' }}>Tarification</h3>
+          <h3 style={{ marginTop: 24, marginBottom: 12, fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>Tarification</h3>
           <div className="admin-form-grid">
             <label className="admin-field">
               <span>Pack</span>
@@ -436,7 +436,7 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
           </div>
 
           {/* Section Finance & Logistique */}
-          <h3 style={{ marginTop: 24, marginBottom: 12, fontSize: 14, fontWeight: 600, color: '#374151', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h3 style={{ marginTop: 24, marginBottom: 12, fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 12 }}>
             Finance & Logistique
             <button
               type="button"
@@ -510,7 +510,7 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
                 type="text"
                 value={formatEuro(studentCost)}
                 disabled
-                style={{ backgroundColor: '#f3f4f6' }}
+                style={{ backgroundColor: 'var(--bg-primary)', opacity: 0.7 }}
               />
             </label>
 
@@ -538,24 +538,24 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
                 value={formatEuro(calculatedMargin)}
                 disabled
                 style={{
-                  backgroundColor: '#f3f4f6',
+                  backgroundColor: 'var(--bg-primary)',
                   fontWeight: 700,
-                  color: calculatedMargin >= 0 ? '#059669' : '#dc2626'
+                  color: calculatedMargin >= 0 ? 'var(--success)' : 'var(--danger)'
                 }}
               />
             </label>
           </div>
 
-          {error && <p className="admin-muted" style={{ color: 'red', marginTop: 16 }}>{error}</p>}
+          {error && <p style={{ color: 'var(--danger)', marginTop: 16 }}>{error}</p>}
         </div>
         <div className="admin-modal-footer">
           {!isNew && (
             <button
               type="button"
-              className="admin-chip"
+              className="admin-chip danger"
               onClick={handleDelete}
               disabled={isSaving}
-              style={{ marginRight: 'auto', backgroundColor: '#ef4444', color: 'white' }}
+              style={{ marginRight: 'auto' }}
             >
               Supprimer
             </button>
