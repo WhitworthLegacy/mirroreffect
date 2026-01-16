@@ -78,20 +78,20 @@ export async function POST(request: Request) {
     const studentRateCents = 1400; // 14€/h
     const fuelCostCents = Math.round(kmTotal * 0.15 * 100); // 0.15€/km
 
-    const { error: financeError } = await supabase.from("event_finance").upsert(
-      {
-        event_id: eventId,
+    // Update events table directly (finance fields now in same table)
+    const { error: updateError } = await supabase
+      .from("events")
+      .update({
         student_hours: studentHours,
         student_rate_cents: studentRateCents,
         km_one_way: kmOneWay,
         km_total: kmTotal,
         fuel_cost_cents: fuelCostCents
-      },
-      { onConflict: "event_id" }
-    );
+      })
+      .eq("id", eventId);
 
-    if (financeError) {
-      return NextResponse.json({ error: financeError.message }, { status: 500 });
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
     return NextResponse.json({

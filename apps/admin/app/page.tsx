@@ -3,44 +3,38 @@ import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { formatCurrency } from "@/lib/format";
 import DashboardCharts from "@/components/DashboardCharts";
 
+// Type combiné: v_monthly_stats (calculé) + monthly_stats (marketing)
 type MonthlyStats = {
-  id: string;
   month: string;
-  leads_meta: number | null;
-  spent_meta_cents: number | null;
-  cpl_meta_cents: number | null;
-  closing_meta: number | null;
-  conversion_meta_pct: number | null;
-  cpa_meta_cents: number | null;
-  leads_total: number | null;
-  cpl_total_cents: number | null;
+  // Closings (depuis v_monthly_stats)
   closing_total: number | null;
-  conversion_total_pct: number | null;
-  cpa_total_cents: number | null;
   closing_decouverte: number | null;
   closing_essentiel: number | null;
   closing_premium: number | null;
-  deposits_paid_cents: number | null;
+  deposits_signed_cents: number | null;
+  // Events (depuis v_monthly_stats)
   events_count: number | null;
   events_decouverte: number | null;
   events_essentiel: number | null;
   events_premium: number | null;
+  // Revenus (depuis v_monthly_stats)
   total_event_cents: number | null;
   deposits_event_cents: number | null;
   remaining_event_cents: number | null;
-  ca_total_cents: number | null;
-  ca_generated_cents: number | null;
   transport_cents: number | null;
-  pack_cost_cents: number | null;
+  ca_total_cents: number | null;
+  // Coûts (depuis v_monthly_stats)
   student_hours: number | null;
   student_cost_cents: number | null;
   fuel_cost_cents: number | null;
   commercial_commission_cents: number | null;
-  fixed_charges_cents: number | null;
+  pack_cost_cents: number | null;
+  // Marges (depuis v_monthly_stats)
   gross_margin_cents: number | null;
-  net_margin_cents: number | null;
   cashflow_gross_cents: number | null;
-  cashflow_net_cents: number | null;
+  // Marketing (depuis monthly_stats table)
+  leads_meta: number | null;
+  spent_meta_cents: number | null;
 };
 
 export default async function Page({
@@ -63,16 +57,29 @@ export default async function Page({
     events = snapshot.events;
     eventsError = snapshot.error;
 
-    // Get monthly_stats
-    const { data: statsData, error: statsError } = await supabase
-      .from("monthly_stats")
-      .select("*")
-      .order("month", { ascending: false });
+    // Get v_monthly_stats (vue calculée) et monthly_stats (données marketing)
+    const [viewResult, marketingResult] = await Promise.all([
+      supabase.from("v_monthly_stats").select("*").order("month", { ascending: false }),
+      supabase.from("monthly_stats").select("month, leads_meta, spent_meta_cents")
+    ]);
 
-    if (statsError) {
-      eventsError = eventsError || statsError.message;
+    if (viewResult.error) {
+      eventsError = eventsError || viewResult.error.message;
     } else {
-      monthlyStats = (statsData || []) as MonthlyStats[];
+      // Combiner les données de la vue avec les données marketing
+      const marketingByMonth = new Map(
+        (marketingResult.data || []).map(m => [m.month?.substring(0, 7), m])
+      );
+
+      monthlyStats = (viewResult.data || []).map(stat => {
+        const monthKey = stat.month?.substring(0, 7);
+        const marketing = marketingByMonth.get(monthKey);
+        return {
+          ...stat,
+          leads_meta: marketing?.leads_meta ?? null,
+          spent_meta_cents: marketing?.spent_meta_cents ?? null,
+        };
+      }) as MonthlyStats[];
     }
   } catch (error) {
     eventsError = error instanceof Error ? error.message : "Impossible de charger les données.";
@@ -115,8 +122,8 @@ export default async function Page({
 
   const yearlyTotalCA = statsForYear.reduce((sum, s) => sum + (s.ca_total_cents ?? 0), 0);
   const yearlyGrossMargin = statsForYear.reduce((sum, s) => sum + (s.gross_margin_cents ?? 0), 0);
-  const yearlyNetMargin = statsForYear.reduce((sum, s) => sum + (s.net_margin_cents ?? 0), 0);
-  const yearlyLeads = statsForYear.reduce((sum, s) => sum + (s.leads_total ?? 0), 0);
+  const yearlyCashflow = statsForYear.reduce((sum, s) => sum + (s.cashflow_gross_cents ?? 0), 0);
+  const yearlyLeads = statsForYear.reduce((sum, s) => sum + (s.leads_meta ?? 0), 0);
   const yearlyClosings = statsForYear.reduce((sum, s) => sum + (s.closing_total ?? 0), 0);
   const yearlyEventsCount = statsForYear.reduce((sum, s) => sum + (s.events_count ?? 0), 0);
   const yearlyAdSpend = statsForYear.reduce((sum, s) => sum + (s.spent_meta_cents ?? 0), 0);
@@ -162,11 +169,11 @@ export default async function Page({
           )}
         </div>
         <div className="admin-kpi-card">
-          <h3>Marge nette</h3>
-          <p>{formatCurrency(yearlyNetMargin)}</p>
+          <h3>Cashflow brut</h3>
+          <p>{formatCurrency(yearlyCashflow)}</p>
           {yearlyTotalCA > 0 && (
             <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-              {((yearlyNetMargin / yearlyTotalCA) * 100).toFixed(1)}% du CA
+              {((yearlyCashflow / yearlyTotalCA) * 100).toFixed(1)}% du CA
             </span>
           )}
         </div>

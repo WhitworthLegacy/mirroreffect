@@ -21,7 +21,22 @@ export type EventRow = {
   guest_count: number | null;
   created_at: string | null;
   updated_at: string | null;
-  event_finance?: EventFinanceRow[] | EventFinanceRow | null;
+  // Finance fields (formerly in event_finance)
+  student_name: string | null;
+  student_hours: number | null;
+  student_rate_cents: number | null;
+  km_one_way: number | null;
+  km_total: number | null;
+  fuel_cost_cents: number | null;
+  commercial_name: string | null;
+  commercial_commission_cents: number | null;
+  // Invoice references for ZenFacture
+  deposit_invoice_ref: string | null;
+  balance_invoice_ref: string | null;
+  invoice_deposit_paid: boolean | null;
+  invoice_balance_paid: boolean | null;
+  // Closing date for monthly calculations
+  closing_date: string | null;
 };
 
 export type PackRow = {
@@ -34,22 +49,6 @@ export type PackRow = {
   impressions_included?: number | null;
 };
 
-export type EventFinanceRow = {
-  event_id?: string | null;
-  student_name?: string | null;
-  student_hours?: number | null;
-  student_rate_cents?: number | null;
-  km_one_way?: number | null;
-  km_total?: number | null;
-  fuel_cost_cents?: number | null;
-  commercial_name?: string | null;
-  commercial_commission_cents?: number | null;
-  gross_margin_cents?: number | null;
-  invoice_deposit_paid?: boolean | null;
-  invoice_balance_paid?: boolean | null;
-  [key: string]: unknown;
-};
-
 export type AdminSnapshot = {
   events: EventRow[];
   packs: PackRow[];
@@ -60,33 +59,9 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   const supabase = createSupabaseServerClient();
   const { data: eventsData, error: eventsError } = await supabase
     .from("events")
-    .select(
-      [
-        "id",
-        "event_date",
-        "event_type",
-        "language",
-        "client_name",
-        "client_email",
-        "client_phone",
-        "zone_id",
-        "status",
-        "total_cents",
-        "transport_fee_cents",
-        "deposit_cents",
-        "balance_due_cents",
-        "balance_status",
-        "pack_id",
-        "address",
-        "on_site_contact",
-        "guest_count",
-        "created_at",
-        "updated_at",
-        "event_finance(*)"
-      ].join(", ")
-    )
+    .select("*")
     .order("event_date", { ascending: true })
-    .limit(200);
+    .limit(500);
 
   const { data: packsData, error: packsError } = await supabase
     .from("packs")

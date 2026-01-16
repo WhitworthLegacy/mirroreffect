@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { EventRow, PackRow, EventFinanceRow } from "@/lib/adminData";
+import type { EventRow, PackRow } from "@/lib/adminData";
 
 type Props = {
   event: EventRow | null;
@@ -48,24 +48,14 @@ function toDateInput(value: string | null) {
   return value;
 }
 
-function getFinance(event: EventRow | null): EventFinanceRow {
-  if (!event?.event_finance) return {};
-  if (Array.isArray(event.event_finance)) {
-    return event.event_finance[0] || {};
-  }
-  return event.event_finance;
-}
-
 export default function EventModal({ event, packs, onClose, onSaved, isNew = false }: Props) {
   const [draft, setDraft] = useState<EventRow | null>(event);
-  const [finance, setFinance] = useState<EventFinanceRow>(() => getFinance(event));
   const [isSaving, setIsSaving] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setDraft(event);
-    setFinance(getFinance(event));
     setError(null);
   }, [event]);
 
@@ -102,10 +92,6 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
-  const updateFinance = <K extends keyof EventFinanceRow>(key: K, value: EventFinanceRow[K]) => {
-    setFinance((prev) => ({ ...prev, [key]: value }));
-  };
-
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -137,8 +123,8 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         throw new Error(data?.error || "Erreur recalcul");
       }
       const data = await res.json();
-      // Update finance with recalculated values + auto commission
-      setFinance((prev) => ({
+      // Update draft with recalculated values + auto commission (all in same object now)
+      setDraft((prev) => prev ? {
         ...prev,
         km_one_way: data.km_one_way,
         km_total: data.km_total,
@@ -146,7 +132,7 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         student_hours: data.student_hours,
         student_rate_cents: data.student_rate_cents,
         commercial_commission_cents: calculateCommission()
-      }));
+      } : prev);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur recalcul");
     } finally {
@@ -183,7 +169,8 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
     setIsSaving(true);
     setError(null);
     try {
-      const eventPayload: Record<string, unknown> = {
+      // All fields in single payload (no more separate finance)
+      const payload: Record<string, unknown> = {
         event_date: draft.event_date || null,
         event_type: draft.event_type,
         language: draft.language,
@@ -201,18 +188,21 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         address: draft.address,
         on_site_contact: draft.on_site_contact,
         guest_count: draft.guest_count,
-      };
-
-      const financePayload: Record<string, unknown> = {
-        student_name: finance.student_name || null,
-        student_hours: finance.student_hours || null,
-        student_rate_cents: finance.student_rate_cents || null,
-        km_one_way: finance.km_one_way || null,
-        km_total: finance.km_total || null,
-        fuel_cost_cents: finance.fuel_cost_cents || null,
-        commercial_name: finance.commercial_name || null,
-        commercial_commission_cents: finance.commercial_commission_cents || calculateCommission(),
-        gross_margin_cents: finance.gross_margin_cents || null
+        // Finance fields (now in same table)
+        student_name: draft.student_name || null,
+        student_hours: draft.student_hours || null,
+        student_rate_cents: draft.student_rate_cents || null,
+        km_one_way: draft.km_one_way || null,
+        km_total: draft.km_total || null,
+        fuel_cost_cents: draft.fuel_cost_cents || null,
+        commercial_name: draft.commercial_name || null,
+        commercial_commission_cents: draft.commercial_commission_cents || calculateCommission(),
+        // Invoice refs
+        deposit_invoice_ref: draft.deposit_invoice_ref || null,
+        balance_invoice_ref: draft.balance_invoice_ref || null,
+        invoice_deposit_paid: draft.invoice_deposit_paid || false,
+        invoice_balance_paid: draft.invoice_balance_paid || false,
+        closing_date: draft.closing_date || null,
       };
 
       if (isNew) {
@@ -220,17 +210,14 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         const res = await fetch("/api/events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            event: eventPayload,
-            finance: financePayload
-          })
+          body: JSON.stringify(payload)
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           throw new Error(data?.error || "Erreur création");
         }
         const data = await res.json();
-        const updatedEvent = { ...draft, id: data.id, event_finance: finance };
+        const updatedEvent = { ...draft, id: data.item.id };
         onSaved(updatedEvent);
       } else {
         // Update existing event
@@ -240,8 +227,7 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
           body: JSON.stringify({
             updates: [{
               id: draft.id,
-              event: eventPayload,
-              finance: financePayload
+              event: payload
             }]
           })
         });
@@ -249,8 +235,7 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
           const data = await res.json().catch(() => ({}));
           throw new Error(data?.error || "Erreur sauvegarde");
         }
-        const updatedEvent = { ...draft, event_finance: finance };
-        onSaved(updatedEvent);
+        onSaved(draft);
       }
       onClose();
     } catch (err) {
@@ -263,11 +248,11 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
   const selectedPackName = draft.pack_id ? packMap.get(draft.pack_id) : "";
   const eventTypeFr = draft.event_type ? (EVENT_TYPES[draft.event_type] || draft.event_type) : "";
 
-  // Calculate gross margin
+  // Calculate gross margin (finance fields now directly in draft)
   const totalRevenue = (draft.total_cents || 0) + (draft.transport_fee_cents || 0);
-  const studentCost = (finance.student_hours || 0) * (finance.student_rate_cents || 1400);
-  const fuelCost = finance.fuel_cost_cents || 0;
-  const commercialCost = finance.commercial_commission_cents || calculateCommission();
+  const studentCost = (draft.student_hours || 0) * (draft.student_rate_cents || 1400);
+  const fuelCost = draft.fuel_cost_cents || 0;
+  const commercialCost = draft.commercial_commission_cents || calculateCommission();
   const calculatedMargin = totalRevenue - studentCost - fuelCost - commercialCost;
 
   return (
@@ -454,8 +439,8 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
               <input
                 type="number"
                 step="0.1"
-                value={finance.km_one_way ?? ""}
-                onChange={(e) => updateFinance("km_one_way", e.target.value ? parseFloat(e.target.value) : null)}
+                value={draft.km_one_way ?? ""}
+                onChange={(e) => updateField("km_one_way", e.target.value ? parseFloat(e.target.value) : null)}
               />
             </label>
             <label className="admin-field">
@@ -463,16 +448,16 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
               <input
                 type="number"
                 step="0.1"
-                value={finance.km_total ?? ""}
-                onChange={(e) => updateFinance("km_total", e.target.value ? parseFloat(e.target.value) : null)}
+                value={draft.km_total ?? ""}
+                onChange={(e) => updateField("km_total", e.target.value ? parseFloat(e.target.value) : null)}
               />
             </label>
             <label className="admin-field">
               <span>Coût essence (€)</span>
               <input
                 type="text"
-                value={formatEuro(finance.fuel_cost_cents)}
-                onChange={(e) => updateFinance("fuel_cost_cents", parseEuro(e.target.value))}
+                value={formatEuro(draft.fuel_cost_cents)}
+                onChange={(e) => updateField("fuel_cost_cents", parseEuro(e.target.value))}
               />
             </label>
             <div style={{ gridColumn: 'span 1' }} />
@@ -481,8 +466,8 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
               <span>Étudiant</span>
               <input
                 type="text"
-                value={finance.student_name ?? ""}
-                onChange={(e) => updateFinance("student_name", e.target.value || null)}
+                value={draft.student_name ?? ""}
+                onChange={(e) => updateField("student_name", e.target.value || null)}
                 placeholder="Nom de l'étudiant"
               />
             </label>
@@ -491,16 +476,16 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
               <input
                 type="number"
                 step="0.5"
-                value={finance.student_hours ?? ""}
-                onChange={(e) => updateFinance("student_hours", e.target.value ? parseFloat(e.target.value) : null)}
+                value={draft.student_hours ?? ""}
+                onChange={(e) => updateField("student_hours", e.target.value ? parseFloat(e.target.value) : null)}
               />
             </label>
             <label className="admin-field">
               <span>Taux horaire (€)</span>
               <input
                 type="text"
-                value={formatEuro(finance.student_rate_cents)}
-                onChange={(e) => updateFinance("student_rate_cents", parseEuro(e.target.value))}
+                value={formatEuro(draft.student_rate_cents)}
+                onChange={(e) => updateField("student_rate_cents", parseEuro(e.target.value))}
                 placeholder="14,00"
               />
             </label>
@@ -518,8 +503,8 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
               <span>Commercial</span>
               <input
                 type="text"
-                value={finance.commercial_name ?? ""}
-                onChange={(e) => updateFinance("commercial_name", e.target.value || null)}
+                value={draft.commercial_name ?? ""}
+                onChange={(e) => updateField("commercial_name", e.target.value || null)}
                 placeholder="Nom du commercial"
               />
             </label>
@@ -527,8 +512,8 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
               <span>Commission 10% (€)</span>
               <input
                 type="text"
-                value={formatEuro(finance.commercial_commission_cents ?? calculateCommission())}
-                onChange={(e) => updateFinance("commercial_commission_cents", parseEuro(e.target.value))}
+                value={formatEuro(draft.commercial_commission_cents ?? calculateCommission())}
+                onChange={(e) => updateField("commercial_commission_cents", parseEuro(e.target.value))}
               />
             </label>
             <label className="admin-field" style={{ gridColumn: 'span 2' }}>

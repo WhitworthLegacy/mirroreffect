@@ -114,8 +114,7 @@ async function importClients() {
   await loadPackMapping();
 
   // Clear existing data
-  console.log("Clearing existing events and event_finance...");
-  await supabase.from("event_finance").delete().neq("event_id", "00000000-0000-0000-0000-000000000000");
+  console.log("Clearing existing events...");
   await supabase.from("events").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
   let imported = 0;
@@ -139,8 +138,18 @@ async function importClients() {
     // Parse guest count
     const guestCount = parseNumber(record["Invités"]);
 
-    // Create event
+    // Parse finance data (now in same table as events)
+    const studentName = record["Etudiant"];
+    const studentHours = parseNumber(record["Heures Etudiant"]);
+    const kmOneWay = parseNumber(record["KM (Aller)"]);
+    const kmTotal = parseNumber(record["KM (Total)"]);
+    const fuelCost = parseNumber(record["Coût Essence"]);
+    const commercialName = record["Commercial"];
+    const commercialComm = parseNumber(record["Comm Commercial"]);
+
+    // Create event with all data (including finance fields)
     const eventData = {
+      // Core event fields
       event_date: eventDate,
       closing_date: closingDate,
       event_type: determineEventType(record["Type Event"]),
@@ -157,51 +166,30 @@ async function importClients() {
       guest_count: guestCount ? Math.round(guestCount) : null,
       status: balanceEuros === 0 ? "confirmed" : "pending",
       balance_status: balanceEuros === 0 ? "paid" : "partial",
+      // Finance fields (formerly in event_finance)
+      student_name: studentName || null,
+      student_hours: studentHours,
+      student_rate_cents: 1400, // 14€/h default rate
+      km_one_way: kmOneWay,
+      km_total: kmTotal,
+      fuel_cost_cents: eurosToCents(fuelCost),
+      commercial_name: commercialName || null,
+      commercial_commission_cents: eurosToCents(commercialComm),
+      // Invoice references for ZenFacture
+      deposit_invoice_ref: record["Ref Facture Acompte"] || null,
+      balance_invoice_ref: record["Ref Facture Solde"] || null,
+      invoice_deposit_paid: record["Acompte Payé"]?.toLowerCase() === "oui" || record["Acompte Payé"]?.toLowerCase() === "true",
+      invoice_balance_paid: record["Solde Payé"]?.toLowerCase() === "oui" || record["Solde Payé"]?.toLowerCase() === "true",
     };
 
-    const { data: insertedEvent, error: eventError } = await supabase
+    const { error: eventError } = await supabase
       .from("events")
-      .insert(eventData)
-      .select("id")
-      .single();
+      .insert(eventData);
 
     if (eventError) {
       console.error("Error inserting event:", eventError.message, record["Nom"]);
       skipped++;
       continue;
-    }
-
-    // Create event_finance if we have financial data
-    const studentName = record["Etudiant"];
-    const studentHours = parseNumber(record["Heures Etudiant"]);
-    const kmOneWay = parseNumber(record["KM (Aller)"]);
-    const kmTotal = parseNumber(record["KM (Total)"]);
-    const fuelCost = parseNumber(record["Coût Essence"]);
-    const commercialName = record["Commercial"];
-    const commercialComm = parseNumber(record["Comm Commercial"]);
-    const grossMargin = parseNumber(record["Marge Brut (Event)"]);
-
-    if (studentName || kmOneWay || commercialName || grossMargin) {
-      const financeData = {
-        event_id: insertedEvent.id,
-        student_name: studentName || null,
-        student_hours: studentHours,
-        student_rate_cents: 7000, // 70€ default rate
-        km_one_way: kmOneWay,
-        km_total: kmTotal,
-        fuel_cost_cents: eurosToCents(fuelCost),
-        commercial_name: commercialName || null,
-        commercial_commission_cents: eurosToCents(commercialComm),
-        gross_margin_cents: eurosToCents(grossMargin),
-      };
-
-      const { error: financeError } = await supabase
-        .from("event_finance")
-        .insert(financeData);
-
-      if (financeError) {
-        console.error("Error inserting event_finance:", financeError.message);
-      }
     }
 
     imported++;

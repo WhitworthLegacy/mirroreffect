@@ -2,12 +2,14 @@ import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { formatCurrency } from "@/lib/format";
 import StudentsList from "@/components/StudentsList";
 
+// Type pour v_student_monthly_stats (vue calculée)
 type StudentMonthlyStats = {
   month: string;
   student_name: string;
-  hours_raw: number | null;
-  hours_adjusted: number | null;
-  remuneration_cents: number | null;
+  total_hours: number | null;
+  total_remuneration_cents: number | null;
+  event_count: number | null;
+  avg_rate_cents: number | null;
 };
 
 export default async function ÉtudiantPage() {
@@ -17,7 +19,7 @@ export default async function ÉtudiantPage() {
   try {
     const supabase = createSupabaseServerClient();
     const { data, error: fetchError } = await supabase
-      .from("student_monthly_stats")
+      .from("v_student_monthly_stats")
       .select("*")
       .order("month", { ascending: false });
 
@@ -33,8 +35,8 @@ export default async function ÉtudiantPage() {
   // Calculate totals
   const uniqueStudents = new Set(studentStats.map(s => s.student_name)).size;
   const totalMonths = new Set(studentStats.map(s => s.month)).size;
-  const totalHours = studentStats.reduce((sum, s) => sum + (s.hours_adjusted || s.hours_raw || 0), 0);
-  const totalRemuneration = studentStats.reduce((sum, s) => sum + (s.remuneration_cents || 0), 0);
+  const totalHours = studentStats.reduce((sum, s) => sum + (s.total_hours || 0), 0);
+  const totalRemuneration = studentStats.reduce((sum, s) => sum + (s.total_remuneration_cents || 0), 0);
 
   return (
     <main className="admin-page">

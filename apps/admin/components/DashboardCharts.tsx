@@ -4,44 +4,38 @@ import { useState, useMemo } from "react";
 import { formatCurrency } from "@/lib/format";
 import type { EventRow } from "@/lib/adminData";
 
+// Type combiné: v_monthly_stats (calculé) + monthly_stats (marketing)
 type MonthlyStats = {
-  id: string;
   month: string;
-  leads_meta: number | null;
-  spent_meta_cents: number | null;
-  cpl_meta_cents: number | null;
-  closing_meta: number | null;
-  conversion_meta_pct: number | null;
-  cpa_meta_cents: number | null;
-  leads_total: number | null;
-  cpl_total_cents: number | null;
+  // Closings (depuis v_monthly_stats)
   closing_total: number | null;
-  conversion_total_pct: number | null;
-  cpa_total_cents: number | null;
   closing_decouverte: number | null;
   closing_essentiel: number | null;
   closing_premium: number | null;
-  deposits_paid_cents: number | null;
+  deposits_signed_cents: number | null;
+  // Events (depuis v_monthly_stats)
   events_count: number | null;
   events_decouverte: number | null;
   events_essentiel: number | null;
   events_premium: number | null;
+  // Revenus (depuis v_monthly_stats)
   total_event_cents: number | null;
   deposits_event_cents: number | null;
   remaining_event_cents: number | null;
-  ca_total_cents: number | null;
-  ca_generated_cents: number | null;
   transport_cents: number | null;
-  pack_cost_cents: number | null;
+  ca_total_cents: number | null;
+  // Coûts (depuis v_monthly_stats)
   student_hours: number | null;
   student_cost_cents: number | null;
   fuel_cost_cents: number | null;
   commercial_commission_cents: number | null;
-  fixed_charges_cents: number | null;
+  pack_cost_cents: number | null;
+  // Marges (depuis v_monthly_stats)
   gross_margin_cents: number | null;
-  net_margin_cents: number | null;
   cashflow_gross_cents: number | null;
-  cashflow_net_cents: number | null;
+  // Marketing (depuis monthly_stats table)
+  leads_meta: number | null;
+  spent_meta_cents: number | null;
 };
 
 type ChartType = "revenue" | "margin" | "leads" | "costs" | "events";
@@ -119,16 +113,16 @@ export default function DashboardCharts({ monthlyStats, events, selectedYear }: 
           return {
             label,
             value1: stat?.gross_margin_cents ?? 0,
-            value2: stat?.net_margin_cents ?? 0,
+            value2: stat?.cashflow_gross_cents ?? 0,
             label1: "Marge brute",
-            label2: "Marge nette",
+            label2: "Cashflow brut",
           };
         case "leads":
           return {
             label,
-            value1: stat?.leads_total ?? 0,
+            value1: stat?.leads_meta ?? 0,
             value2: stat?.closing_total ?? 0,
-            label1: "Leads",
+            label1: "Leads Meta",
             label2: "Closings",
             isCount: true,
           };
@@ -171,8 +165,8 @@ export default function DashboardCharts({ monthlyStats, events, selectedYear }: 
         month: date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }),
         ca: stat.ca_total_cents ?? 0,
         grossMargin: stat.gross_margin_cents ?? 0,
-        netMargin: stat.net_margin_cents ?? 0,
-        leads: stat.leads_total ?? 0,
+        cashflow: stat.cashflow_gross_cents ?? 0,
+        leads: stat.leads_meta ?? 0,
         closings: stat.closing_total ?? 0,
         events: stat.events_count ?? 0,
         adSpend: stat.spent_meta_cents ?? 0,
@@ -269,7 +263,7 @@ export default function DashboardCharts({ monthlyStats, events, selectedYear }: 
                   <th>Mois</th>
                   <th style={{ textAlign: "right" }}>CA</th>
                   <th style={{ textAlign: "right" }}>Marge brute</th>
-                  <th style={{ textAlign: "right" }}>Marge nette</th>
+                  <th style={{ textAlign: "right" }}>Cashflow</th>
                   <th style={{ textAlign: "right" }}>Leads</th>
                   <th style={{ textAlign: "right" }}>Closings</th>
                   <th style={{ textAlign: "right" }}>Events</th>
@@ -287,8 +281,8 @@ export default function DashboardCharts({ monthlyStats, events, selectedYear }: 
                       </span>
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      <span className={row.netMargin > 0 ? "admin-badge success" : "admin-badge danger"}>
-                        {formatCurrency(row.netMargin)}
+                      <span className={row.cashflow > 0 ? "admin-badge success" : "admin-badge danger"}>
+                        {formatCurrency(row.cashflow)}
                       </span>
                     </td>
                     <td style={{ textAlign: "right" }}>{row.leads}</td>
@@ -303,7 +297,7 @@ export default function DashboardCharts({ monthlyStats, events, selectedYear }: 
                   <td>Total</td>
                   <td style={{ textAlign: "right" }}>{formatCurrency(tableData.reduce((s, r) => s + r.ca, 0))}</td>
                   <td style={{ textAlign: "right" }}>{formatCurrency(tableData.reduce((s, r) => s + r.grossMargin, 0))}</td>
-                  <td style={{ textAlign: "right" }}>{formatCurrency(tableData.reduce((s, r) => s + r.netMargin, 0))}</td>
+                  <td style={{ textAlign: "right" }}>{formatCurrency(tableData.reduce((s, r) => s + r.cashflow, 0))}</td>
                   <td style={{ textAlign: "right" }}>{tableData.reduce((s, r) => s + r.leads, 0)}</td>
                   <td style={{ textAlign: "right" }}>{tableData.reduce((s, r) => s + r.closings, 0)}</td>
                   <td style={{ textAlign: "right" }}>{tableData.reduce((s, r) => s + r.events, 0)}</td>

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
+// All event fields including finance (now in same table)
 const EVENT_FIELDS = [
+  // Core event fields
   "event_date",
   "event_type",
   "language",
@@ -12,15 +14,33 @@ const EVENT_FIELDS = [
   "address",
   "on_site_contact",
   "pack_id",
+  "guest_count",
+  // Pricing fields
   "transport_fee_cents",
   "total_cents",
   "deposit_cents",
   "balance_due_cents",
   "balance_status",
-  "status"
+  "status",
+  // Finance fields (formerly in event_finance)
+  "student_name",
+  "student_hours",
+  "student_rate_cents",
+  "km_one_way",
+  "km_total",
+  "fuel_cost_cents",
+  "commercial_name",
+  "commercial_commission_cents",
+  // Invoice references for ZenFacture
+  "deposit_invoice_ref",
+  "balance_invoice_ref",
+  "invoice_deposit_paid",
+  "invoice_balance_paid",
+  // Closing date
+  "closing_date"
 ];
 
-function sanitizeEventPayload(payload: Record<string, unknown>) {
+function sanitizePayload(payload: Record<string, unknown>) {
   const cleaned: Record<string, unknown> = {};
   EVENT_FIELDS.forEach((field) => {
     if (Object.prototype.hasOwnProperty.call(payload, field)) {
@@ -31,26 +51,20 @@ function sanitizeEventPayload(payload: Record<string, unknown>) {
   return cleaned;
 }
 
-function sanitizeFinancePayload(payload: Record<string, unknown>) {
-  const cleaned: Record<string, unknown> = {};
-  Object.entries(payload).forEach(([key, value]) => {
-    cleaned[key] = value === "" ? null : value;
-  });
-  return cleaned;
-}
-
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
-      event?: Record<string, unknown>;
-      finance?: Record<string, unknown>;
-    };
+    const body = (await request.json()) as Record<string, unknown>;
 
-    if (!body?.event) {
-      return NextResponse.json({ error: "event payload missing" }, { status: 400 });
+    if (!body) {
+      return NextResponse.json({ error: "payload missing" }, { status: 400 });
     }
 
-    const eventPayload = sanitizeEventPayload(body.event);
+    // Support both old format (event + finance) and new flat format
+    const payload = body.event
+      ? { ...(body.event as Record<string, unknown>), ...(body.finance as Record<string, unknown> || {}) }
+      : body;
+
+    const eventPayload = sanitizePayload(payload);
     if (!eventPayload.event_date) {
       return NextResponse.json({ error: "event_date required" }, { status: 400 });
     }
@@ -64,17 +78,6 @@ export async function POST(request: Request) {
 
     if (error || !created) {
       return NextResponse.json({ error: error?.message ?? "create failed" }, { status: 500 });
-    }
-
-    if (body.finance) {
-      const financePayload = sanitizeFinancePayload(body.finance);
-      await supabase.from("event_finance").upsert(
-        {
-          event_id: created.id,
-          ...financePayload
-        },
-        { onConflict: "event_id" }
-      );
     }
 
     return NextResponse.json({ item: created });
@@ -107,23 +110,11 @@ export async function PATCH(request: Request) {
       const { id, event, finance } = update;
       if (!id) continue;
 
-      if (event && Object.keys(event).length > 0) {
-        const eventPayload = sanitizeEventPayload(event);
-        const { error } = await supabase.from("events").update(eventPayload).eq("id", id);
-        if (error) {
-          return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-      }
-
-      if (finance && Object.keys(finance).length > 0) {
-        const financePayload = sanitizeFinancePayload(finance);
-        const { error } = await supabase.from("event_finance").upsert(
-          {
-            event_id: id,
-            ...financePayload
-          },
-          { onConflict: "event_id" }
-        );
+      // Merge event and finance into single payload (all in events table now)
+      const merged = { ...(event || {}), ...(finance || {}) };
+      if (Object.keys(merged).length > 0) {
+        const payload = sanitizePayload(merged);
+        const { error } = await supabase.from("events").update(payload).eq("id", id);
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
         }
@@ -149,10 +140,7 @@ export async function DELETE(request: Request) {
 
     const supabase = createSupabaseServerClient();
 
-    // Delete finance data first (if exists)
-    await supabase.from("event_finance").delete().eq("event_id", body.id);
-
-    // Delete the event
+    // Delete the event (all data now in single table)
     const { error } = await supabase.from("events").delete().eq("id", body.id);
 
     if (error) {
