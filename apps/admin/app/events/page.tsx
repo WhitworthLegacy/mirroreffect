@@ -16,17 +16,13 @@ export default async function EventsPage() {
 
   return (
     <main className="admin-page">
-      <header style={{ marginBottom: 24 }}>
-        <h1>Events</h1>
-        <p className="admin-muted">Liste des events. Cliquez sur une ligne pour modifier.</p>
-        <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 4 }}>
-          📊 Données lues depuis Google Sheets (feuille "Clients") - chargement unique côté client
-        </p>
+      <header style={{ marginBottom: 32 }}>
+        <h1 style={{ marginBottom: 4 }}>Events</h1>
+        <p className="admin-muted">Manage all events and bookings</p>
       </header>
       {packsError && (
-        <div className="admin-card" style={{ marginBottom: 24 }}>
-          <h2>Erreur de chargement packs</h2>
-          <p className="admin-muted">{packsError}</p>
+        <div className="admin-card" style={{ marginBottom: 24, backgroundColor: 'rgba(205, 27, 23, 0.05)', borderColor: 'var(--fire-red)' }}>
+          <p style={{ color: 'var(--fire-red)', margin: 0 }}>{packsError}</p>
         </div>
       )}
       <EventsPageClient packs={packs} />
