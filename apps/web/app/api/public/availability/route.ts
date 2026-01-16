@@ -42,6 +42,7 @@ export async function GET(req: Request) {
 
     const headers = (rows[0] as string[]).map(h => String(h).trim());
     const dateIdx = headers.findIndex(h => h === "Date Event");
+    const depositPaidIdx = headers.findIndex(h => h === "Date Acompte Payé" || h === "Date acompte payé");
 
     if (dateIdx === -1) {
       console.error("[availability] Header 'Date Event' not found");
@@ -49,8 +50,15 @@ export async function GET(req: Request) {
     }
 
     // Compter les events sur cette date
+    // IMPORTANT: Only count rows with a non-empty "Date Acompte Payé" (paid deposits only)
     // Format date attendu: YYYY-MM-DD
     const reserved = rows.slice(1).filter(row => {
+      // Skip rows without paid deposit
+      if (depositPaidIdx >= 0) {
+        const depositPaid = String(row[depositPaidIdx] || "").trim();
+        if (!depositPaid) return false;
+      }
+
       const eventDate = String(row[dateIdx] || "").trim();
       // Normaliser les formats de date possibles
       if (eventDate === date) return true;
