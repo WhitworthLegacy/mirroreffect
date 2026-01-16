@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useSheetsStore } from "@/lib/sheetsStore";
 import { formatCurrency } from "@/lib/format";
 import DashboardCharts from "@/components/DashboardCharts";
@@ -49,7 +49,7 @@ export default function DashboardPageClient({ selectedYear }: Props) {
   const { events, statsRows, statsHeaders, isLoading, error, getCell, findRowByDate } = useSheetsStore();
 
   // Helper pour obtenir une valeur depuis Stats par header exact
-  const getStatsValue = (row: unknown[], headerName: string, asCents = false): number | null => {
+  const getStatsValue = useCallback((row: unknown[], headerName: string, asCents = false): number | null => {
     const headerIndex = statsHeaders.findIndex((h) => String(h).trim() === headerName);
     if (headerIndex < 0) {
       console.warn(`[Dashboard] Header "${headerName}" not found in Stats`);
@@ -57,7 +57,7 @@ export default function DashboardPageClient({ selectedYear }: Props) {
     }
     const value = row[headerIndex];
     return asCents ? parseEuropeanNumberToCents(value) : parseEuropeanNumber(value);
-  };
+  }, [statsHeaders]);
 
   // Filtrer les lignes Stats pour l'année sélectionnée
   const statsForYear = useMemo(() => {
@@ -128,7 +128,7 @@ export default function DashboardPageClient({ selectedYear }: Props) {
       cashflowNet,
       eventsCount,
     };
-  }, [statsForYear, statsHeaders]);
+  }, [statsForYear, getStatsValue]);
 
   // Filter events by year for fallback calculations
   const eventsForYear = useMemo(() => {
@@ -186,12 +186,16 @@ export default function DashboardPageClient({ selectedYear }: Props) {
 
   // Convertir statsRows en format MonthlyStats pour DashboardCharts (compatibilité)
   const monthlyStatsForCharts = useMemo(() => {
-    return statsForYear.map((row) => {
-      const dateIndex = statsHeaders.findIndex((h) => String(h).trim() === "Date");
-      const month = dateIndex >= 0 ? String(row[dateIndex] || "").trim() : "";
-      
-      return {
-        month: month || null,
+    return statsForYear
+      .map((row) => {
+        const dateIndex = statsHeaders.findIndex((h) => String(h).trim() === "Date");
+        const month = dateIndex >= 0 ? String(row[dateIndex] || "").trim() : "";
+        
+        // Filtrer les lignes sans mois valide
+        if (!month) return null;
+        
+        return {
+          month: month,
         closing_total: getStatsValue(row, "# closing Total", false),
         closing_decouverte: getStatsValue(row, "# C.Découverte", false),
         closing_essentiel: getStatsValue(row, "# C.Essentiel", false),
@@ -215,9 +219,10 @@ export default function DashboardPageClient({ selectedYear }: Props) {
         cashflow_gross_cents: getStatsValue(row, "Cashflow Brut (mensuel)", true),
         leads_meta: getStatsValue(row, "# Leads META", false),
         spent_meta_cents: getStatsValue(row, "Spent META", true),
-      };
-    });
-  }, [statsForYear, statsHeaders]);
+        };
+      })
+      .filter((stat): stat is NonNullable<typeof stat> => stat !== null);
+  }, [statsForYear, getStatsValue]);
 
   if (isLoading && !events.length) {
     return (
