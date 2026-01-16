@@ -30,6 +30,7 @@ export type EventRow = {
   fuel_cost_cents: number | null;
   commercial_name: string | null;
   commercial_commission_cents: number | null;
+  gross_margin_cents: number | null;
   // Invoice references for ZenFacture
   deposit_invoice_ref: string | null;
   balance_invoice_ref: string | null;
@@ -37,6 +38,20 @@ export type EventRow = {
   invoice_balance_paid: boolean | null;
   // Closing date for monthly calculations
   closing_date: string | null;
+};
+
+export type EventFinanceRow = {
+  student_name: string | null;
+  student_hours: number | null;
+  student_rate_cents: number | null;
+  km_one_way: number | null;
+  km_total: number | null;
+  fuel_cost_cents: number | null;
+  commercial_name: string | null;
+  commercial_commission_cents: number | null;
+  gross_margin_cents: number | null;
+  invoice_deposit_paid: boolean | null;
+  invoice_balance_paid: boolean | null;
 };
 
 export type PackRow = {

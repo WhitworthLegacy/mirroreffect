@@ -53,9 +53,20 @@ const financeDefaults: EventFinanceRow = {
 };
 
 function getFinanceFromEvent(event: EventRow): EventFinanceRow {
-  const financeData = event.event_finance ?? null;
-  const finance = Array.isArray(financeData) ? financeData[0] : financeData;
-  return { ...financeDefaults, ...(finance ?? {}) };
+  return {
+    ...financeDefaults,
+    student_name: event.student_name ?? null,
+    student_hours: event.student_hours ?? null,
+    student_rate_cents: event.student_rate_cents ?? null,
+    km_one_way: event.km_one_way ?? null,
+    km_total: event.km_total ?? null,
+    fuel_cost_cents: event.fuel_cost_cents ?? null,
+    commercial_name: event.commercial_name ?? null,
+    commercial_commission_cents: event.commercial_commission_cents ?? null,
+    gross_margin_cents: event.gross_margin_cents ?? null,
+    invoice_deposit_paid: event.invoice_deposit_paid ?? null,
+    invoice_balance_paid: event.invoice_balance_paid ?? null
+  };
 }
 
 function normalizeRows(events: EventRow[]): SheetRow[] {
