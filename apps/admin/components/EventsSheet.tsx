@@ -268,7 +268,22 @@ export default function EventsSheet({ events, packs }: Props) {
           on_site_contact: null,
           guest_count: null,
           created_at: null,
-          updated_at: null
+          updated_at: null,
+          // Finance fields
+          student_name: null,
+          student_hours: null,
+          student_rate_cents: 1400,
+          km_one_way: null,
+          km_total: null,
+          fuel_cost_cents: null,
+          commercial_name: null,
+          commercial_commission_cents: null,
+          gross_margin_cents: null,
+          deposit_invoice_ref: null,
+          balance_invoice_ref: null,
+          invoice_deposit_paid: null,
+          invoice_balance_paid: null,
+          closing_date: null
         },
         finance: getDefaultFinance()
       },
