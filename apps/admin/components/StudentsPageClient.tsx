@@ -5,7 +5,7 @@ import { useSheetsStore } from "@/lib/sheetsStore";
 import StudentsView from "@/components/StudentsView";
 
 export default function StudentsPageClient() {
-  const { rows: events, loading, error } = useClientsStore();
+  const { events, isLoading, error } = useSheetsStore();
 
   // Extract student data from events (student fields now directly in events)
   const studentEvents = useMemo(() => {
