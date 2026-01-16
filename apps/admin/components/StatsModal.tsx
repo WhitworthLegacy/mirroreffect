@@ -3,21 +3,36 @@
 import { useState, useEffect } from "react";
 import { formatCurrency } from "@/lib/format";
 
-// Type aligné avec v_student_monthly_stats (vue calculée)
-export type StudentMonthlyStats = {
+export type MonthlyStats = {
   month: string;
-  student_name: string;
-  total_hours: number | null;
-  total_remuneration_cents: number | null;
-  event_count: number | null;
-  avg_rate_cents: number | null;
-  hours_raw?: number | null;
-  hours_adjusted?: number | null;
-  remuneration_cents?: number | null;
+  closing_total?: number | null;
+  closing_decouverte?: number | null;
+  closing_essentiel?: number | null;
+  closing_premium?: number | null;
+  deposits_signed_cents?: number | null;
+  events_count?: number | null;
+  events_decouverte?: number | null;
+  events_essentiel?: number | null;
+  events_premium?: number | null;
+  total_event_cents?: number | null;
+  deposits_event_cents?: number | null;
+  remaining_event_cents?: number | null;
+  transport_cents?: number | null;
+  ca_total_cents?: number | null;
+  student_hours?: number | null;
+  student_cost_cents?: number | null;
+  fuel_cost_cents?: number | null;
+  commercial_commission_cents?: number | null;
+  pack_cost_cents?: number | null;
+  gross_margin_cents?: number | null;
+  cashflow_gross_cents?: number | null;
+  leads_meta?: number | null;
+  spent_meta_cents?: number | null;
+  [key: string]: unknown;
 };
 
 type Props = {
-  stat: StudentMonthlyStats | null;
+  stat: MonthlyStats | null;
   onClose: () => void;
   onSaved?: () => void;
 };
@@ -35,8 +50,8 @@ function parseEuro(value: string): number | null {
   return Math.round(parsed * 100);
 }
 
-export default function StudentModal({ stat, onClose, onSaved }: Props) {
-  const [draft, setDraft] = useState<StudentMonthlyStats | null>(stat);
+export default function StatsModal({ stat, onClose, onSaved }: Props) {
+  const [draft, setDraft] = useState<MonthlyStats | null>(stat);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,16 +75,10 @@ export default function StudentModal({ stat, onClose, onSaved }: Props) {
     setError(null);
 
     try {
-      const response = await fetch("/api/stats/students", {
+      const response = await fetch("/api/stats/monthly", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          month: draft.month,
-          student_name: draft.student_name,
-          hours_raw: draft.hours_raw ?? draft.total_hours,
-          hours_adjusted: draft.hours_adjusted ?? draft.total_hours,
-          remuneration_cents: draft.remuneration_cents ?? draft.total_remuneration_cents,
-        }),
+        body: JSON.stringify(draft),
       });
 
       if (!response.ok) {
@@ -86,23 +95,23 @@ export default function StudentModal({ stat, onClose, onSaved }: Props) {
     }
   };
 
-  const updateField = <K extends keyof StudentMonthlyStats>(key: K, value: StudentMonthlyStats[K]) => {
+  const updateField = (key: string, value: unknown) => {
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
   return (
     <div className="admin-modal-backdrop" role="dialog" aria-modal="true" onClick={handleBackdropClick}>
-      <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="admin-modal" style={{ maxWidth: 800 }} onClick={(e) => e.stopPropagation()}>
         <div className="admin-modal-header">
           <div>
-            <h2>{stat.student_name}</h2>
+            <h2>Statistiques mensuelles</h2>
             <p className="admin-muted">{monthLabel}</p>
           </div>
           <button type="button" className="admin-chip" onClick={onClose}>
             Fermer
           </button>
         </div>
-        <div className="admin-modal-body">
+        <div className="admin-modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
           {error && (
             <div style={{ padding: 12, background: "var(--error-bg)", color: "var(--error)", borderRadius: "var(--radius-sm)", marginBottom: 16 }}>
               {error}
@@ -115,60 +124,70 @@ export default function StudentModal({ stat, onClose, onSaved }: Props) {
                 type="month"
                 value={draft.month ? draft.month.substring(0, 7) : ""}
                 onChange={(e) => updateField("month", e.target.value ? `${e.target.value}-01` : "")}
-                disabled
-                style={{ opacity: 0.6 }}
               />
             </div>
             <div className="admin-field">
-              <span>Étudiant</span>
-              <input
-                type="text"
-                value={draft.student_name || ""}
-                onChange={(e) => updateField("student_name", e.target.value)}
-                disabled
-                style={{ opacity: 0.6 }}
-              />
-            </div>
-            <div className="admin-field">
-              <span>Heures brutes</span>
+              <span>Closings totaux</span>
               <input
                 type="number"
-                step="0.5"
-                value={draft.hours_raw ?? draft.total_hours ?? ""}
-                onChange={(e) => updateField("hours_raw", e.target.value ? parseFloat(e.target.value) : null)}
+                value={draft.closing_total ?? ""}
+                onChange={(e) => updateField("closing_total", e.target.value ? parseInt(e.target.value) : null)}
                 placeholder="0"
               />
             </div>
             <div className="admin-field">
-              <span>Heures ajustées</span>
+              <span>Événements totaux</span>
               <input
                 type="number"
-                step="0.5"
-                value={draft.hours_adjusted ?? draft.total_hours ?? ""}
-                onChange={(e) => updateField("hours_adjusted", e.target.value ? parseFloat(e.target.value) : null)}
+                value={draft.events_count ?? ""}
+                onChange={(e) => updateField("events_count", e.target.value ? parseInt(e.target.value) : null)}
                 placeholder="0"
               />
             </div>
             <div className="admin-field">
-              <span>Rémunération (€)</span>
+              <span>CA Total (€)</span>
               <input
                 type="text"
-                value={formatEuro(draft.remuneration_cents ?? draft.total_remuneration_cents)}
-                onChange={(e) => updateField("remuneration_cents", parseEuro(e.target.value))}
+                value={formatEuro(draft.ca_total_cents)}
+                onChange={(e) => updateField("ca_total_cents", parseEuro(e.target.value))}
                 placeholder="0,00"
               />
             </div>
             <div className="admin-field">
-              <span>Événements</span>
-              <div style={{ padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                {stat.event_count ?? 0}
-              </div>
+              <span>Marge brute (€)</span>
+              <input
+                type="text"
+                value={formatEuro(draft.gross_margin_cents)}
+                onChange={(e) => updateField("gross_margin_cents", parseEuro(e.target.value))}
+                placeholder="0,00"
+              />
             </div>
             <div className="admin-field">
-              <span>Taux moyen</span>
-              <div style={{ padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                {stat.avg_rate_cents ? formatCurrency(stat.avg_rate_cents) + "/h" : "—"}
-              </div>
+              <span>Cashflow brut (€)</span>
+              <input
+                type="text"
+                value={formatEuro(draft.cashflow_gross_cents)}
+                onChange={(e) => updateField("cashflow_gross_cents", parseEuro(e.target.value))}
+                placeholder="0,00"
+              />
+            </div>
+            <div className="admin-field">
+              <span>Leads Meta</span>
+              <input
+                type="number"
+                value={draft.leads_meta ?? ""}
+                onChange={(e) => updateField("leads_meta", e.target.value ? parseInt(e.target.value) : null)}
+                placeholder="0"
+              />
+            </div>
+            <div className="admin-field">
+              <span>Dépenses Pub Meta (€)</span>
+              <input
+                type="text"
+                value={formatEuro(draft.spent_meta_cents)}
+                onChange={(e) => updateField("spent_meta_cents", parseEuro(e.target.value))}
+                placeholder="0,00"
+              />
             </div>
           </div>
         </div>

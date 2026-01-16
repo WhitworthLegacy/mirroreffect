@@ -57,10 +57,12 @@ export default async function Page({
     events = snapshot.events;
     eventsError = snapshot.error;
 
-    // Lire les stats depuis Google Sheets au lieu de Supabase
+    // ✅ Lire les stats depuis Google Sheets (feuille "Stats")
     try {
       const { readMonthlyStatsFromSheets } = await import("@/lib/googleSheets");
+      console.log("[Dashboard] Loading stats from Google Sheets (sheet: 'Stats')");
       const sheetsStats = await readMonthlyStatsFromSheets();
+      console.log(`[Dashboard] Loaded ${sheetsStats.length} stats from Google Sheets`);
       
       if (sheetsStats && sheetsStats.length > 0) {
         // Convertir les données au format attendu
@@ -185,6 +187,9 @@ export default async function Page({
         <p className="admin-muted">
           Vue d&apos;ensemble des performances et métriques clés.
         </p>
+        <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 4 }}>
+          📊 Données lues depuis Google Sheets (feuille "Stats")
+        </p>
       </header>
 
       {/* Year selector */}
@@ -285,3 +290,4 @@ export default async function Page({
     </main>
   );
 }
+

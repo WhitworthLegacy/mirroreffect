@@ -1,8 +1,9 @@
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { formatCurrency } from "@/lib/format";
 import StudentsList from "@/components/StudentsList";
+import { readStudentStatsFromSheets } from "@/lib/googleSheets";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
-// Type pour v_student_monthly_stats (vue calculée)
+// Type pour student monthly stats
 type StudentMonthlyStats = {
   month: string;
   student_name: string;
@@ -17,19 +18,52 @@ export default async function ÉtudiantPage() {
   let studentStats: StudentMonthlyStats[] = [];
 
   try {
-    const supabase = createSupabaseServerClient();
-    const { data, error: fetchError } = await supabase
-      .from("v_student_monthly_stats")
-      .select("*")
-      .order("month", { ascending: false });
-
-    if (fetchError) {
-      error = fetchError.message;
+    // Read from Google Sheets (primary source)
+    const sheetsStats = await readStudentStatsFromSheets();
+    
+    if (sheetsStats && sheetsStats.length > 0) {
+      // Convert data to expected format
+      studentStats = sheetsStats.map((stat) => {
+        const convertCents = (value: unknown): number | null => {
+          if (value === null || value === undefined || value === "") return null;
+          const num = typeof value === "string" ? parseFloat(value.replace(",", ".")) : Number(value);
+          return Number.isNaN(num) ? null : Math.round(num * 100); // Convert to cents
+        };
+        const convertNumber = (value: unknown): number | null => {
+          if (value === null || value === undefined || value === "") return null;
+          const num = typeof value === "string" ? parseFloat(value.replace(",", ".")) : Number(value);
+          return Number.isNaN(num) ? null : num;
+        };
+        return {
+          month: stat.month || "",
+          student_name: stat.student_name || "",
+          total_hours: convertNumber(stat.total_hours || stat.hours_raw || stat.hours_adjusted),
+          total_remuneration_cents: convertCents(stat.total_remuneration_cents || stat.remuneration_cents),
+          event_count: convertNumber(stat.event_count),
+          avg_rate_cents: convertCents(stat.avg_rate_cents),
+        } as StudentMonthlyStats;
+      }).sort((a, b) => b.month.localeCompare(a.month));
     } else {
-      studentStats = data || [];
+      throw new Error("No data from Google Sheets");
     }
-  } catch (err) {
-    error = err instanceof Error ? err.message : "Impossible de charger les données.";
+  } catch (sheetsError) {
+    console.error("Failed to load student stats from Google Sheets, falling back to Supabase:", sheetsError);
+    // Fallback to Supabase
+    try {
+      const supabase = createSupabaseServerClient();
+      const { data, error: fetchError } = await supabase
+        .from("v_student_monthly_stats")
+        .select("*")
+        .order("month", { ascending: false });
+
+      if (fetchError) {
+        error = fetchError.message;
+      } else {
+        studentStats = (data || []) as StudentMonthlyStats[];
+      }
+    } catch (err) {
+      error = err instanceof Error ? err.message : "Impossible de charger les données.";
+    }
   }
 
   // Calculate totals

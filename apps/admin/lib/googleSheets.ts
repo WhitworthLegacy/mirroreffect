@@ -647,8 +647,14 @@ export async function readMonthlyStatsFromSheets(): Promise<Array<{
   month: string;
   [key: string]: unknown;
 }>> {
+  // ✅ LECTURE DEPUIS LA FEUILLE "Stats"
+  console.log("[Google Sheets] Reading monthly stats from sheet: 'Stats'");
   const rows = await readSheet("Stats");
-  if (rows.length === 0) return [];
+  if (rows.length === 0) {
+    console.log("[Google Sheets] Sheet 'Stats' is empty");
+    return [];
+  }
+  console.log(`[Google Sheets] Found ${rows.length - 1} rows in sheet 'Stats' (excluding header)`);
 
   // First row is headers
   const headers = rows[0] as string[];
@@ -661,6 +667,193 @@ export async function readMonthlyStatsFromSheets(): Promise<Array<{
     });
     return obj as { month: string; [key: string]: unknown };
   });
+}
+
+/**
+ * Read student monthly stats from Google Sheets
+ */
+export async function readStudentStatsFromSheets(): Promise<Array<{
+  month: string;
+  student_name: string;
+  [key: string]: unknown;
+}>> {
+  const rows = await readSheet("Students");
+  if (rows.length === 0) return [];
+
+  // First row is headers
+  const headers = rows[0] as string[];
+  const dataRows = rows.slice(1);
+
+  return dataRows.map((row) => {
+    const obj: Record<string, unknown> = {};
+    headers.forEach((header, index) => {
+      obj[header] = row[index];
+    });
+    return obj as { month: string; student_name: string; [key: string]: unknown };
+  });
+}
+
+/**
+ * Read commercial monthly stats from Google Sheets
+ */
+export async function readCommercialStatsFromSheets(): Promise<Array<{
+  month: string;
+  commercial_name: string;
+  [key: string]: unknown;
+}>> {
+  const rows = await readSheet("Commercial");
+  if (rows.length === 0) return [];
+
+  // First row is headers
+  const headers = rows[0] as string[];
+  const dataRows = rows.slice(1);
+
+  return dataRows.map((row) => {
+    const obj: Record<string, unknown> = {};
+    headers.forEach((header, index) => {
+      obj[header] = row[index];
+    });
+    return obj as { month: string; commercial_name: string; [key: string]: unknown };
+  });
+}
+
+/**
+ * Update or insert a row in a sheet by composite key (month + name)
+ */
+async function updateRowByCompositeKey(
+  sheetName: string,
+  key1: string,
+  key1Value: string,
+  key2: string,
+  key2Value: string,
+  values: Record<string, unknown>
+): Promise<void> {
+  const cfg = getConfig();
+  
+  if (cfg.gasWebAppUrl) {
+    await gasRequest("updateRowByCompositeKey", {
+      sheetName,
+      key1,
+      key1Value,
+      key2,
+      key2Value,
+      values,
+    });
+    return;
+  }
+
+  // Use direct API - find row by composite key
+  const rows = await readSheet(sheetName);
+  if (rows.length === 0) throw new Error(`Sheet "${sheetName}" is empty`);
+
+  const headers = rows[0] as string[];
+  const dataRows = rows.slice(1);
+  
+  const key1Idx = headers.findIndex(h => String(h).trim() === key1);
+  const key2Idx = headers.findIndex(h => String(h).trim() === key2);
+  
+  if (key1Idx < 0 || key2Idx < 0) {
+    throw new Error(`Keys "${key1}" or "${key2}" not found in sheet "${sheetName}"`);
+  }
+
+  const rowIndex = dataRows.findIndex(
+    row => String(row[key1Idx]) === String(key1Value) && String(row[key2Idx]) === String(key2Value)
+  );
+
+  // Build values array in header order
+  const valuesArray = headers.map(header => {
+    if (header === key1) return key1Value;
+    if (header === key2) return key2Value;
+    return values[header] ?? "";
+  });
+
+  if (rowIndex === -1) {
+    // Row not found, append it
+    await appendRowToSheet(sheetName, valuesArray);
+  } else {
+    // Update existing row
+    const updateRange = `${sheetName}!A${rowIndex + 2}:${getColumnLetter(headers.length)}${rowIndex + 2}`;
+    const token = await getAccessToken();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.spreadsheetId}/values/${updateRange}?valueInputOption=RAW`;
+    await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ values: [valuesArray] }),
+    });
+  }
+}
+
+/**
+ * Write monthly stats to Google Sheets
+ */
+export async function writeMonthlyStatsToSheets(stat: {
+  month: string;
+  [key: string]: unknown;
+}): Promise<void> {
+  // For Stats, we use month as the key (assuming one row per month)
+  const rows = await readSheet("Stats");
+  if (rows.length === 0) throw new Error("Stats sheet is empty");
+  
+  const headers = rows[0] as string[];
+  const dataRows = rows.slice(1);
+  
+  const monthIdx = headers.findIndex(h => String(h).trim().toLowerCase() === "month");
+  if (monthIdx < 0) throw new Error("Month column not found in Stats sheet");
+
+  const rowIndex = dataRows.findIndex(row => String(row[monthIdx]) === String(stat.month));
+  
+  // Build values array in header order
+  const valuesArray = headers.map(header => {
+    const headerLower = String(header).trim().toLowerCase();
+    if (headerLower === "month") return stat.month;
+    return stat[header] ?? "";
+  });
+
+  if (rowIndex === -1) {
+    await appendRowToSheet("Stats", valuesArray);
+  } else {
+    const updateRange = `Stats!A${rowIndex + 2}:${getColumnLetter(headers.length)}${rowIndex + 2}`;
+    const token = await getAccessToken();
+    const cfg = getConfig();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.spreadsheetId}/values/${updateRange}?valueInputOption=RAW`;
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ values: [valuesArray] }),
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to update Stats: ${error}`);
+    }
+  }
+}
+
+/**
+ * Write student stats to Google Sheets
+ */
+export async function writeStudentStatsToSheets(stat: {
+  month: string;
+  student_name: string;
+  [key: string]: unknown;
+}): Promise<void> {
+  await updateRowByCompositeKey("Students", "month", stat.month, "student_name", stat.student_name, stat);
+}
+
+/**
+ * Write commercial stats to Google Sheets
+ */
+export async function writeCommercialStatsToSheets(stat: {
+  month: string;
+  commercial_name: string;
+  [key: string]: unknown;
+}): Promise<void> {
+  await updateRowByCompositeKey("Commercial", "month", stat.month, "commercial_name", stat.commercial_name, stat);
 }
 
 /**
@@ -872,8 +1065,14 @@ export async function readEventsFromSheets(): Promise<Array<{
   invoice_balance_paid: boolean | null;
   closing_date: string | null;
 }>> {
+  // ✅ LECTURE DEPUIS LA FEUILLE "Clients" (pas "Events")
+  console.log("[Google Sheets] Reading events from sheet: 'Clients'");
   const rows = await readSheet("Clients");
-  if (rows.length === 0) return [];
+  if (rows.length === 0) {
+    console.log("[Google Sheets] Sheet 'Clients' is empty");
+    return [];
+  }
+  console.log(`[Google Sheets] Found ${rows.length - 1} rows in sheet 'Clients' (excluding header)`);
 
   // First row is headers
   const headers = rows[0].map(h => String(h).trim()) as string[];

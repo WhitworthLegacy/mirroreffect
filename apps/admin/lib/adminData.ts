@@ -74,10 +74,12 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   let events: EventRow[] = [];
   let eventsError: string | null = null;
 
-  // Read events from Google Sheets (primary source)
+  // ✅ Read events from Google Sheets (feuille "Clients" - primary source)
   try {
     const { readEventsFromSheets } = await import("./googleSheets");
+    console.log("[getAdminSnapshot] Loading events from Google Sheets (sheet: 'Clients')");
     events = await readEventsFromSheets();
+    console.log(`[getAdminSnapshot] Loaded ${events.length} events from Google Sheets`);
   } catch (error) {
     eventsError = error instanceof Error ? error.message : "Failed to load events from Google Sheets";
     console.error("Error loading events from Google Sheets:", error);

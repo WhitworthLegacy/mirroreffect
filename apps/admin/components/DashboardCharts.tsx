@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { formatCurrency } from "@/lib/format";
 import type { EventRow } from "@/lib/adminData";
+import StatsModal, { type MonthlyStats as StatsModalType } from "./StatsModal";
 
 // Type combiné: v_monthly_stats (calculé) + monthly_stats (marketing)
 type MonthlyStats = {
@@ -56,6 +57,7 @@ const CHART_CONFIGS: Record<ChartType, { label: string; color: string }> = {
 
 export default function DashboardCharts({ monthlyStats, events, selectedYear }: Props) {
   const [activeChart, setActiveChart] = useState<ChartType>("revenue");
+  const [selectedStat, setSelectedStat] = useState<StatsModalType | null>(null);
   const [showComparison, setShowComparison] = useState(false);
 
   // Filter stats for selected year and sort by month
@@ -271,26 +273,32 @@ export default function DashboardCharts({ monthlyStats, events, selectedYear }: 
                 </tr>
               </thead>
               <tbody>
-                {tableData.map((row, i) => (
-                  <tr key={i}>
-                    <td style={{ textTransform: "capitalize" }}>{row.month}</td>
-                    <td style={{ textAlign: "right", fontWeight: 600 }}>{formatCurrency(row.ca)}</td>
-                    <td style={{ textAlign: "right" }}>
-                      <span className={row.grossMargin > 0 ? "admin-badge success" : "admin-badge danger"}>
-                        {formatCurrency(row.grossMargin)}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      <span className={row.cashflow > 0 ? "admin-badge success" : "admin-badge danger"}>
-                        {formatCurrency(row.cashflow)}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "right" }}>{row.leads}</td>
-                    <td style={{ textAlign: "right" }}>{row.closings}</td>
-                    <td style={{ textAlign: "right" }}>{row.events}</td>
-                    <td style={{ textAlign: "right" }}>{formatCurrency(row.adSpend)}</td>
-                  </tr>
-                ))}
+                {tableData.map((row, i) => {
+                  const stat = monthlyStats.find(s => {
+                    const statMonth = new Date(s.month).toLocaleDateString("fr-BE", { year: "numeric", month: "long" });
+                    return statMonth.toLowerCase() === row.month.toLowerCase();
+                  });
+                  return (
+                    <tr key={i} onClick={() => stat && setSelectedStat(stat as StatsModalType)} style={{ cursor: stat ? "pointer" : "default" }}>
+                      <td style={{ textTransform: "capitalize" }}>{row.month}</td>
+                      <td style={{ textAlign: "right", fontWeight: 600 }}>{formatCurrency(row.ca)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        <span className={row.grossMargin > 0 ? "admin-badge success" : "admin-badge danger"}>
+                          {formatCurrency(row.grossMargin)}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <span className={row.cashflow > 0 ? "admin-badge success" : "admin-badge danger"}>
+                          {formatCurrency(row.cashflow)}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: "right" }}>{row.leads}</td>
+                      <td style={{ textAlign: "right" }}>{row.closings}</td>
+                      <td style={{ textAlign: "right" }}>{row.events}</td>
+                      <td style={{ textAlign: "right" }}>{formatCurrency(row.adSpend)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr style={{ background: "var(--bg-tertiary)", fontWeight: 700 }}>

@@ -56,6 +56,7 @@ export default function StudentsList({ initialStats }: Props) {
       <StudentModal
         stat={selectedStat}
         onClose={() => setSelectedStat(null)}
+        onSaved={() => window.location.reload()}
       />
     </>
   );

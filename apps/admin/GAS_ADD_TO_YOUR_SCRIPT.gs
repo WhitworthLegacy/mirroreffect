@@ -41,6 +41,10 @@ function handleAdminActions_(body) {
       // Nouvelle action pour mettre à jour par Event ID avec mapping de colonnes
       return updateRowByEventIdForAdmin_(sh, head, data.eventId, data.values);
       
+    case 'updateRowByCompositeKey':
+      // Nouvelle action pour mettre à jour par clé composite (month + name)
+      return updateRowByCompositeKeyForAdmin_(sh, head, data.sheetName, data.key1, data.key1Value, data.key2, data.key2Value, data.values);
+      
     case 'deleteRow':
       return deleteRowForAdmin_(sh, head, data.sheetName, data.id);
       
@@ -181,6 +185,60 @@ function updateRowByEventIdForAdmin_(sh, head, eventId, values) {
 }
 
 /**
+ * Met à jour une ligne par clé composite (ex: month + student_name)
+ */
+function updateRowByCompositeKeyForAdmin_(sh, head, sheetName, key1, key1Value, key2, key2Value, values) {
+  let targetSheet = sh;
+  
+  if (sheetName === 'Students' || sheetName === 'Commercial' || sheetName === 'Stats') {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    targetSheet = ss.getSheetByName(sheetName);
+    if (!targetSheet) {
+      return { error: 'Sheet "' + sheetName + '" not found' };
+    }
+  } else if (sheetName !== 'Clients') {
+    return { error: 'Sheet not found: ' + sheetName };
+  }
+  
+  const vals = targetSheet.getDataRange().getValues();
+  const headRow = vals.shift().map(String);
+  const dataRows = vals;
+  
+  // Trouver les indices des colonnes clés
+  const key1Idx = headRow.findIndex(h => h === key1);
+  const key2Idx = headRow.findIndex(h => h === key2);
+  
+  if (key1Idx < 0 || key2Idx < 0) {
+    return { error: 'Keys not found: ' + key1 + ' or ' + key2 };
+  }
+  
+  // Trouver la ligne
+  const rowIndex = dataRows.findIndex(row => 
+    String(row[key1Idx]) === String(key1Value) && String(row[key2Idx]) === String(key2Value)
+  );
+  
+  // Construire le tableau de valeurs dans l'ordre des colonnes
+  const valuesArray = headRow.map(header => {
+    if (header === key1) return key1Value;
+    if (header === key2) return key2Value;
+    return values[header] !== undefined ? values[header] : '';
+  });
+  
+  if (rowIndex === -1) {
+    // Ligne non trouvée, on l'ajoute
+    targetSheet.appendRow(valuesArray);
+    return { success: true, action: 'appended' };
+  }
+  
+  // Mettre à jour la ligne
+  const rowNum = rowIndex + 2;
+  const range = targetSheet.getRange(rowNum, 1, 1, headRow.length);
+  range.setValues([valuesArray]);
+  
+  return { success: true, action: 'updated' };
+}
+
+/**
  * Supprime une ligne par ID (Event ID pour Clients)
  */
 function deleteRowForAdmin_(sh, head, sheetName, id) {
@@ -244,7 +302,8 @@ function doPost(e){
 
     // ✅ NOUVEAU : Actions Admin (Next.js) - AJOUTEZ CETTE SECTION
     if (body.action && (body.action === 'readSheet' || body.action === 'appendRow' || 
-        body.action === 'updateRow' || body.action === 'updateRowByEventId' || body.action === 'deleteRow')) {
+        body.action === 'updateRow' || body.action === 'updateRowByEventId' || 
+        body.action === 'updateRowByCompositeKey' || body.action === 'deleteRow')) {
       const result = handleAdminActions_(body);
       return _json(result.error ? { error: result.error } : { data: result });
     }

@@ -17,9 +17,19 @@ export default async function EventsPage() {
 
   return (
     <main className="admin-page">
-      <h1>Events</h1>
-      <p className="admin-muted">Liste des events. Cliquez sur une ligne pour modifier.</p>
-      {error && <p className="admin-muted">Erreur: {error}</p>}
+      <header style={{ marginBottom: 24 }}>
+        <h1>Events</h1>
+        <p className="admin-muted">Liste des events. Cliquez sur une ligne pour modifier.</p>
+        <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 4 }}>
+          📊 Données lues depuis Google Sheets (feuille "Clients")
+        </p>
+      </header>
+      {error && (
+        <div className="admin-card" style={{ marginBottom: 24 }}>
+          <h2>Erreur de chargement</h2>
+          <p className="admin-muted">{error}</p>
+        </div>
+      )}
       <EventsList events={events} packs={packs} />
     </main>
   );
