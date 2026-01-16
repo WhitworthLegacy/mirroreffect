@@ -6,9 +6,6 @@ import type { EventRow } from "@/lib/adminData";
 /**
  * Synchronise tous les events de Supabase vers Google Sheets
  * Cette route peut être appelée par un cron job (Vercel Cron) toutes les 15 minutes
- * 
- * Pour activer le cron sur Vercel, ajouter dans vercel.json:
- * crons: [{ path: "/api/sync/google-sheets", schedule: "*/15 * * * *" }]
  */
 export async function GET(request: Request) {
   // Vérifier l'authentification (optionnel, mais recommandé)
