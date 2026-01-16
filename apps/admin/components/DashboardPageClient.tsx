@@ -264,8 +264,8 @@ export default function DashboardPageClient({ selectedYear }: Props) {
         ))}
       </div>
 
-      {/* Main KPIs */}
-      <section className="admin-kpi">
+      {/* Main KPIs - 3 columns as per design spec */}
+      <section className="admin-kpi" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
         <div className="admin-kpi-card">
           <h3>CA Total</h3>
           <p>{formatCurrency(kpis.caTotal)}</p>
@@ -288,24 +288,6 @@ export default function DashboardPageClient({ selectedYear }: Props) {
           )}
         </div>
         <div className="admin-kpi-card">
-          <h3>Marge brute opé.</h3>
-          <p>{formatCurrency(kpis.margeBruteOpe)}</p>
-          {kpis.caTotal > 0 && (
-            <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-              {((kpis.margeBruteOpe / kpis.caTotal) * 100).toFixed(1)}% du CA
-            </span>
-          )}
-        </div>
-        <div className="admin-kpi-card">
-          <h3>Cashflow brut</h3>
-          <p>{formatCurrency(kpis.cashflowBrut)}</p>
-          {kpis.caTotal > 0 && (
-            <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-              {((kpis.cashflowBrut / kpis.caTotal) * 100).toFixed(1)}% du CA
-            </span>
-          )}
-        </div>
-        <div className="admin-kpi-card">
           <h3>Cashflow net</h3>
           <p>{formatCurrency(kpis.cashflowNet)}</p>
           {kpis.caTotal > 0 && (
@@ -314,34 +296,65 @@ export default function DashboardPageClient({ selectedYear }: Props) {
             </span>
           )}
         </div>
-        <div className="admin-kpi-card">
-          <h3>Événements à venir</h3>
-          <p>{upcomingEvents.length}</p>
-          <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-            {formatCurrency(futureBalance)} à encaisser
-          </span>
-        </div>
       </section>
 
-      {/* Secondary KPIs */}
-      <section className="admin-kpi" style={{ marginTop: 16 }}>
-        <div className="admin-kpi-card">
-          <h3>Marge nette opé.</h3>
-          <p>{formatCurrency(kpis.margeNetteOpe)}</p>
-          {kpis.caTotal > 0 && (
+      {/* Secondary KPIs - Collapsible section */}
+      <details style={{ marginTop: 16 }}>
+        <summary style={{
+          cursor: "pointer",
+          padding: "12px 0",
+          fontSize: "0.875rem",
+          fontWeight: 600,
+          color: "var(--text-secondary)",
+          borderBottom: "1px solid var(--border)",
+          marginBottom: 16
+        }}>
+          Plus de métriques
+        </summary>
+        <section className="admin-kpi" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+          <div className="admin-kpi-card">
+            <h3>Marge brute opé.</h3>
+            <p>{formatCurrency(kpis.margeBruteOpe)}</p>
+            {kpis.caTotal > 0 && (
+              <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
+                {((kpis.margeBruteOpe / kpis.caTotal) * 100).toFixed(1)}% du CA
+              </span>
+            )}
+          </div>
+          <div className="admin-kpi-card">
+            <h3>Cashflow brut</h3>
+            <p>{formatCurrency(kpis.cashflowBrut)}</p>
+            {kpis.caTotal > 0 && (
+              <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
+                {((kpis.cashflowBrut / kpis.caTotal) * 100).toFixed(1)}% du CA
+              </span>
+            )}
+          </div>
+          <div className="admin-kpi-card">
+            <h3>Marge nette opé.</h3>
+            <p>{formatCurrency(kpis.margeNetteOpe)}</p>
+            {kpis.caTotal > 0 && (
+              <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
+                {((kpis.margeNetteOpe / kpis.caTotal) * 100).toFixed(1)}% du CA
+              </span>
+            )}
+          </div>
+          <div className="admin-kpi-card">
+            <h3>Événements à venir</h3>
+            <p>{upcomingEvents.length}</p>
             <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-              {((kpis.margeNetteOpe / kpis.caTotal) * 100).toFixed(1)}% du CA
+              {formatCurrency(futureBalance)} à encaisser
             </span>
-          )}
-        </div>
-        <div className="admin-kpi-card">
-          <h3>Leads à convertir</h3>
-          <p>{leadCandidates.length}</p>
-          <a href="/crm" className="admin-muted" style={{ fontSize: "0.875rem" }}>
-            Voir CRM →
-          </a>
-        </div>
-      </section>
+          </div>
+          <div className="admin-kpi-card">
+            <h3>Leads à convertir</h3>
+            <p>{leadCandidates.length}</p>
+            <a href="/crm" className="admin-muted" style={{ fontSize: "0.875rem" }}>
+              Voir CRM →
+            </a>
+          </div>
+        </section>
+      </details>
 
       {error && (
         <div className="admin-card" style={{ marginTop: 24 }}>
