@@ -75,30 +75,38 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </header>
 
       <div className="admin-content">
-        {/* Topbar with Refresh button */}
+        {/* Topbar with Refresh button - Figma design */}
         <div style={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           alignItems: 'center',
           marginBottom: 24,
-          padding: '12px 0',
+          gap: 16,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {hasAnyDirty() && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--warning)' }}>
-                ⚠️ Unsaved changes
-              </span>
-            )}
-            {lastSyncAt && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Last sync: {formatLastSync(lastSyncAt)}
-              </span>
-            )}
-          </div>
+          {hasAnyDirty() && (
+            <span style={{ fontSize: '0.75rem', color: 'var(--warning)' }}>
+              ⚠️ Unsaved changes
+            </span>
+          )}
+          {lastSyncAt && (
+            <span style={{ fontSize: '0.75rem', color: 'var(--gray-muted)' }}>
+              Last sync: {formatLastSync(lastSyncAt)}
+            </span>
+          )}
           <button
             type="button"
             onClick={handleRefresh}
             disabled={isLoading}
+            onMouseOver={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.background = 'var(--satin-gold)';
+                e.currentTarget.style.color = 'white';
+              }
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--satin-gold)';
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -112,12 +120,25 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               color: 'var(--satin-gold)',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
+              opacity: isLoading ? 0.6 : 1,
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                animation: isLoading ? 'spin 1s linear infinite' : 'none',
+              }}
+            >
               <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
             </svg>
-            {isLoading ? "Refreshing..." : "Refresh Data"}
+            <span style={{ fontSize: '0.875rem' }}>{isLoading ? "Refreshing..." : "Refresh Data"}</span>
           </button>
         </div>
         {children}

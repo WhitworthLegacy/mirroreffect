@@ -718,6 +718,21 @@ a:hover {
   color: var(--accent-dark);
 }
 
+/* Spin animation for refresh icon */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Utility class for spacing */
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
 /* Responsive */
 @media (max-width: 720px) {
   .admin-form-grid {
