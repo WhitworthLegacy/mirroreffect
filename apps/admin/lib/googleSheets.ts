@@ -179,6 +179,7 @@ async function getAccessToken(): Promise<string> {
 
 /**
  * Make request via Google Apps Script Web App (if configured)
+ * Utilise la fonction robuste gasPostAdmin pour gérer les redirects et détecter HTML
  */
 async function gasRequest(action: string, data?: unknown): Promise<unknown> {
   const cfg = getConfig();
@@ -186,71 +187,9 @@ async function gasRequest(action: string, data?: unknown): Promise<unknown> {
     throw new Error("GAS_WEBAPP_URL not configured");
   }
 
-  const keyToUse = cfg.gasKey || "p8V9kqJYwz0M_3rXy1tLZbQF5sNaC2h7"; // Default to your existing key
-  
-  // Log for debugging (only in development)
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[GAS Request] Action: ${action}, Key: ${keyToUse.substring(0, 10)}...`);
-  }
-
-  const response = await fetch(cfg.gasWebAppUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      action,
-      key: keyToUse,
-      data,
-    }),
-  });
-
-  // Handle redirects (Google Apps Script Web Apps sometimes redirect)
-  if (response.status === 200 && response.redirected) {
-    // If redirected, follow the redirect
-    const redirectUrl = response.url;
-    const redirectResponse = await fetch(redirectUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        action,
-        key: cfg.gasKey || "p8V9kqJYwz0M_3rXy1tLZbQF5sNaC2h7",
-        data,
-      }),
-    });
-    if (!redirectResponse.ok) {
-      const error = await redirectResponse.text();
-      throw new Error(`Google Apps Script error: ${error}`);
-    }
-    const redirectResult = await redirectResponse.json();
-    if (redirectResult.error) {
-      throw new Error(redirectResult.error);
-    }
-    return redirectResult.data;
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage = `Google Apps Script error: ${errorText}`;
-    try {
-      const errorJson = JSON.parse(errorText);
-      if (errorJson.error) {
-        errorMessage = errorJson.error;
-      }
-    } catch {
-      // Not JSON, use text as is
-    }
-    throw new Error(errorMessage);
-  }
-
-  const result = await response.json();
-  if (result.error) {
-    throw new Error(result.error);
-  }
-
-  return result.data;
+  // Utiliser la fonction robuste depuis lib/gas.ts
+  const { gasPostAdmin } = await import("./gas");
+  return gasPostAdmin(action, data);
 }
 
 /**
@@ -381,10 +320,28 @@ export async function readSheet(sheetName: string): Promise<unknown[][]> {
   
   // Use Google Apps Script if configured
   if (cfg.gasWebAppUrl) {
-    const result = await gasRequest("readSheet", { sheetName }) as {
-      values?: unknown[][];
-    };
-    return result.values || [];
+    try {
+      const result = await gasRequest("readSheet", { sheetName });
+      
+      // GAS returns { values: [...] } directly, not wrapped in { data: { values: [...] } }
+      // But gasRequest returns result.data, so if GAS returns { data: { values: [...] } },
+      // then result is { values: [...] }
+      if (result && typeof result === 'object' && 'values' in result) {
+        const values = (result as { values: unknown[][] }).values;
+        return Array.isArray(values) ? values : [];
+      }
+      
+      // Fallback: if result is directly an array or has a different structure
+      if (Array.isArray(result)) {
+        return result;
+      }
+      
+      console.error("[readSheet] Unexpected GAS response format:", result);
+      return [];
+    } catch (error) {
+      console.error(`[readSheet] Error reading sheet "${sheetName}" from GAS:`, error);
+      throw error;
+    }
   }
 
   // Use direct API
