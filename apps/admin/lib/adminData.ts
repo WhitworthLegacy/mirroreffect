@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "./supabaseServer";
 
 export type EventRow = {
   id: string;
-  event_date: string;
+  event_date: string | null;
   event_type: string | null;
   language: string | null;
   client_name: string | null;
