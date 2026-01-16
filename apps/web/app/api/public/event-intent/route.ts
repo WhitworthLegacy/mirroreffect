@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { gasPost } from "@/lib/gas";
 
 const EventIntentSchema = z.object({
-  event_id: z.string().uuid().optional(),
+  lead_id: z.string().optional(),
   language: z.enum(["fr", "nl"]).default("fr"),
   client_name: z.string().min(2),
   client_email: z.string().email(),
@@ -17,6 +17,16 @@ const EventIntentSchema = z.object({
   balance_due_cents: z.number().int().min(0)
 });
 
+// Générer un ID unique pour le lead
+function generateLeadId(): string {
+  return `LEAD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+}
+
+// Convertir cents en euros formaté
+function centsToEuros(cents: number): string {
+  return (cents / 100).toFixed(2).replace(".", ",");
+}
+
 export async function POST(req: Request) {
   const raw = await req.json().catch(() => null);
   const parsed = EventIntentSchema.safeParse(raw);
@@ -25,56 +35,79 @@ export async function POST(req: Request) {
     return Response.json({ error: "invalid_body", issues: parsed.error.format() }, { status: 400 });
   }
 
-  const supabase = createSupabaseServerClient();
   const data = parsed.data;
+  const leadId = data.lead_id || generateLeadId();
 
-  if (data.event_id) {
-    const { error } = await supabase
-      .from("events")
-      .update({
-        language: data.language,
-        client_name: data.client_name,
-        client_email: data.client_email,
-        client_phone: data.client_phone,
-        event_date: data.event_date,
-        address: data.address,
-        transport_fee_cents: data.transport_fee_cents,
-        total_cents: data.total_cents,
-        deposit_cents: data.deposit_cents,
-        balance_due_cents: data.balance_due_cents,
-        status: "active"
-      })
-      .eq("id", data.event_id);
+  try {
+    if (data.lead_id) {
+      // Update existing lead
+      const result = await gasPost({
+        action: "updateRowByLeadId",
+        key: process.env.GAS_KEY,
+        data: {
+          sheetName: "Leads",
+          leadId: data.lead_id,
+          values: {
+            "Language": data.language,
+            "Nom": data.client_name,
+            "Email": data.client_email,
+            "Phone": data.client_phone,
+            "Date Event": data.event_date,
+            "Lieu Event": data.address,
+            "Pack": data.pack_code,
+            "Options": data.options.join(", "),
+            "Transport (€)": centsToEuros(data.transport_fee_cents),
+            "Total": centsToEuros(data.total_cents),
+            "Acompte": centsToEuros(data.deposit_cents),
+            "Solde Restant": centsToEuros(data.balance_due_cents),
+            "Updated At": new Date().toISOString()
+          }
+        }
+      });
 
-    if (error) {
-      return Response.json({ error: "event_update_failed" }, { status: 500 });
+      if (!result.ok) {
+        console.error("[event-intent] Update failed:", result.error);
+        return Response.json({ error: "lead_update_failed" }, { status: 500 });
+      }
+
+      return Response.json({ lead_id: data.lead_id });
     }
 
-    return Response.json({ event_id: data.event_id });
+    // Create new lead
+    const result = await gasPost({
+      action: "appendRow",
+      key: process.env.GAS_KEY,
+      data: {
+        sheetName: "Leads",
+        values: {
+          "Lead ID": leadId,
+          "Type Event": "b2c",
+          "Language": data.language,
+          "Nom": data.client_name,
+          "Email": data.client_email,
+          "Phone": data.client_phone,
+          "Date Event": data.event_date,
+          "Lieu Event": data.address,
+          "Pack": data.pack_code,
+          "Options": data.options.join(", "),
+          "Transport (€)": centsToEuros(data.transport_fee_cents),
+          "Total": centsToEuros(data.total_cents),
+          "Acompte": centsToEuros(data.deposit_cents),
+          "Solde Restant": centsToEuros(data.balance_due_cents),
+          "Status": "intent",
+          "Created At": new Date().toISOString()
+        }
+      }
+    });
+
+    if (!result.ok) {
+      console.error("[event-intent] Create failed:", result.error);
+      return Response.json({ error: "lead_create_failed" }, { status: 500 });
+    }
+
+    return Response.json({ lead_id: leadId });
+  } catch (error) {
+    console.error("[event-intent] Error:", error);
+    return Response.json({ error: "internal_error" }, { status: 500 });
   }
-
-  const { data: created, error } = await supabase
-    .from("events")
-    .insert({
-      event_type: "b2c",
-      language: data.language,
-      client_name: data.client_name,
-      client_email: data.client_email,
-      client_phone: data.client_phone,
-      event_date: data.event_date,
-      address: data.address,
-      transport_fee_cents: data.transport_fee_cents,
-      total_cents: data.total_cents,
-      deposit_cents: data.deposit_cents,
-      balance_due_cents: data.balance_due_cents,
-      status: "active"
-    })
-    .select("id")
-    .single();
-
-  if (error || !created?.id) {
-    return Response.json({ error: "event_create_failed" }, { status: 500 });
-  }
-
-  return Response.json({ event_id: created.id });
 }

@@ -1,10 +1,8 @@
 import { PublicAvailabilityQuerySchema, PublicAvailabilityResponseSchema } from "@mirroreffect/core";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { gasPost } from "@/lib/gas";
 
-console.log("ENV CHECK", {
-  hasUrl: !!process.env.SUPABASE_URL,
-  hasService: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-});
+// Miroirs hardcodés pour MVP (pas de sheet inventory)
+const TOTAL_MIRRORS = 4;
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -15,43 +13,69 @@ export async function GET(req: Request) {
     return Response.json({ error: "invalid_query", issues: parsed.error.format() }, { status: 400 });
   }
 
-  const supabase = createSupabaseServerClient();
   const { date } = parsed.data;
 
-  const { count: totalMirrors, error: totalError } = await supabase
-    .from("inventory_items")
-    .select("id", { count: "exact", head: true })
-    .eq("type", "mirror")
-    .neq("status", "out_of_service");
+  try {
+    // Lire Clients sheet (contient uniquement les events avec acompte payé)
+    const result = await gasPost({
+      action: "readSheet",
+      key: process.env.GAS_KEY,
+      data: { sheetName: "Clients" }
+    });
 
-  if (totalError) {
-    return Response.json({ error: "inventory_error" }, { status: 500 });
+    if (!result.ok || !result.data) {
+      return Response.json({ error: "sheets_error" }, { status: 500 });
+    }
+
+    const rows = result.data as unknown[][];
+    if (rows.length < 2) {
+      // Pas d'events = tous les miroirs disponibles
+      const output = PublicAvailabilityResponseSchema.parse({
+        date,
+        total_mirrors: TOTAL_MIRRORS,
+        reserved_mirrors: 0,
+        remaining_mirrors: TOTAL_MIRRORS,
+        available: true
+      });
+      return Response.json(output);
+    }
+
+    const headers = (rows[0] as string[]).map(h => String(h).trim());
+    const dateIdx = headers.findIndex(h => h === "Date Event");
+
+    if (dateIdx === -1) {
+      console.error("[availability] Header 'Date Event' not found");
+      return Response.json({ error: "sheet_format_error" }, { status: 500 });
+    }
+
+    // Compter les events sur cette date
+    // Format date attendu: YYYY-MM-DD
+    const reserved = rows.slice(1).filter(row => {
+      const eventDate = String(row[dateIdx] || "").trim();
+      // Normaliser les formats de date possibles
+      if (eventDate === date) return true;
+      // Format DD/MM/YYYY -> YYYY-MM-DD
+      const match = eventDate.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (match) {
+        const normalized = `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
+        return normalized === date;
+      }
+      return false;
+    }).length;
+
+    const remaining = Math.max(0, TOTAL_MIRRORS - reserved);
+
+    const output = PublicAvailabilityResponseSchema.parse({
+      date,
+      total_mirrors: TOTAL_MIRRORS,
+      reserved_mirrors: reserved,
+      remaining_mirrors: remaining,
+      available: remaining > 0
+    });
+
+    return Response.json(output);
+  } catch (error) {
+    console.error("[availability] Error:", error);
+    return Response.json({ error: "internal_error" }, { status: 500 });
   }
-
-  const { count: reservedMirrors, error: reservedError } = await supabase
-    .from("event_resources")
-    .select("id, events!inner(event_date,status,deleted_at)", { count: "exact", head: true })
-    .eq("events.event_date", date)
-    .neq("events.status", "cancelled")
-    .is("events.deleted_at", null)
-    .is("released_at", null);
-
-  if (reservedError) {
-    return Response.json({ error: "reservation_error" }, { status: 500 });
-  }
-
-  const total = totalMirrors ?? 0;
-  const reserved = reservedMirrors ?? 0;
-  const remaining = Math.max(0, total - reserved);
-
-  // TODO: Hide event details; public endpoint returns counts only.
-  const output = PublicAvailabilityResponseSchema.parse({
-    date,
-    total_mirrors: total,
-    reserved_mirrors: reserved,
-    remaining_mirrors: remaining,
-    available: remaining > 0
-  });
-
-  return Response.json(output);
 }

@@ -1,16 +1,21 @@
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { gasPost } from "@/lib/gas";
 import { fetchMolliePaymentStatus } from "@/lib/payments/mollie";
 
-const DEPOSIT_EUR_CENTS = 18000;
+const DEPOSIT_CENTS = 18000;
+
+// Convertir cents en euros formaté
+function centsToEuros(cents: number): string {
+  return (cents / 100).toFixed(2).replace(".", ",");
+}
 
 export async function POST(req: Request) {
-  // ✅ Simple protection (au lieu de requireRole)
+  // Protection webhook
   const secret = req.headers.get("x-webhook-secret");
   if (!process.env.MOLLIE_WEBHOOK_SECRET || secret !== process.env.MOLLIE_WEBHOOK_SECRET) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // ✅ Mollie => id=tr_... (form-urlencoded)
+  // Mollie envoie id=tr_... (form-urlencoded)
   const raw = await req.text();
   const params = new URLSearchParams(raw);
   const molliePaymentId = params.get("id");
@@ -19,123 +24,164 @@ export async function POST(req: Request) {
     return Response.json({ error: "missing_id" }, { status: 400 });
   }
 
-  const supabase = createSupabaseServerClient();
+  try {
+    // Idempotence: vérifier si payment déjà traité dans Payments sheet
+    const paymentsResult = await gasPost({
+      action: "readSheet",
+      key: process.env.GAS_KEY,
+      data: { sheetName: "Payments" }
+    });
 
-  // ✅ Idempotence simple: si payment déjà "paid" => OK
-  const { data: existing } = await supabase
-    .from("payments")
-    .select("id,status,event_id,provider_payment_id")
-    .eq("provider", "mollie")
-    .eq("provider_payment_id", molliePaymentId)
-    .maybeSingle();
+    if (paymentsResult.ok && paymentsResult.data) {
+      const rows = paymentsResult.data as unknown[][];
+      if (rows.length >= 2) {
+        const headers = (rows[0] as string[]).map(h => String(h).trim());
+        const paymentIdIdx = headers.findIndex(h => h === "Payment ID");
+        const statusIdx = headers.findIndex(h => h === "Status");
 
-  if (existing?.status === "paid") {
-    return Response.json({ received: true });
-  }
+        const existingPayment = rows.slice(1).find(row =>
+          String(row[paymentIdIdx]).trim() === molliePaymentId
+        );
 
-  // ✅ Fetch status Mollie
-  const payment = await fetchMolliePaymentStatus(molliePaymentId);
-  if (!payment) return Response.json({ error: "payment_not_found" }, { status: 404 });
-
-  // On ne traite que paid
-  if (payment.status !== "paid") {
-    // update payment row if exists
-    if (existing?.id) {
-      await supabase.from("payments").update({ status: payment.status }).eq("id", existing.id);
+        if (existingPayment && String(existingPayment[statusIdx]).trim().toLowerCase() === "paid") {
+          // Déjà traité
+          return Response.json({ received: true });
+        }
+      }
     }
+
+    // Fetch status Mollie
+    const payment = await fetchMolliePaymentStatus(molliePaymentId);
+    if (!payment) return Response.json({ error: "payment_not_found" }, { status: 404 });
+
+    // On ne traite que paid
+    if (payment.status !== "paid") {
+      // Update payment status
+      await gasPost({
+        action: "updateRowByPaymentId",
+        key: process.env.GAS_KEY,
+        data: {
+          sheetName: "Payments",
+          paymentId: molliePaymentId,
+          values: {
+            "Status": payment.status,
+            "Updated At": new Date().toISOString()
+          }
+        }
+      });
+      return Response.json({ received: true });
+    }
+
+    // Validate acompte
+    if (payment.amount_cents !== DEPOSIT_CENTS) {
+      return Response.json({ error: "invalid_deposit_amount" }, { status: 400 });
+    }
+
+    // Récupérer données depuis metadata
+    const meta = payment.metadata;
+    if (!meta?.event_id) {
+      return Response.json({ error: "missing_event_id" }, { status: 400 });
+    }
+
+    const eventId = meta.event_id as string;
+    const paidAt = payment.paid_at || new Date().toISOString();
+
+    // 1) Créer l'event dans Clients sheet (acompte payé = client confirmé)
+    // Date réservation = date acompte payé
+    await gasPost({
+      action: "appendRow",
+      key: process.env.GAS_KEY,
+      data: {
+        sheetName: "Clients",
+        values: {
+          "Event ID": eventId,
+          "Lead ID": meta.lead_id || "",
+          "Type Event": "b2c",
+          "Language": meta.language || "fr",
+          "Nom": meta.client_name || "",
+          "Email": meta.client_email || "",
+          "Phone": meta.client_phone || "",
+          "Date Event": meta.event_date || "",
+          "Lieu Event": meta.address || "",
+          "Pack": meta.pack_code || "",
+          "Transport (€)": centsToEuros(Number(meta.transport_fee_cents) || 0),
+          "Total": centsToEuros(Number(meta.total_cents) || 0),
+          "Acompte": centsToEuros(Number(meta.deposit_cents) || DEPOSIT_CENTS),
+          "Solde Restant": centsToEuros(Number(meta.balance_due_cents) || 0),
+          "Date Acompte Payé": paidAt,
+          "Created At": new Date().toISOString()
+        }
+      }
+    });
+
+    // 2) Update payment status dans Payments sheet
+    await gasPost({
+      action: "updateRowByPaymentId",
+      key: process.env.GAS_KEY,
+      data: {
+        sheetName: "Payments",
+        paymentId: molliePaymentId,
+        values: {
+          "Status": "paid",
+          "Paid At": paidAt,
+          "Updated At": new Date().toISOString()
+        }
+      }
+    });
+
+    // 3) Ajouter notifications
+    await gasPost({
+      action: "appendRow",
+      key: process.env.GAS_KEY,
+      data: {
+        sheetName: "Notifications",
+        values: {
+          "Template": "B2C_BOOKING_CONFIRMED",
+          "Email": meta.client_email || "",
+          "Event ID": eventId,
+          "Locale": meta.language || "fr",
+          "Status": "queued",
+          "Created At": new Date().toISOString()
+        }
+      }
+    });
+
+    await gasPost({
+      action: "appendRow",
+      key: process.env.GAS_KEY,
+      data: {
+        sheetName: "Notifications",
+        values: {
+          "Template": "B2C_EVENT_RECAP",
+          "Email": meta.client_email || "",
+          "Event ID": eventId,
+          "Locale": meta.language || "fr",
+          "Status": "queued",
+          "Created At": new Date().toISOString()
+        }
+      }
+    });
+
+    // 4) Marquer lead comme converted (si existe)
+    if (meta.lead_id) {
+      await gasPost({
+        action: "updateRowByLeadId",
+        key: process.env.GAS_KEY,
+        data: {
+          sheetName: "Leads",
+          leadId: meta.lead_id,
+          values: {
+            "Status": "converted",
+            "Converted At": new Date().toISOString(),
+            "Event ID": eventId
+          }
+        }
+      });
+    }
+
     return Response.json({ received: true });
+  } catch (error) {
+    console.error("[mollie-webhook] Error:", error);
+    return Response.json({ error: "internal_error" }, { status: 500 });
   }
-
-  // ✅ Validate acompte
-  if (payment.amount_cents !== DEPOSIT_EUR_CENTS) {
-    return Response.json({ error: "invalid_deposit_amount" }, { status: 400 });
-  }
-
-  // ✅ On bosse avec event_id dans metadata (simple & robuste)
-  const eventId = payment.metadata?.event_id;
-  if (!eventId) {
-    return Response.json({ error: "missing_event_id" }, { status: 400 });
-  }
-
-  // ✅ Charge event (pour date)
-  const { data: event, error: eventErr } = await supabase
-    .from("events")
-    .select("id,event_date,status")
-    .eq("id", eventId)
-    .single();
-
-  if (eventErr || !event) return Response.json({ error: "event_not_found" }, { status: 404 });
-
-  const { data: currentResource } = await supabase
-    .from("event_resources")
-    .select("inventory_item_id")
-    .eq("event_id", event.id)
-    .is("released_at", null)
-    .maybeSingle();
-
-  let mirrorId = currentResource?.inventory_item_id ?? null;
-
-  if (!mirrorId) {
-    // ✅ Trouver un miroir dispo ce jour (exactement comme availability)
-    const { data: mirrors, error: mirrorsError } = await supabase
-      .from("inventory_items")
-      .select("id")
-      .eq("type", "mirror")
-      .neq("status", "out_of_service");
-
-    if (mirrorsError) return Response.json({ error: "inventory_error" }, { status: 500 });
-
-    const { data: reservations, error: reservationsError } = await supabase
-      .from("event_resources")
-      .select("inventory_item_id, events!inner(event_date,status,deleted_at)")
-      .eq("events.event_date", event.event_date)
-      .neq("events.status", "cancelled")
-      .is("events.deleted_at", null)
-      .is("released_at", null);
-
-    if (reservationsError) return Response.json({ error: "reservation_error" }, { status: 500 });
-
-    const reservedIds = new Set((reservations ?? []).map((r: any) => r.inventory_item_id).filter(Boolean));
-    const freeMirror = (mirrors ?? []).find((m: any) => !reservedIds.has(m.id));
-
-    if (!freeMirror) return Response.json({ error: "no_mirror_available" }, { status: 409 });
-
-    mirrorId = freeMirror.id;
-  }
-
-  if (!currentResource && mirrorId) {
-    const { error: resourceError } = await supabase.from("event_resources").insert({
-      event_id: event.id,
-      inventory_item_id: mirrorId,
-    });
-
-    if (resourceError) return Response.json({ error: "resource_create_failed" }, { status: 500 });
-  }
-
-  // ✅ Upsert payment row (only existing columns)
-  if (existing?.id) {
-    await supabase.from("payments").update({
-      status: "paid",
-      paid_at: payment.paid_at,
-      amount_cents: payment.amount_cents,
-      event_id: event.id,
-    }).eq("id", existing.id);
-  } else {
-    await supabase.from("payments").insert({
-      provider: "mollie",
-      provider_payment_id: molliePaymentId,
-      event_id: event.id,
-      amount_cents: payment.amount_cents,
-      status: "paid",
-      paid_at: payment.paid_at,
-    });
-  }
-
-  // ✅ Enqueue emails (tes tables existent)
-  await supabase.from("notification_queue").insert([
-    { template_key: "B2C_BOOKING_CONFIRMED", event_id: event.id },
-    { template_key: "B2C_EVENT_RECAP", event_id: event.id },
-  ]);
-
-  return Response.json({ received: true });
 }

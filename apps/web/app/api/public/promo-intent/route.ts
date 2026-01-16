@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { gasPost } from "@/lib/gas";
 
 const PromoIntentSchema = z.object({
   email: z.string().email(),
@@ -15,19 +15,35 @@ export async function POST(req: Request) {
     return Response.json({ error: "invalid_body", issues: parsed.error.format() }, { status: 400 });
   }
 
-  const supabase = createSupabaseServerClient();
   const { email, locale, payload } = parsed.data;
-
   const sendAfter = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
 
-  await supabase.from("notification_queue").insert({
-    template_key: "B2C_PROMO_48H",
-    to_email: email,
-    locale,
-    payload: payload ?? {},
-    send_after: sendAfter,
-    status: "queued"
-  });
+  try {
+    const result = await gasPost({
+      action: "appendRow",
+      key: process.env.GAS_KEY,
+      data: {
+        sheetName: "Notifications",
+        values: {
+          "Template": "B2C_PROMO_48H",
+          "Email": email,
+          "Locale": locale,
+          "Payload": JSON.stringify(payload ?? {}),
+          "Send After": sendAfter,
+          "Status": "queued",
+          "Created At": new Date().toISOString()
+        }
+      }
+    });
 
-  return Response.json({ queued: true });
+    if (!result.ok) {
+      console.error("[promo-intent] GAS error:", result.error);
+      return Response.json({ error: "gas_error", details: result.error }, { status: 500 });
+    }
+
+    return Response.json({ queued: true });
+  } catch (error) {
+    console.error("[promo-intent] Error:", error);
+    return Response.json({ error: "internal_error" }, { status: 500 });
+  }
 }

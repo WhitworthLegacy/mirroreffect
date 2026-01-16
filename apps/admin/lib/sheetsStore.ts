@@ -8,7 +8,7 @@ import type { EventRow } from "./adminData";
  * Source unique de vérité pour toutes les données Google Sheets
  */
 
-// Mapping Clients row -> EventRow (réutilisé depuis clientsStore)
+// Mapping Clients row -> EventRow
 function mapClientsRowToEventRow(headers: string[], row: unknown[]): EventRow | null {
   const getCol = (label: string): unknown => {
     const idx = headers.findIndex((h) => String(h).trim() === label);
