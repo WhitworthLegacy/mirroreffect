@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { EventRow, PackRow } from "@/lib/adminData";
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 
 type Props = {
   event: EventRow | null;
