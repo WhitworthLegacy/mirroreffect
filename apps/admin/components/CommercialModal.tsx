@@ -142,7 +142,7 @@ export default function CommercialModal({ stat, onClose, onSaved }: Props) {
               />
             </div>
             <div className="admin-field">
-              <span>Appels > 5 min</span>
+              <span>Appels &gt; 5 min</span>
               <input
                 type="number"
                 value={draft.calls_over_5min ?? ""}
