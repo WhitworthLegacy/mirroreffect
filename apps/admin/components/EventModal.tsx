@@ -11,8 +11,6 @@ type Props = {
   isNew?: boolean;
 };
 
-const PACK_OPTIONS = ["Découverte", "Essentiel", "Premium"];
-
 const EVENT_TYPES: Record<string, string> = {
   wedding: "Mariage",
   corporate: "Entreprise",
@@ -84,6 +82,15 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
       map.set(pack.id, pack.price_current_cents || 0);
     });
     return map;
+  }, [packs]);
+
+  const packOptions = useMemo(() => {
+    return packs
+      .filter((pack) => pack.id)
+      .map((pack) => ({
+        id: pack.id!,
+        name: pack.name_fr || pack.code || "Pack"
+      }));
   }, [packs]);
 
   if (!event || !draft) return null;
@@ -245,7 +252,6 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
     }
   };
 
-  const selectedPackName = draft.pack_id ? packMap.get(draft.pack_id) : "";
   const eventTypeFr = draft.event_type ? (EVENT_TYPES[draft.event_type] || draft.event_type) : "";
 
   // Calculate gross margin (finance fields now directly in draft)
@@ -367,10 +373,10 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
             <label className="admin-field">
               <span>Pack</span>
               <select
-                value={selectedPackName ?? ""}
+                value={draft.pack_id ?? ""}
                 onChange={(e) => {
-                  const packId = e.target.value ? reversePackMap.get(e.target.value) : null;
-                  updateField("pack_id", packId ?? null);
+                  const packId = e.target.value || null;
+                  updateField("pack_id", packId);
                   // Auto-set pack price
                   if (packId) {
                     const price = packPriceMap.get(packId);
@@ -379,9 +385,9 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
                 }}
               >
                 <option value="">—</option>
-                {PACK_OPTIONS.map((packName) => (
-                  <option key={packName} value={packName}>
-                    {packName}
+                {packOptions.map((pack) => (
+                  <option key={pack.id} value={pack.id}>
+                    {pack.name}
                   </option>
                 ))}
               </select>

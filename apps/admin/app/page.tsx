@@ -57,29 +57,79 @@ export default async function Page({
     events = snapshot.events;
     eventsError = snapshot.error;
 
-    // Get v_monthly_stats (vue calculée) et monthly_stats (données marketing)
-    const [viewResult, marketingResult] = await Promise.all([
-      supabase.from("v_monthly_stats").select("*").order("month", { ascending: false }),
-      supabase.from("monthly_stats").select("month, leads_meta, spent_meta_cents")
-    ]);
+    // Lire les stats depuis Google Sheets au lieu de Supabase
+    try {
+      const { readMonthlyStatsFromSheets } = await import("@/lib/googleSheets");
+      const sheetsStats = await readMonthlyStatsFromSheets();
+      
+      if (sheetsStats && sheetsStats.length > 0) {
+        // Convertir les données au format attendu
+        monthlyStats = sheetsStats.map((stat) => {
+          const convertCents = (value: unknown): number | null => {
+            if (value === null || value === undefined || value === "") return null;
+            const num = typeof value === "string" ? parseFloat(value) : Number(value);
+            return Number.isNaN(num) ? null : Math.round(num * 100);
+          };
+          const convertNumber = (value: unknown): number | null => {
+            if (value === null || value === undefined || value === "") return null;
+            const num = typeof value === "string" ? parseFloat(value) : Number(value);
+            return Number.isNaN(num) ? null : num;
+          };
+          return {
+            month: stat.month || null,
+            closing_total: convertNumber(stat.closing_total),
+            closing_decouverte: convertNumber(stat.closing_decouverte),
+            closing_essentiel: convertNumber(stat.closing_essentiel),
+            closing_premium: convertNumber(stat.closing_premium),
+            deposits_signed_cents: convertCents(stat.deposits_signed_cents),
+            events_count: convertNumber(stat.events_count),
+            events_decouverte: convertNumber(stat.events_decouverte),
+            events_essentiel: convertNumber(stat.events_essentiel),
+            events_premium: convertNumber(stat.events_premium),
+            total_event_cents: convertCents(stat.total_event_cents),
+            deposits_event_cents: convertCents(stat.deposits_event_cents),
+            remaining_event_cents: convertCents(stat.remaining_event_cents),
+            transport_cents: convertCents(stat.transport_cents),
+            ca_total_cents: convertCents(stat.ca_total_cents),
+            student_hours: convertNumber(stat.student_hours),
+            student_cost_cents: convertCents(stat.student_cost_cents),
+            fuel_cost_cents: convertCents(stat.fuel_cost_cents),
+            commercial_commission_cents: convertCents(stat.commercial_commission_cents),
+            pack_cost_cents: convertCents(stat.pack_cost_cents),
+            gross_margin_cents: convertCents(stat.gross_margin_cents),
+            cashflow_gross_cents: convertCents(stat.cashflow_gross_cents),
+            leads_meta: convertNumber(stat.leads_meta),
+            spent_meta_cents: convertCents(stat.spent_meta_cents),
+          } as MonthlyStats;
+        });
+      } else {
+        throw new Error("No data from Google Sheets");
+      }
+    } catch (sheetsError) {
+      console.error("Failed to load stats from Google Sheets, falling back to Supabase:", sheetsError);
+      // Fallback vers Supabase
+      const [viewResult, marketingResult] = await Promise.all([
+        supabase.from("v_monthly_stats").select("*").order("month", { ascending: false }),
+        supabase.from("monthly_stats").select("month, leads_meta, spent_meta_cents")
+      ]);
 
-    if (viewResult.error) {
-      eventsError = eventsError || viewResult.error.message;
-    } else {
-      // Combiner les données de la vue avec les données marketing
-      const marketingByMonth = new Map(
-        (marketingResult.data || []).map(m => [m.month?.substring(0, 7), m])
-      );
+      if (viewResult.error) {
+        eventsError = eventsError || viewResult.error.message;
+      } else {
+        const marketingByMonth = new Map(
+          (marketingResult.data || []).map(m => [m.month?.substring(0, 7), m])
+        );
 
-      monthlyStats = (viewResult.data || []).map(stat => {
-        const monthKey = stat.month?.substring(0, 7);
-        const marketing = marketingByMonth.get(monthKey);
-        return {
-          ...stat,
-          leads_meta: marketing?.leads_meta ?? null,
-          spent_meta_cents: marketing?.spent_meta_cents ?? null,
-        };
-      }) as MonthlyStats[];
+        monthlyStats = (viewResult.data || []).map(stat => {
+          const monthKey = stat.month?.substring(0, 7);
+          const marketing = marketingByMonth.get(monthKey);
+          return {
+            ...stat,
+            leads_meta: marketing?.leads_meta ?? null,
+            spent_meta_cents: marketing?.spent_meta_cents ?? null,
+          };
+        }) as MonthlyStats[];
+      }
     }
   } catch (error) {
     eventsError = error instanceof Error ? error.message : "Impossible de charger les données.";

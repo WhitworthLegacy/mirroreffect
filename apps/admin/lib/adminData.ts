@@ -71,23 +71,47 @@ export type AdminSnapshot = {
 };
 
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
-  const supabase = createSupabaseServerClient();
-  const { data: eventsData, error: eventsError } = await supabase
-    .from("events")
-    .select("*")
-    .order("event_date", { ascending: true })
-    .limit(500);
+  let events: EventRow[] = [];
+  let eventsError: string | null = null;
 
+  // Read events from Google Sheets (primary source)
+  try {
+    const { readEventsFromSheets } = await import("./googleSheets");
+    events = await readEventsFromSheets();
+  } catch (error) {
+    eventsError = error instanceof Error ? error.message : "Failed to load events from Google Sheets";
+    console.error("Error loading events from Google Sheets:", error);
+    
+    // Fallback to Supabase if Google Sheets fails
+    try {
+      const supabase = createSupabaseServerClient();
+      const { data: eventsData, error: supabaseError } = await supabase
+        .from("events")
+        .select("*")
+        .order("event_date", { ascending: true })
+        .limit(500);
+      
+      if (supabaseError) {
+        eventsError = eventsError + " | " + supabaseError.message;
+      } else {
+        events = (eventsData ?? []) as unknown as EventRow[];
+      }
+    } catch (fallbackError) {
+      eventsError = eventsError + " | Fallback failed: " + (fallbackError instanceof Error ? fallbackError.message : "Unknown error");
+    }
+  }
+
+  // Packs still come from Supabase (or could be moved to Google Sheets later)
+  const supabase = createSupabaseServerClient();
   const { data: packsData, error: packsError } = await supabase
     .from("packs")
     .select("id, code, name_fr, name_nl, price_current_cents, price_original_cents, impressions_included");
 
-  const events = (eventsData ?? []) as unknown as EventRow[];
   const packs = (packsData ?? []) as unknown as PackRow[];
 
   return {
     events,
     packs,
-    error: eventsError?.message ?? packsError?.message ?? null
+    error: eventsError ?? packsError?.message ?? null
   };
 }
