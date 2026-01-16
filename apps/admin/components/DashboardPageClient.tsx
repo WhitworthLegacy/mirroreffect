@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 import { useSheetsStore } from "@/lib/sheetsStore";
 import { formatCurrency } from "@/lib/format";
 import DashboardCharts from "@/components/DashboardCharts";
@@ -92,7 +92,10 @@ export default function DashboardPageClient({ selectedYear }: Props) {
     for (const row of statsForYear) {
       // CA (Acomptes + Restants)
       const ca = getStatsValue(row, "CA (Acomptes + Restants)", true);
-      if (ca !== null) caTotal += ca;
+      if (ca !== null) {
+        console.log(`[Dashboard Debug] CA trouvé: ${ca / 100}€ pour ligne`, row);
+        caTotal += ca;
+      }
 
       // CA généré (Event + Transport)
       const caGen = getStatsValue(row, "CA généré (Event + Transport)", true);
@@ -129,6 +132,20 @@ export default function DashboardPageClient({ selectedYear }: Props) {
       eventsCount,
     };
   }, [statsForYear, getStatsValue]);
+
+  // Debug: Log des valeurs calculées
+  useEffect(() => {
+    if (statsForYear.length > 0) {
+      console.log(`[Dashboard Debug] Stats for year ${selectedYear}:`, {
+        rowsCount: statsForYear.length,
+        caTotal: kpis.caTotal / 100,
+        caGenere: kpis.caGenere / 100,
+        margeBruteOpe: kpis.margeBruteOpe / 100,
+        cashflowBrut: kpis.cashflowBrut / 100,
+        cashflowNet: kpis.cashflowNet / 100,
+      });
+    }
+  }, [statsForYear, kpis, selectedYear]);
 
   // Filter events by year for fallback calculations
   const eventsForYear = useMemo(() => {
@@ -251,10 +268,15 @@ export default function DashboardPageClient({ selectedYear }: Props) {
       <section className="admin-kpi">
         <div className="admin-kpi-card">
           <h3>CA Total</h3>
-          <p>{formatCurrency(kpis.caTotal || totalRevenue)}</p>
+          <p>{formatCurrency(kpis.caTotal)}</p>
           <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
             {kpis.eventsCount || eventsForYear.length} événements
           </span>
+          {!kpis.caTotal && (
+            <span className="admin-muted" style={{ fontSize: "0.75rem", color: "var(--warning)", display: "block", marginTop: 4 }}>
+              ⚠️ Données Stats manquantes
+            </span>
+          )}
         </div>
         <div className="admin-kpi-card">
           <h3>CA généré</h3>

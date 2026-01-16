@@ -436,6 +436,16 @@ body {
   box-shadow: var(--shadow-glow);
 }
 
+.admin-calendar-day.is-full {
+  background: #fee2e2;
+  border-color: var(--danger);
+}
+
+.admin-calendar-day.is-partial {
+  background: #fef3c7;
+  border-color: var(--warning);
+}
+
 .admin-calendar-date {
   font-weight: 700;
 }

@@ -137,6 +137,10 @@ type SheetsStore = {
   statsRows: unknown[][];
   statsHeaders: string[];
   
+  // Students state
+  studentsRows: unknown[][];
+  studentsHeaders: string[];
+  
   // Global state
   isLoading: boolean;
   error: string | null;
@@ -160,7 +164,7 @@ type SheetsStore = {
   getLocalEvent: (eventId: string) => EventRow | null;
   
   // Helpers
-  getCell: (sheet: "clients" | "stats", rowIndex: number, headerName: string) => unknown;
+  getCell: (sheet: "clients" | "stats" | "students", rowIndex: number, headerName: string) => unknown;
   findRowByDate: (sheet: "stats", date: string) => unknown[] | null;
 };
 
@@ -170,6 +174,8 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
   events: [],
   statsRows: [],
   statsHeaders: [],
+  studentsRows: [],
+  studentsHeaders: [],
   isLoading: false,
   error: null,
   lastSyncAt: null,
@@ -183,8 +189,8 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      // Fetch Clients and Stats in parallel
-      const [clientsRes, statsRes] = await Promise.all([
+      // Fetch Clients, Stats and Students in parallel
+      const [clientsRes, statsRes, studentsRes] = await Promise.all([
         fetch("/api/gas", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -201,22 +207,32 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
             data: { sheetName: "Stats" },
           }),
         }),
+        fetch("/api/gas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "readSheet",
+            data: { sheetName: "Students" },
+          }),
+        }),
       ]);
 
-      if (!clientsRes.ok || !statsRes.ok) {
+      if (!clientsRes.ok || !statsRes.ok || !studentsRes.ok) {
         const clientsError = !clientsRes.ok ? await clientsRes.json().catch(() => ({})) : null;
         const statsError = !statsRes.ok ? await statsRes.json().catch(() => ({})) : null;
+        const studentsError = !studentsRes.ok ? await studentsRes.json().catch(() => ({})) : null;
         throw new Error(
-          clientsError?.error?.message || statsError?.error?.message || "Erreur de chargement"
+          clientsError?.error?.message || statsError?.error?.message || studentsError?.error?.message || "Erreur de chargement"
         );
       }
 
       const clientsData = await clientsRes.json();
       const statsData = await statsRes.json();
+      const studentsData = await studentsRes.json();
 
-      if (!clientsData.ok || !statsData.ok) {
+      if (!clientsData.ok || !statsData.ok || !studentsData.ok) {
         throw new Error(
-          clientsData.error?.message || statsData.error?.message || "Erreur de chargement"
+          clientsData.error?.message || statsData.error?.message || studentsData.error?.message || "Erreur de chargement"
         );
       }
 
@@ -239,14 +255,27 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
           return a.event_date.localeCompare(b.event_date);
         });
 
-      // Parse Stats
+      // Parse Stats (peut être vide, pas grave)
       const statsValues = statsData.data?.values || statsData.data;
       if (!Array.isArray(statsValues) || statsValues.length === 0) {
-        throw new Error("Aucune donnée Stats retournée");
+        console.warn("[SheetsStore] Aucune donnée Stats retournée");
       }
 
       const statsHeaders = (statsValues[0] as string[]).map((h) => String(h).trim());
       const statsDataRows = statsValues.slice(1) as unknown[][];
+
+      // Parse Students
+      const studentsValues = studentsData.data?.values || studentsData.data;
+      if (!Array.isArray(studentsValues) || studentsValues.length === 0) {
+        console.warn("[SheetsStore] Aucune donnée Students retournée");
+      }
+
+      const studentsHeaders = studentsValues.length > 0 
+        ? (studentsValues[0] as string[]).map((h) => String(h).trim())
+        : [];
+      const studentsDataRows = studentsValues.length > 1 
+        ? studentsValues.slice(1) as unknown[][]
+        : [];
 
       set({
         clientsRows: clientsDataRows,
@@ -254,6 +283,8 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
         events,
         statsRows: statsDataRows,
         statsHeaders,
+        studentsRows: studentsDataRows,
+        studentsHeaders,
         isLoading: false,
         error: null,
         lastSyncAt: Date.now(),
@@ -464,10 +495,10 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
     return state.events.find((r: EventRow) => r.id === eventId) || null;
   },
 
-  getCell: (sheet: "clients" | "stats", rowIndex: number, headerName: string) => {
+  getCell: (sheet: "clients" | "stats" | "students", rowIndex: number, headerName: string) => {
     const state = get();
-    const headers = sheet === "clients" ? state.clientsHeaders : state.statsHeaders;
-    const rows = sheet === "clients" ? state.clientsRows : state.statsRows;
+    const headers = sheet === "clients" ? state.clientsHeaders : sheet === "stats" ? state.statsHeaders : state.studentsHeaders;
+    const rows = sheet === "clients" ? state.clientsRows : sheet === "stats" ? state.statsRows : state.studentsRows;
     
     const headerIndex = headers.findIndex((h) => String(h).trim() === headerName);
     if (headerIndex < 0 || rowIndex >= rows.length) return null;
