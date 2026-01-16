@@ -180,6 +180,9 @@ async function getAccessToken(): Promise<string> {
 /**
  * Make request via Google Apps Script Web App (if configured)
  * Utilise la fonction robuste gasPostAdmin pour gérer les redirects et détecter HTML
+ * 
+ * Note: Cette fonction est utilisée par les API routes server-side.
+ * Les composants client doivent appeler /api/gas directement.
  */
 async function gasRequest(action: string, data?: unknown): Promise<unknown> {
   const cfg = getConfig();
@@ -187,7 +190,7 @@ async function gasRequest(action: string, data?: unknown): Promise<unknown> {
     throw new Error("GAS_WEBAPP_URL not configured");
   }
 
-  // Utiliser la fonction robuste depuis lib/gas.ts
+  // Utiliser la fonction robuste depuis lib/gas.ts (maintenant bulletproof)
   const { gasPostAdmin } = await import("./gas");
   return gasPostAdmin(action, data);
 }

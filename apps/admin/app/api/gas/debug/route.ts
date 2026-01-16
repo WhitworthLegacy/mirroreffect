@@ -1,0 +1,75 @@
+import { NextResponse } from "next/server";
+import { gasPostAdmin } from "@/lib/gas";
+import { readSheet } from "@/lib/googleSheets";
+
+/**
+ * Debug endpoint pour tester /api/gas
+ * GET: Teste readSheet "Clients"
+ * POST: Teste une action spécifique
+ */
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    // Test readSheet "Clients"
+    const rows = await readSheet("Clients");
+    
+    return NextResponse.json({
+      ok: true,
+      message: "GAS connection working",
+      test: "readSheet",
+      sheetName: "Clients",
+      rowCount: rows.length - 1, // Exclude header
+      sampleHeaders: rows[0]?.slice(0, 5) || [],
+      env: {
+        hasGAS_URL: !!process.env.GAS_WEBAPP_URL,
+        hasGAS_KEY: !!process.env.GAS_KEY,
+        hasSPREADSHEET_ID: !!process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+        gasUrlPreview: process.env.GAS_WEBAPP_URL?.substring(0, 50) + "..." || "not set",
+      },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        test: "readSheet",
+        sheetName: "Clients",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { action, data } = body;
+
+    if (!action) {
+      return NextResponse.json(
+        { ok: false, error: "action required" },
+        { status: 400 }
+      );
+    }
+
+    // Test l'action via gasPostAdmin
+    const result = await gasPostAdmin(action, data);
+
+    return NextResponse.json({
+      ok: true,
+      action,
+      data: result,
+      message: "GAS action executed successfully",
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        action: body?.action,
+      },
+      { status: 500 }
+    );
+  }
+}
