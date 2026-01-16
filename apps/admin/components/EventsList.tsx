@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { EventRow, PackRow } from "@/lib/adminData";
 import { formatDate } from "@/lib/format";
 import EventModal from "@/components/EventModal";
+import { useClientsStore } from "@/lib/clientsStore";
 
 type Props = {
   events: EventRow[];
@@ -11,7 +12,10 @@ type Props = {
 };
 
 export default function EventsList({ events, packs }: Props) {
-  const [rows, setRows] = useState<EventRow[]>(() => events);
+  const { rows: storeRows, refreshClients } = useClientsStore();
+  // Utiliser le store si disponible, sinon fallback sur props
+  const rows = storeRows.length > 0 ? storeRows : events;
+  
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isNewEvent, setIsNewEvent] = useState(false);
   const [search, setSearch] = useState("");
@@ -28,7 +32,7 @@ export default function EventsList({ events, packs }: Props) {
   const filteredRows = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
-    return rows.filter((event) =>
+    return rows.filter((event: EventRow) =>
       (event.client_name?.toLowerCase().includes(q)) ||
       (event.address?.toLowerCase().includes(q)) ||
       (event.event_date?.includes(q))
@@ -37,14 +41,18 @@ export default function EventsList({ events, packs }: Props) {
 
   const selectedEvent = isNewEvent
     ? { id: "new", event_date: "", client_name: "", client_email: "", client_phone: "" } as EventRow
-    : rows.find((row) => row.id === selectedId) ?? null;
+    : rows.find((row: EventRow) => row.id === selectedId) ?? null;
 
-  const handleSaved = (updated: EventRow) => {
+  const handleSaved = async (updated: EventRow) => {
     if (isNewEvent) {
-      setRows((prev) => [updated, ...prev]);
+      // Pour les nouveaux events, refresh depuis le store pour récupérer l'event créé
+      // (qui sera créé via /api/events, pas via le store)
       setIsNewEvent(false);
+      // Refresh le store pour récupérer les dernières données
+      await refreshClients();
     } else {
-      setRows((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+      // Pour les events existants, le store a déjà été mis à jour par saveEvent
+      setIsNewEvent(false);
     }
   };
 
@@ -90,7 +98,7 @@ export default function EventsList({ events, packs }: Props) {
             </tr>
           </thead>
           <tbody>
-            {filteredRows.map((event) => (
+            {filteredRows.map((event: EventRow) => (
               <tr key={event.id} onClick={() => setSelectedId(event.id)} className="admin-row">
                 <td>{event.event_date ? formatDate(event.event_date) : "—"}</td>
                 <td>{event.client_name || "—"}</td>

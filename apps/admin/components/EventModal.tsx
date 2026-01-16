@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { EventRow, PackRow } from "@/lib/adminData";
+import { useClientsStore } from "@/lib/clientsStore";
 
 type Props = {
   event: EventRow | null;
@@ -47,15 +48,28 @@ function toDateInput(value: string | null) {
 }
 
 export default function EventModal({ event, packs, onClose, onSaved, isNew = false }: Props) {
-  const [draft, setDraft] = useState<EventRow | null>(event);
+  const { getLocalEvent, updateLocal, saveEvent, isDirty, loading: storeLoading } = useClientsStore();
+  
+  // Pour les nouveaux events, utiliser un state local
+  // Pour les events existants, lire depuis le store (mais garder un draft local pour éviter les problèmes de sync)
+  const localEvent = isNew ? null : (event?.id ? getLocalEvent(event.id) : null);
+  const [draft, setDraft] = useState<EventRow | null>(localEvent || event);
+  
   const [isSaving, setIsSaving] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const dirty = !isNew && event?.id ? isDirty(event.id) : false;
+
+  // Synchroniser draft avec le store quand localEvent change (mais seulement pour events existants)
   useEffect(() => {
-    setDraft(event);
+    if (!isNew && localEvent) {
+      setDraft(localEvent);
+    } else if (isNew) {
+      setDraft(event);
+    }
     setError(null);
-  }, [event]);
+  }, [localEvent, event, isNew]);
 
   const packMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -96,11 +110,21 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
   if (!event || !draft) return null;
 
   const updateField = <K extends keyof EventRow>(key: K, value: EventRow[K]) => {
+    // Mettre à jour le draft local (pour l'affichage immédiat)
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
+    
+    // Pour les events existants, mettre à jour aussi le store
+    if (!isNew && event?.id) {
+      updateLocal(event.id, { [key]: value } as Record<string, unknown>);
+    }
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
+      // Si des modifications non sauvegardées, demander confirmation
+      if (dirty && !window.confirm("Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer ?")) {
+        return;
+      }
       onClose();
     }
   };
@@ -130,16 +154,20 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         throw new Error(data?.error || "Erreur recalcul");
       }
       const data = await res.json();
-      // Update draft with recalculated values + auto commission (all in same object now)
-      setDraft((prev) => prev ? {
-        ...prev,
+      const patch = {
         km_one_way: data.km_one_way,
         km_total: data.km_total,
         fuel_cost_cents: data.fuel_cost_cents,
         student_hours: data.student_hours,
         student_rate_cents: data.student_rate_cents,
         commercial_commission_cents: calculateCommission()
-      } : prev);
+      };
+      // Mettre à jour le draft local
+      setDraft((prev) => prev ? { ...prev, ...patch } : prev);
+      // Update via le store avec les valeurs recalculées
+      if (!isNew && draft?.id) {
+        updateLocal(draft.id, patch);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur recalcul");
     } finally {
@@ -173,6 +201,24 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
 
   const handleSave = async () => {
     if (!draft) return;
+    
+    // Pour les events existants avec des modifications, utiliser le store
+    if (!isNew && event?.id && dirty) {
+      setIsSaving(true);
+      setError(null);
+      try {
+        await saveEvent(event.id);
+        onSaved(draft);
+        onClose();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur sauvegarde");
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
+    // Pour les nouveaux events ou les events sans modifications, utiliser l'ancienne API
     setIsSaving(true);
     setError(null);
     try {
@@ -227,7 +273,7 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         const updatedEvent = { ...draft, id: data.item.id };
         onSaved(updatedEvent);
       } else {
-        // Update existing event
+        // Update existing event (fallback si pas de modifications via store)
         const res = await fetch("/api/events", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -268,6 +314,11 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
           <div>
             <h2>{isNew ? "Nouvel événement" : (draft.client_name || "Event")}</h2>
             <p className="admin-muted">{draft.event_date || "Date à définir"}</p>
+            {dirty && (
+              <p style={{ fontSize: "0.75rem", color: "var(--warning)", marginTop: 4 }}>
+                ⚠️ Modifications non sauvegardées
+              </p>
+            )}
           </div>
           <button type="button" className="admin-chip" onClick={onClose}>
             Fermer
@@ -558,9 +609,9 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
             type="button"
             className="admin-chip primary"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || storeLoading || (!isNew && !dirty)}
           >
-            {isSaving ? "Sauvegarde..." : (isNew ? "Créer" : "Sauvegarder")}
+            {isSaving || storeLoading ? "Sauvegarde..." : (isNew ? "Créer" : "Sauvegarder")}
           </button>
         </div>
       </div>

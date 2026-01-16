@@ -1,18 +1,17 @@
-import EventsList from "@/components/EventsList";
-import { getAdminSnapshot, type EventRow, type PackRow } from "@/lib/adminData";
+import EventsPageClient from "@/components/EventsPageClient";
+import { getAdminSnapshot, type PackRow } from "@/lib/adminData";
 
 export default async function EventsPage() {
-  let events: EventRow[] = [];
   let packs: PackRow[] = [];
-  let error: string | null = null;
+  let packsError: string | null = null;
 
+  // Charger uniquement les packs depuis Supabase (events viennent du store client)
   try {
     const snapshot = await getAdminSnapshot();
-    events = snapshot.events;
     packs = snapshot.packs;
-    error = snapshot.error;
+    packsError = snapshot.error;
   } catch (err) {
-    error = err instanceof Error ? err.message : "Impossible de charger les données.";
+    packsError = err instanceof Error ? err.message : "Impossible de charger les données.";
   }
 
   return (
@@ -21,16 +20,16 @@ export default async function EventsPage() {
         <h1>Events</h1>
         <p className="admin-muted">Liste des events. Cliquez sur une ligne pour modifier.</p>
         <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 4 }}>
-          📊 Données lues depuis Google Sheets (feuille "Clients")
+          📊 Données lues depuis Google Sheets (feuille "Clients") - chargement unique côté client
         </p>
       </header>
-      {error && (
+      {packsError && (
         <div className="admin-card" style={{ marginBottom: 24 }}>
-          <h2>Erreur de chargement</h2>
-          <p className="admin-muted">{error}</p>
+          <h2>Erreur de chargement packs</h2>
+          <p className="admin-muted">{packsError}</p>
         </div>
       )}
-      <EventsList events={events} packs={packs} />
+      <EventsPageClient packs={packs} />
     </main>
   );
 }
