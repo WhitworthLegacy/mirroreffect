@@ -1,47 +1,25 @@
-import { getAdminSnapshot } from "@/lib/adminData";
+import InventoryPageClient from "@/components/InventoryPageClient";
+import { getAdminSnapshot, type PackRow } from "@/lib/adminData";
 
 export default async function InventoryPage() {
-  const { events, packs, error } = await getAdminSnapshot();
-  const packMap = new Map(
-    packs.map((pack) => [pack.id, pack.name_fr || pack.code || "Pack"])
-  );
-  const packStats = events.reduce<Record<string, number>>((acc, event) => {
-    const key = event.pack_id ?? "unknown";
-    acc[key] = (acc[key] ?? 0) + 1;
-    return acc;
-  }, {});
+  let packs: PackRow[] = [];
+  let packsError: string | null = null;
+
+  // Charger uniquement les packs depuis Supabase (events viennent du store client)
+  try {
+    const snapshot = await getAdminSnapshot();
+    packs = snapshot.packs;
+    packsError = snapshot.error;
+  } catch (err) {
+    packsError = err instanceof Error ? err.message : "Impossible de charger les packs.";
+  }
 
   return (
     <main className="admin-page">
       <h1>Inventaire</h1>
       <p className="admin-muted">Etat des packs, materiels et rotations.</p>
-      {error && <p className="admin-muted">Erreur: {error}</p>}
-
-      <div className="admin-card" style={{ marginTop: 20 }}>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Pack</th>
-              <th>Volume</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(packStats).map(([packId, count]) => (
-              <tr key={packId}>
-                <td>{packId === "unknown" ? "Non choisi" : packMap.get(packId) || "Pack"}</td>
-                <td>{count}</td>
-              </tr>
-            ))}
-            {events.length === 0 && (
-              <tr>
-                <td colSpan={2} className="admin-muted">
-                  Aucun historique disponible.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {packsError && <p className="admin-muted">Erreur packs: {packsError}</p>}
+      <InventoryPageClient packs={packs} />
     </main>
   );
 }

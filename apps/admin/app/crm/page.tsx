@@ -1,26 +1,25 @@
-import CrmList from "@/components/CrmList";
-import { getAdminSnapshot, type EventRow, type PackRow } from "@/lib/adminData";
+import CrmPageClient from "@/components/CrmPageClient";
+import { getAdminSnapshot, type PackRow } from "@/lib/adminData";
 
 export default async function CrmPage() {
-  let events: EventRow[] = [];
   let packs: PackRow[] = [];
-  let error: string | null = null;
+  let packsError: string | null = null;
 
+  // Charger uniquement les packs depuis Supabase (events viennent du store client)
   try {
     const snapshot = await getAdminSnapshot();
-    events = snapshot.events;
     packs = snapshot.packs;
-    error = snapshot.error;
+    packsError = snapshot.error;
   } catch (err) {
-    error = err instanceof Error ? err.message : "Impossible de charger les données.";
+    packsError = err instanceof Error ? err.message : "Impossible de charger les packs.";
   }
 
   return (
     <main className="admin-page">
       <h1>CRM</h1>
       <p className="admin-muted">Leads, relances et qualification commerciale.</p>
-      {error && <p className="admin-muted">Erreur: {error}</p>}
-      <CrmList events={events} packs={packs} />
+      {packsError && <p className="admin-muted">Erreur packs: {packsError}</p>}
+      <CrmPageClient packs={packs} />
     </main>
   );
 }

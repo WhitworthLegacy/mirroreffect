@@ -14,12 +14,20 @@ function mapClientsRowToEventRow(headers: string[], row: unknown[]): EventRow | 
   };
 
   // Helper to convert string to number (cents) - les valeurs dans Clients sont en euros avec virgule
+  // Format supporté: "1.234,56" ou "1234,56" (format européen)
   const parseCents = (value: unknown): number | null => {
     if (value === null || value === undefined || value === "") return null;
     let num: number;
     if (typeof value === "string") {
-      const cleaned = value.replace(",", ".").trim();
-      num = parseFloat(cleaned);
+      // Gérer le format européen: points comme séparateurs de milliers, virgule comme décimale
+      const cleaned = value.trim().replace(/\s/g, "");
+      if (cleaned.includes(",")) {
+        // Enlever les points (séparateurs de milliers) et remplacer la virgule par un point
+        const normalized = cleaned.replace(/\./g, "").replace(",", ".");
+        num = parseFloat(normalized);
+      } else {
+        num = parseFloat(cleaned);
+      }
     } else {
       num = Number(value);
     }
@@ -151,17 +159,22 @@ function eventRowToSheetValues(patch: Record<string, unknown>): Record<string, u
     language: (v) => ({ "Language": v || "" }),
     address: (v) => ({ "Lieu Event": v || "" }),
     pack_id: (v) => ({ "Pack": v || "" }),
-    total_cents: (v) => ({ "Pack (€)": centsToEuro(v as number | null) }),
+    total_cents: (v) => ({ 
+      "Pack (€)": centsToEuro(v as number | null), // Gardé pour compatibilité
+      "Total": centsToEuro(v as number | null) // ✅ Header exact
+    }),
     transport_fee_cents: (v) => ({ "Transport (€)": centsToEuro(v as number | null) }),
     deposit_cents: (v) => ({ "Acompte": centsToEuro(v as number | null) }),
     balance_due_cents: (v) => ({ "Solde Restant": centsToEuro(v as number | null) }),
     student_name: (v) => ({ "Etudiant": v || "" }),
     student_hours: (v) => ({ "Heures Etudiant": formatNumber(v as number | null) }),
+    student_rate_cents: (v) => ({ "Etudiant €/Event": centsToEuro(v as number | null) }),
     km_one_way: (v) => ({ "KM (Aller)": formatNumber(v as number | null) }),
     km_total: (v) => ({ "KM (Total)": formatNumber(v as number | null) }),
     fuel_cost_cents: (v) => ({ "Coût Essence": centsToEuro(v as number | null) }),
     commercial_name: (v) => ({ "Commercial": v || "" }),
     commercial_commission_cents: (v) => ({ "Comm Commercial": centsToEuro(v as number | null) }),
+    gross_margin_cents: (v) => ({ "Marge Brut (Event)": centsToEuro(v as number | null) }),
     deposit_invoice_ref: (v) => ({ "Acompte Facture": v || "" }),
     balance_invoice_ref: (v) => ({ "Solde Facture": v || "" }),
     guest_count: (v) => ({ "Invités": formatNumber(v as number | null) }),
@@ -184,13 +197,18 @@ type ClientsStore = {
   loading: boolean;
   error: string | null;
   loaded: boolean;
+  lastLoadedAt: number | null; // timestamp de dernière sync
   dirtyByEventId: Record<string, Record<string, unknown>>; // patch cumulatif par eventId
 
   // Actions
   loadClients: () => Promise<void>;
+  loadOnce: () => Promise<void>; // charge uniquement si pas déjà chargé
   refreshClients: () => Promise<boolean>; // retourne true si refresh effectué, false si annulé
   updateLocal: (eventId: string, patch: Record<string, unknown>) => void;
   saveEvent: (eventId: string) => Promise<void>;
+  applyEventPatch: (eventId: string, patch: Record<string, unknown>) => void; // optimistic update après save
+  applyEventReplace: (event: EventRow) => void; // remplace un event complet
+  removeEvent: (eventId: string) => void; // supprime un event
   clearDirty: (eventId: string) => void;
   isDirty: (eventId: string) => boolean;
   hasAnyDirty: () => boolean;
@@ -203,12 +221,21 @@ export const useClientsStore = create<ClientsStore>((set, get) => ({
   loading: false,
   error: null,
   loaded: false,
+  lastLoadedAt: null,
   dirtyByEventId: {},
+
+  loadOnce: async () => {
+    const state = get();
+    // Ne charger qu'une seule fois si déjà chargé
+    if (state.loaded || state.loading) return;
+    // Sinon appeler loadClients
+    await get().loadClients();
+  },
 
   loadClients: async () => {
     const state = get();
-    // Ne charger qu'une seule fois
-    if (state.loaded || state.loading) return;
+    // Ne pas recharger si déjà en cours
+    if (state.loading) return;
 
     set({ loading: true, error: null });
 
@@ -257,6 +284,7 @@ export const useClientsStore = create<ClientsStore>((set, get) => ({
         loading: false,
         error: null,
         loaded: true,
+        lastLoadedAt: Date.now(),
       });
     } catch (err) {
       set({
@@ -325,6 +353,7 @@ export const useClientsStore = create<ClientsStore>((set, get) => ({
         headers,
         loading: false,
         error: null,
+        lastLoadedAt: Date.now(),
         dirtyByEventId: {}, // Nettoyer les dirty states
       });
 
@@ -417,6 +446,42 @@ export const useClientsStore = create<ClientsStore>((set, get) => ({
       });
       throw err;
     }
+  },
+
+  applyEventPatch: (eventId: string, patch: Record<string, unknown>) => {
+    const state = get();
+    const updatedRows = state.rows.map((row) => {
+      if (row.id !== eventId) return row;
+      return { ...row, ...patch };
+    });
+    set({ rows: updatedRows });
+  },
+
+  applyEventReplace: (event: EventRow) => {
+    const state = get();
+    const updatedRows = state.rows.map((row) => {
+      if (row.id !== event.id) return row;
+      return event;
+    });
+    // Si l'event n'existe pas, l'ajouter
+    if (!updatedRows.find((r) => r.id === event.id)) {
+      updatedRows.push(event);
+      updatedRows.sort((a, b) => {
+        if (!a.event_date && !b.event_date) return 0;
+        if (!a.event_date) return 1;
+        if (!b.event_date) return -1;
+        return a.event_date.localeCompare(b.event_date);
+      });
+    }
+    set({ rows: updatedRows });
+  },
+
+  removeEvent: (eventId: string) => {
+    const state = get();
+    const updatedRows = state.rows.filter((row) => row.id !== eventId);
+    const newDirtyByEventId = { ...state.dirtyByEventId };
+    delete newDirtyByEventId[eventId];
+    set({ rows: updatedRows, dirtyByEventId: newDirtyByEventId });
   },
 
   clearDirty: (eventId: string) => {

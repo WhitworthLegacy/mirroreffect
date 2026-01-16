@@ -519,18 +519,20 @@ function mapEventRowToClientsValues(event: {
     "Phone": event.client_phone || "",
     "Lieu Event": event.address || "",
     "Pack": event.pack_id || "",
-    "Pack (€)": centsToEuro(event.total_cents),
+    "Pack (€)": centsToEuro(event.total_cents), // Gardé pour compatibilité si le sheet l'utilise
+    "Total": centsToEuro(event.total_cents), // ✅ Header exact selon spécification
     "Transport (€)": centsToEuro(event.transport_fee_cents),
     "Acompte": centsToEuro(event.deposit_cents),
     "Solde Restant": centsToEuro(event.balance_due_cents),
     "Etudiant": event.student_name || "",
     "Heures Etudiant": formatNumber(event.student_hours),
+    "Etudiant €/Event": centsToEuro(event.student_rate_cents), // ✅ Header exact
     "KM (Aller)": formatNumber(event.km_one_way),
     "KM (Total)": formatNumber(event.km_total),
     "Coût Essence": centsToEuro(event.fuel_cost_cents),
     "Commercial": event.commercial_name || "",
     "Comm Commercial": centsToEuro(event.commercial_commission_cents),
-    "Marge Brut (Event)": centsToEuro(event.gross_margin_cents),
+    "Marge Brut (Event)": centsToEuro(event.gross_margin_cents), // ✅ Source de vérité - PAS de calcul
     "Acompte Facture": event.deposit_invoice_ref || "",
     "Solde Facture": event.balance_invoice_ref || "",
     "Invités": formatNumber(event.guest_count),
@@ -617,6 +619,115 @@ export async function writeEventToSheets(event: {
 }
 
 /**
+ * Parse European number format (1.234,56 or 1234,56) to number
+ * Returns null if parsing fails
+ */
+export function parseEuropeanNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  
+  if (typeof value === "number") return value;
+  
+  if (typeof value === "string") {
+    // Remove spaces and handle European format
+    const cleaned = value.trim().replace(/\s/g, "");
+    // Replace comma with dot for decimal separator
+    // Remove dots used as thousands separator
+    const normalized = cleaned.replace(/\./g, "").replace(",", ".");
+    const num = parseFloat(normalized);
+    return Number.isNaN(num) ? null : num;
+  }
+  
+  const num = Number(value);
+  return Number.isNaN(num) ? null : num;
+}
+
+/**
+ * Parse European number format to cents (multiply by 100)
+ */
+export function parseEuropeanNumberToCents(value: unknown): number | null {
+  const num = parseEuropeanNumber(value);
+  return num === null ? null : Math.round(num * 100);
+}
+
+/**
+ * Find column index by exact header name
+ */
+export function findColumnIndex(headers: string[], headerNameExact: string): number {
+  const index = headers.findIndex(h => String(h).trim() === headerNameExact);
+  if (index < 0) {
+    console.warn(`[Stats] Column "${headerNameExact}" not found. Available headers: ${headers.slice(0, 10).join(", ")}...`);
+  }
+  return index;
+}
+
+/**
+ * Get cell value from a row by exact header name
+ */
+export function getCell(row: unknown[], headers: string[], headerNameExact: string): unknown {
+  const index = findColumnIndex(headers, headerNameExact);
+  return index >= 0 ? row[index] : null;
+}
+
+/**
+ * Parse Stats sheet rows into structured format
+ */
+export function parseStatsRows(rows: unknown[][]): { headers: string[]; rows: unknown[][] } {
+  if (rows.length === 0) {
+    return { headers: [], rows: [] };
+  }
+  
+  const headers = (rows[0] as string[]).map(h => String(h).trim());
+  const dataRows = rows.slice(1);
+  
+  return { headers, rows: dataRows };
+}
+
+/**
+ * Find the row for a specific month, or the last non-empty row if no month specified
+ */
+export function findStatsRowForMonth(
+  headers: string[],
+  rows: unknown[][],
+  month?: string | null
+): unknown[] | null {
+  const dateIndex = findColumnIndex(headers, "Date");
+  if (dateIndex < 0) {
+    console.warn("[Stats] Column 'Date' not found, using last non-empty row");
+    // Return last non-empty row
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const row = rows[i];
+      if (row && row.some(cell => cell !== null && cell !== undefined && cell !== "")) {
+        return row;
+      }
+    }
+    return null;
+  }
+  
+  if (month) {
+    // Find row matching the month
+    const monthStr = String(month).trim();
+    for (const row of rows) {
+      const dateValue = row[dateIndex];
+      if (dateValue && String(dateValue).trim() === monthStr) {
+        return row;
+      }
+    }
+    console.warn(`[Stats] No row found for month "${month}"`);
+    return null;
+  }
+  
+  // No month specified: return last non-empty row
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const row = rows[i];
+    if (row && row.some(cell => cell !== null && cell !== undefined && cell !== "")) {
+      return row;
+    }
+  }
+  
+  return null;
+}
+
+/**
  * Read monthly stats from Google Sheets
  */
 export async function readMonthlyStatsFromSheets(): Promise<Array<{
@@ -643,6 +754,18 @@ export async function readMonthlyStatsFromSheets(): Promise<Array<{
     });
     return obj as { month: string; [key: string]: unknown };
   });
+}
+
+/**
+ * Read Stats sheet and return structured data with headers
+ */
+export async function readStatsSheetStructured(): Promise<{
+  headers: string[];
+  rows: unknown[][];
+}> {
+  console.log("[Google Sheets] Reading Stats sheet (structured)");
+  const rows = await readSheet("Stats");
+  return parseStatsRows(rows);
 }
 
 /**
@@ -877,13 +1000,23 @@ function mapClientsRowToEventRow(headers: string[], row: unknown[]): {
   };
 
   // Helper to convert string to number (cents) - les valeurs dans Clients sont en euros avec virgule
+  // Format supporté: "1.234,56" ou "1234,56" (format européen)
   const parseCents = (value: unknown): number | null => {
     if (value === null || value === undefined || value === "") return null;
     let num: number;
     if (typeof value === "string") {
-      // Gérer les virgules (format européen) et les points
-      const cleaned = value.replace(",", ".").trim();
-      num = parseFloat(cleaned);
+      // Gérer le format européen: points comme séparateurs de milliers, virgule comme décimale
+      // Ex: "1.234,56" -> 1234.56
+      const cleaned = value.trim().replace(/\s/g, "");
+      // Si on a une virgule, c'est le séparateur décimal
+      if (cleaned.includes(",")) {
+        // Enlever les points (séparateurs de milliers) et remplacer la virgule par un point
+        const normalized = cleaned.replace(/\./g, "").replace(",", ".");
+        num = parseFloat(normalized);
+      } else {
+        // Pas de virgule, traiter comme un nombre avec point décimal ou entier
+        num = parseFloat(cleaned);
+      }
     } else {
       num = Number(value);
     }
@@ -932,7 +1065,14 @@ function mapClientsRowToEventRow(headers: string[], row: unknown[]): {
     return str;
   };
 
-  // Mapping selon vos colonnes COLS
+  // Mapping selon les headers EXACTS de la feuille "Clients"
+  // Headers: Nom, Email, Phone, Language, Date Formulaire, Date Event, Heure Début, Heure Fin, 
+  // Lieu Event, Type Event, Invités, Pack, Pack (€), Transport (€), Supplément, Supplément (h), 
+  // Supplément (€), Date acompte payé, Acompte, Total, Solde Restant, Etudiant, Heures Etudiant, 
+  // Etudiant €/Event, KM (Aller), KM (Total), Coût Essence, Commercial, Comm Commercial, 
+  // Marge Brut (Event), Lien Invoice, Lien Galerie, Lien ZIP, Event ID, Sync Status, Review Status, 
+  // Annual Offer Status, Acompte Facture, Solde Facture
+  
   const eventId = getCol("Event ID");
   if (!eventId) return null; // Ignorer les lignes sans Event ID
 
@@ -945,19 +1085,24 @@ function mapClientsRowToEventRow(headers: string[], row: unknown[]): {
   const client_phone = getCol("Phone") ? String(getCol("Phone")).trim() : null;
   const address = getCol("Lieu Event") ? String(getCol("Lieu Event")).trim() : null;
   const pack_id = getCol("Pack") ? String(getCol("Pack")).trim() : null;
-  const total_cents = parseCents(getCol("Pack (€)"));
+  // ✅ Lire "Total" (pas "Pack (€)") - source de vérité
+  const total_cents = parseCents(getCol("Total"));
   const transport_fee_cents = parseCents(getCol("Transport (€)"));
   const deposit_cents = parseCents(getCol("Acompte"));
+  // ✅ Lire "Solde Restant" - source de vérité
   const balance_due_cents = parseCents(getCol("Solde Restant"));
   const student_name = getCol("Etudiant") ? String(getCol("Etudiant")).trim() : null;
   const student_hours = parseNumber(getCol("Heures Etudiant"));
-  // Taux étudiant par défaut 14€/h = 1400 centimes
-  const student_rate_cents = 1400;
+  // ✅ Lire "Etudiant €/Event" au lieu d'un taux par défaut - source de vérité
+  const student_rate_cents = parseCents(getCol("Etudiant €/Event"));
+  // ✅ Lire directement depuis le sheet - source de vérité
   const km_one_way = parseNumber(getCol("KM (Aller)"));
   const km_total = parseNumber(getCol("KM (Total)"));
+  // ✅ Lire "Coût Essence" - source de vérité
   const fuel_cost_cents = parseCents(getCol("Coût Essence"));
   const commercial_name = getCol("Commercial") ? String(getCol("Commercial")).trim() : null;
   const commercial_commission_cents = parseCents(getCol("Comm Commercial"));
+  // ✅ Lire "Marge Brut (Event)" - source de vérité (PAS de calcul)
   const gross_margin_cents = parseCents(getCol("Marge Brut (Event)"));
   const deposit_invoice_ref = getCol("Acompte Facture") ? String(getCol("Acompte Facture")).trim() : null;
   const balance_invoice_ref = getCol("Solde Facture") ? String(getCol("Solde Facture")).trim() : null;

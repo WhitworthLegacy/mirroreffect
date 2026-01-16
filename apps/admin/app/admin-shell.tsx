@@ -14,10 +14,16 @@ const NAV_ITEMS = [
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPublicRoute = pathname === "/health" || pathname === "/login";
-  const { refreshClients, loading, hasAnyDirty } = useClientsStore();
+  const { refreshClients, loading, hasAnyDirty, lastLoadedAt } = useClientsStore();
 
   const handleRefresh = async () => {
     await refreshClients();
+  };
+
+  const formatLastSync = (timestamp: number | null): string => {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   };
 
   if (isPublicRoute) {
@@ -27,24 +33,37 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return (
     <div className="admin-shell">
       <div className="admin-content">
-        {pathname === "/events" && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, gap: 8 }}>
+        {/* Topbar globale avec bouton Refresh */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: 16,
+          padding: '8px 0',
+          borderBottom: '1px solid var(--border)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {hasAnyDirty() && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--warning)', alignSelf: 'center' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--warning)' }}>
                 ⚠️ Modifications non sauvegardées
               </span>
             )}
-            <button
-              type="button"
-              className="admin-chip"
-              onClick={handleRefresh}
-              disabled={loading}
-              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
-            >
-              {loading ? "Rafraîchissement..." : "🔄 Refresh"}
-            </button>
+            {lastLoadedAt && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                Dernière sync: {formatLastSync(lastLoadedAt)}
+              </span>
+            )}
           </div>
-        )}
+          <button
+            type="button"
+            className="admin-chip"
+            onClick={handleRefresh}
+            disabled={loading}
+            style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+          >
+            {loading ? "Rafraîchissement..." : "🔄 Rafraîchir"}
+          </button>
+        </div>
         {children}
       </div>
       <nav className="admin-bottom-nav" aria-label="Admin navigation">

@@ -48,7 +48,7 @@ function toDateInput(value: string | null) {
 }
 
 export default function EventModal({ event, packs, onClose, onSaved, isNew = false }: Props) {
-  const { getLocalEvent, updateLocal, saveEvent, isDirty, loading: storeLoading } = useClientsStore();
+  const { getLocalEvent, updateLocal, saveEvent, isDirty, loading: storeLoading, applyEventPatch, applyEventReplace } = useClientsStore();
   
   // Pour les nouveaux events, utiliser un state local
   // Pour les events existants, lire depuis le store (mais garder un draft local pour éviter les problèmes de sync)
@@ -208,6 +208,8 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
       setError(null);
       try {
         await saveEvent(event.id);
+        // ✅ Optimistic update: le store a déjà mis à jour via saveEvent, mais on s'assure que draft est bien reflété
+        applyEventPatch(event.id, draft);
         onSaved(draft);
         onClose();
       } catch (err) {
@@ -271,6 +273,8 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         }
         const data = await res.json();
         const updatedEvent = { ...draft, id: data.item.id };
+        // ✅ Optimistic update: ajouter le nouvel event au store
+        applyEventReplace(updatedEvent);
         onSaved(updatedEvent);
       } else {
         // Update existing event (fallback si pas de modifications via store)
@@ -300,11 +304,15 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
 
   const eventTypeFr = draft.event_type ? (EVENT_TYPES[draft.event_type] || draft.event_type) : "";
 
-  // Calculate gross margin (finance fields now directly in draft)
+  // ✅ Afficher directement gross_margin_cents depuis Google Sheets (source de vérité)
+  // PAS de calcul automatique - la valeur vient du sheet "Clients" colonne "Marge Brut (Event)"
+  const displayedMargin = draft.gross_margin_cents ?? null;
+  
+  // Calcul pour affichage info uniquement (si marge manquante)
   const totalRevenue = (draft.total_cents || 0) + (draft.transport_fee_cents || 0);
-  const studentCost = (draft.student_hours || 0) * (draft.student_rate_cents || 1400);
+  const studentCost = (draft.student_hours || 0) * (draft.student_rate_cents || 0);
   const fuelCost = draft.fuel_cost_cents || 0;
-  const commercialCost = draft.commercial_commission_cents || calculateCommission();
+  const commercialCost = draft.commercial_commission_cents || 0;
   const calculatedMargin = totalRevenue - studentCost - fuelCost - commercialCost;
 
   return (
@@ -577,13 +585,13 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
               <span>Marge brute (€)</span>
               <input
                 type="text"
-                value={formatEuro(calculatedMargin)}
-                disabled
+                value={formatEuro(displayedMargin ?? calculatedMargin)}
+                onChange={(e) => updateField("gross_margin_cents", parseEuro(e.target.value))}
                 style={{
-                  backgroundColor: 'var(--bg-primary)',
                   fontWeight: 700,
-                  color: calculatedMargin >= 0 ? 'var(--success)' : 'var(--danger)'
+                  color: (displayedMargin ?? calculatedMargin) >= 0 ? 'var(--success)' : 'var(--danger)'
                 }}
+                title={displayedMargin !== null ? "Valeur depuis Google Sheets" : "Calculé (marge manquante dans le sheet)"}
               />
             </label>
           </div>

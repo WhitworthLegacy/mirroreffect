@@ -2,6 +2,7 @@ import "./globals.css";
 import { Aleo } from "next/font/google";
 import AdminGuard from "./admin-guard";
 import AdminShell from "./admin-shell";
+import AdminDataLoader from "@/components/AdminDataLoader";
 
 const aleo = Aleo({
   subsets: ["latin"],
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={aleo.className}>
         <AdminGuard>
+          <AdminDataLoader />
           <AdminShell>{children}</AdminShell>
         </AdminGuard>
       </body>
