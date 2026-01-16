@@ -48,16 +48,27 @@ const STATUSES = [
   { value: "cancelled", label: "Annulé" }
 ];
 
-const financeDefaults: EventFinanceRow = {
-  student_rate_cents: 1400
-};
+function getDefaultFinance(): EventFinanceRow {
+  return {
+    student_name: null,
+    student_hours: null,
+    student_rate_cents: 1400,
+    km_one_way: null,
+    km_total: null,
+    fuel_cost_cents: null,
+    commercial_name: null,
+    commercial_commission_cents: null,
+    gross_margin_cents: null,
+    invoice_deposit_paid: null,
+    invoice_balance_paid: null
+  };
+}
 
 function getFinanceFromEvent(event: EventRow): EventFinanceRow {
   return {
-    ...financeDefaults,
     student_name: event.student_name ?? null,
     student_hours: event.student_hours ?? null,
-    student_rate_cents: event.student_rate_cents ?? null,
+    student_rate_cents: event.student_rate_cents ?? 1400,
     km_one_way: event.km_one_way ?? null,
     km_total: event.km_total ?? null,
     fuel_cost_cents: event.fuel_cost_cents ?? null,
@@ -259,7 +270,7 @@ export default function EventsSheet({ events, packs }: Props) {
           created_at: null,
           updated_at: null
         },
-        finance: { ...financeDefaults }
+        finance: getDefaultFinance()
       },
       ...prev
     ]);
