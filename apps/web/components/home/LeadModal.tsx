@@ -3,9 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbypyjYSnd-yRYZkMlJbfAFju-I38TX5yfjxvvKW8IaXYM6lrKM2kPx4_bk4fNPQPCII/exec";
-
 const prefixes: Record<string, string> = {
   BE: "+32",
   FR: "+33",
@@ -166,18 +163,15 @@ export function LeadModal({ mode }: LeadModalProps) {
     };
 
     try {
-      const res = await fetch(APPS_SCRIPT_URL, {
+      const res = await fetch("/api/public/leads", {
         method: "POST",
-        body: JSON.stringify(payload)
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
 
-      const text = await res.text();
-      let data: { ok?: boolean; error?: string } | null = null;
-      try {
-        data = JSON.parse(text) as { ok?: boolean; error?: string };
-      } catch {
-        data = null;
-      }
+      const data = await res.json() as { ok?: boolean; error?: string };
 
       if (!res.ok || (data && data.ok === false)) {
         throw new Error(data?.error ?? `HTTP ${res.status}`);

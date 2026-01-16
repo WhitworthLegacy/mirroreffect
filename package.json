@@ -1,7 +1,7 @@
 {
   "name": "mirroreffect",
   "private": true,
-  "packageManager": "pnpm@9.12.3",
+  "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
