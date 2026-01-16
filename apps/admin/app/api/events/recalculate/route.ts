@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { readEventsFromSheets, writeEventToSheets } from "@/lib/googleSheets";
 
-const ORIGIN_ADDRESS = "Boulevard Edmond Machtens 119, 1080 Molenbeek";
+const ORIGIN_ADDRESS = "Boulevard Edmond Machtens 119, 1080 Bruxelles, Belgique";
 
 function roundTwo(value: number) {
   return Math.round(value * 100) / 100;
@@ -17,29 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "event_id missing" }, { status: 400 });
     }
 
-    const supabase = createSupabaseServerClient();
+    // Read event from Google Sheets
+    const events = await readEventsFromSheets();
+    const event = events.find(e => e.id === eventId);
 
-    if (addressOverride) {
-      const { error: addressError } = await supabase
-        .from("events")
-        .update({ address: addressOverride })
-        .eq("id", eventId);
-      if (addressError) {
-        return NextResponse.json({ error: addressError.message }, { status: 500 });
-      }
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    const { data: eventRow, error: eventError } = await supabase
-      .from("events")
-      .select("id, address")
-      .eq("id", eventId)
-      .single();
-
-    if (eventError || !eventRow) {
-      return NextResponse.json({ error: eventError?.message ?? "Event not found" }, { status: 404 });
-    }
-
-    const destination = eventRow.address;
+    const destination = addressOverride || event.address;
     if (!destination) {
       return NextResponse.json({ error: "Missing address" }, { status: 400 });
     }
@@ -70,35 +56,33 @@ export async function POST(request: Request) {
     const kmOneWay = roundTwo(meters / 1000);
     const kmTotal = roundTwo(kmOneWay * 4); // Aller-retour x2
 
-    // Heures étudiant = temps trajet aller-retour + 90 min installation
-    const travelTimeHours = (durationSeconds * 2) / 3600; // Aller-retour
-    const installationHours = 1.5; // 90 minutes
-    const studentHours = roundTwo(travelTimeHours + installationHours);
+    // Heures étudiant = (temps aller x 4) + 60 min installation, arrondi au 0.5 supérieur
+    const minutesTotal = (durationSeconds * 4) + 3600; // 4 trajets + 60 min
+    const heuresReelles = minutesTotal / 3600;
+    const studentHours = Math.ceil(heuresReelles * 2) / 2; // Arrondi au 0.5 supérieur
 
     const studentRateCents = 1400; // 14€/h
     const fuelCostCents = Math.round(kmTotal * 0.15 * 100); // 0.15€/km
 
-    // Update events table directly (finance fields now in same table)
-    const { error: updateError } = await supabase
-      .from("events")
-      .update({
-        student_hours: studentHours,
-        student_rate_cents: studentRateCents,
-        km_one_way: kmOneWay,
-        km_total: kmTotal,
-        fuel_cost_cents: fuelCostCents
-      })
-      .eq("id", eventId);
+    // Update event in Google Sheets
+    const updatedEvent = {
+      ...event,
+      address: addressOverride || event.address,
+      student_hours: studentHours,
+      student_rate_cents: studentRateCents,
+      km_one_way: kmOneWay,
+      km_total: kmTotal,
+      fuel_cost_cents: fuelCostCents,
+    };
 
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
+    await writeEventToSheets(updatedEvent);
 
     return NextResponse.json({
       ok: true,
       km_one_way: kmOneWay,
       km_total: kmTotal,
       student_hours: studentHours,
+      student_rate_cents: studentRateCents,
       fuel_cost_cents: fuelCostCents
     });
   } catch (error) {

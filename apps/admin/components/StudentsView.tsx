@@ -5,7 +5,7 @@ import { formatCurrency } from "@/lib/format";
 
 type StudentEvent = {
   event_id: string;
-  event_date: string;
+  event_date: string | null;
   client_name: string | null;
   student_name: string;
   student_hours: number | null;
@@ -36,7 +36,7 @@ export default function StudentsView({ studentEvents }: Props) {
 
   // Get unique months and students for filters
   const months = useMemo(() => {
-    const m = [...new Set(events.map(e => e.event_date.substring(0, 7)))];
+    const m = [...new Set(events.map(e => e.event_date?.substring(0, 7)).filter(Boolean) as string[])];
     return m.sort((a, b) => b.localeCompare(a));
   }, [events]);
 
@@ -47,7 +47,7 @@ export default function StudentsView({ studentEvents }: Props) {
   // Filter events
   const filteredEvents = useMemo(() => {
     return events.filter(e => {
-      if (selectedMonth && !e.event_date.startsWith(selectedMonth)) return false;
+      if (selectedMonth && (!e.event_date || !e.event_date.startsWith(selectedMonth))) return false;
       if (selectedStudent && e.student_name !== selectedStudent) return false;
       return true;
     });
@@ -59,7 +59,7 @@ export default function StudentsView({ studentEvents }: Props) {
     const byMonthStudent: Record<string, { hours: number; remuneration: number; count: number }> = {};
 
     for (const e of filteredEvents) {
-      const monthKey = e.event_date.substring(0, 7);
+      const monthKey = e.event_date?.substring(0, 7) || "unknown";
       const key = `${monthKey}|${e.student_name}`;
       if (!byMonthStudent[key]) {
         byMonthStudent[key] = { hours: 0, remuneration: 0, count: 0 };
@@ -279,11 +279,11 @@ export default function StudentsView({ studentEvents }: Props) {
                   return (
                     <tr key={event.event_id} className="admin-row">
                       <td>
-                        {new Date(event.event_date).toLocaleDateString("fr-BE", {
+                        {event.event_date ? new Date(event.event_date).toLocaleDateString("fr-BE", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
-                        })}
+                        }) : "—"}
                       </td>
                       <td style={{ fontWeight: 600 }}>{event.student_name}</td>
                       <td className="admin-muted">{event.client_name || "—"}</td>

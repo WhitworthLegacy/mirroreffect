@@ -1,34 +1,24 @@
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import StudentsView from "@/components/StudentsView";
 import type { EventRow } from "@/lib/adminData";
+import { readEventsFromSheets } from "@/lib/googleSheets";
 
 export default async function StudentsPage() {
   let error: string | null = null;
   let events: EventRow[] = [];
 
   try {
-    const supabase = createSupabaseServerClient();
-    const { data, error: fetchError } = await supabase
-      .from("events")
-      .select("*")
-      .order("event_date", { ascending: false })
-      .limit(500);
-
-    if (fetchError) {
-      error = fetchError.message;
-    } else {
-      events = (data || []) as EventRow[];
-    }
+    // Read from Google Sheets (primary source)
+    events = await readEventsFromSheets();
   } catch (err) {
     error = err instanceof Error ? err.message : "Impossible de charger les données.";
   }
 
   // Extract student data from events (student fields now directly in events)
   const studentEvents = events
-    .filter(event => event.student_name)
+    .filter(event => event.student_name && event.event_date) // Filter out events without date or student
     .map(event => ({
       event_id: event.id,
-      event_date: event.event_date,
+      event_date: event.event_date!,
       client_name: event.client_name,
       student_name: event.student_name!,
       student_hours: event.student_hours,
