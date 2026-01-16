@@ -1,49 +1,136 @@
 "use client";
 
-"use client";
-
 import { useMemo } from "react";
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 import { formatCurrency } from "@/lib/format";
 import DashboardCharts from "@/components/DashboardCharts";
 
-// Type combiné: v_monthly_stats (calculé) + monthly_stats (marketing)
-type MonthlyStats = {
-  month: string;
-  closing_total: number | null;
-  closing_decouverte: number | null;
-  closing_essentiel: number | null;
-  closing_premium: number | null;
-  deposits_signed_cents: number | null;
-  events_count: number | null;
-  events_decouverte: number | null;
-  events_essentiel: number | null;
-  events_premium: number | null;
-  total_event_cents: number | null;
-  deposits_event_cents: number | null;
-  remaining_event_cents: number | null;
-  transport_cents: number | null;
-  ca_total_cents: number | null;
-  student_hours: number | null;
-  student_cost_cents: number | null;
-  fuel_cost_cents: number | null;
-  commercial_commission_cents: number | null;
-  pack_cost_cents: number | null;
-  gross_margin_cents: number | null;
-  cashflow_gross_cents: number | null;
-  leads_meta: number | null;
-  spent_meta_cents: number | null;
-};
-
 type Props = {
-  monthlyStats: MonthlyStats[];
   selectedYear: number;
 };
 
-export default function DashboardPageClient({ monthlyStats, selectedYear }: Props) {
-  const { rows: events, loading, error } = useClientsStore();
+// Helper pour parser un nombre européen (1.234,56) en centimes
+function parseEuropeanNumberToCents(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  let num: number;
+  if (typeof value === "string") {
+    const cleaned = value.trim().replace(/\s/g, "");
+    if (cleaned.includes(",")) {
+      const normalized = cleaned.replace(/\./g, "").replace(",", ".");
+      num = parseFloat(normalized);
+    } else {
+      num = parseFloat(cleaned);
+    }
+  } else {
+    num = Number(value);
+  }
+  return Number.isNaN(num) ? null : Math.round(num * 100);
+}
 
-  // Filter events by year for CA calculation
+// Helper pour parser un nombre européen simple
+function parseEuropeanNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  let num: number;
+  if (typeof value === "string") {
+    const cleaned = value.trim().replace(/\s/g, "");
+    if (cleaned.includes(",")) {
+      const normalized = cleaned.replace(/\./g, "").replace(",", ".");
+      num = parseFloat(normalized);
+    } else {
+      num = parseFloat(cleaned);
+    }
+  } else {
+    num = Number(value);
+  }
+  return Number.isNaN(num) ? null : num;
+}
+
+export default function DashboardPageClient({ selectedYear }: Props) {
+  const { events, statsRows, statsHeaders, isLoading, error, getCell, findRowByDate } = useSheetsStore();
+
+  // Helper pour obtenir une valeur depuis Stats par header exact
+  const getStatsValue = (row: unknown[], headerName: string, asCents = false): number | null => {
+    const headerIndex = statsHeaders.findIndex((h) => String(h).trim() === headerName);
+    if (headerIndex < 0) {
+      console.warn(`[Dashboard] Header "${headerName}" not found in Stats`);
+      return null;
+    }
+    const value = row[headerIndex];
+    return asCents ? parseEuropeanNumberToCents(value) : parseEuropeanNumber(value);
+  };
+
+  // Filtrer les lignes Stats pour l'année sélectionnée
+  const statsForYear = useMemo(() => {
+    if (!statsRows.length || !statsHeaders.length) return [];
+    
+    const dateIndex = statsHeaders.findIndex((h) => String(h).trim() === "Date");
+    if (dateIndex < 0) return [];
+
+    return statsRows.filter((row) => {
+      const dateValue = String(row[dateIndex] || "").trim();
+      if (!dateValue) return false;
+      
+      // Parser la date (format peut être YYYY-MM ou YYYY-MM-DD)
+      const dateMatch = dateValue.match(/^(\d{4})-(\d{2})/);
+      if (!dateMatch) return false;
+      
+      const rowYear = parseInt(dateMatch[1], 10);
+      return rowYear === selectedYear;
+    });
+  }, [statsRows, statsHeaders, selectedYear]);
+
+  // Calculer les KPI depuis Stats avec headers exacts
+  const kpis = useMemo(() => {
+    let caTotal = 0;
+    let caGenere = 0;
+    let margeBruteOpe = 0;
+    let margeNetteOpe = 0;
+    let cashflowBrut = 0;
+    let cashflowNet = 0;
+    let eventsCount = 0;
+
+    for (const row of statsForYear) {
+      // CA (Acomptes + Restants)
+      const ca = getStatsValue(row, "CA (Acomptes + Restants)", true);
+      if (ca !== null) caTotal += ca;
+
+      // CA généré (Event + Transport)
+      const caGen = getStatsValue(row, "CA généré (Event + Transport)", true);
+      if (caGen !== null) caGenere += caGen;
+
+      // Marge brute opé. (Events)
+      const margeBrute = getStatsValue(row, "Marge brute opé. (Events)", true);
+      if (margeBrute !== null) margeBruteOpe += margeBrute;
+
+      // Marge nette opé. (Events)
+      const margeNette = getStatsValue(row, "Marge nette opé. (Events)", true);
+      if (margeNette !== null) margeNetteOpe += margeNette;
+
+      // Cashflow Brut (mensuel)
+      const cfBrut = getStatsValue(row, "Cashflow Brut (mensuel)", true);
+      if (cfBrut !== null) cashflowBrut += cfBrut;
+
+      // Cashflow Net (mensuel)
+      const cfNet = getStatsValue(row, "Cashflow Net (mensuel)", true);
+      if (cfNet !== null) cashflowNet += cfNet;
+
+      // # Events
+      const evCount = getStatsValue(row, "# Events", false);
+      if (evCount !== null) eventsCount += evCount;
+    }
+
+    return {
+      caTotal,
+      caGenere,
+      margeBruteOpe,
+      margeNetteOpe,
+      cashflowBrut,
+      cashflowNet,
+      eventsCount,
+    };
+  }, [statsForYear, statsHeaders]);
+
+  // Filter events by year for fallback calculations
   const eventsForYear = useMemo(() => {
     return events.filter((event) => {
       if (!event.event_date) return false;
@@ -63,7 +150,6 @@ export default function DashboardPageClient({ monthlyStats, selectedYear }: Prop
     });
   }, [events]);
 
-  // Solde restant = only future events
   const futureBalance = useMemo(() => {
     return upcomingEvents.reduce((sum, event) => sum + (event.balance_due_cents ?? 0), 0);
   }, [upcomingEvents]);
@@ -77,54 +163,66 @@ export default function DashboardPageClient({ monthlyStats, selectedYear }: Prop
     const yearsFromEvents = events
       .map(e => e.event_date ? new Date(e.event_date).getFullYear() : null)
       .filter((y): y is number => y !== null);
-    const yearsFromStats = monthlyStats
-      .map(s => new Date(s.month).getFullYear())
-      .filter(y => !isNaN(y));
+    
+    const yearsFromStats: number[] = [];
+    if (statsHeaders.length > 0) {
+      const dateIndex = statsHeaders.findIndex((h) => String(h).trim() === "Date");
+      if (dateIndex >= 0) {
+        for (const row of statsRows) {
+          const dateValue = String(row[dateIndex] || "").trim();
+          const dateMatch = dateValue.match(/^(\d{4})/);
+          if (dateMatch) {
+            const year = parseInt(dateMatch[1], 10);
+            if (!isNaN(year)) yearsFromStats.push(year);
+          }
+        }
+      }
+    }
+    
     const allYears = [...new Set([...yearsFromEvents, ...yearsFromStats])].sort((a, b) => b - a);
     if (!allYears.includes(selectedYear)) allYears.unshift(selectedYear);
     return allYears;
-  }, [events, monthlyStats, selectedYear]);
+  }, [events, statsRows, statsHeaders, selectedYear]);
 
-  // Calculate stats from monthly_stats for selected year
-  const statsForYear = useMemo(() => {
-    return monthlyStats.filter(s => {
-      const year = new Date(s.month).getFullYear();
-      return year === selectedYear;
+  // Convertir statsRows en format MonthlyStats pour DashboardCharts (compatibilité)
+  const monthlyStatsForCharts = useMemo(() => {
+    return statsForYear.map((row) => {
+      const dateIndex = statsHeaders.findIndex((h) => String(h).trim() === "Date");
+      const month = dateIndex >= 0 ? String(row[dateIndex] || "").trim() : "";
+      
+      return {
+        month: month || null,
+        closing_total: getStatsValue(row, "# closing Total", false),
+        closing_decouverte: getStatsValue(row, "# C.Découverte", false),
+        closing_essentiel: getStatsValue(row, "# C.Essentiel", false),
+        closing_premium: getStatsValue(row, "# C.Premium", false),
+        deposits_signed_cents: getStatsValue(row, "Acomptes (payés)", true),
+        events_count: getStatsValue(row, "# Events", false),
+        events_decouverte: getStatsValue(row, "# E.Découverte", false),
+        events_essentiel: getStatsValue(row, "# E.Essentiel", false),
+        events_premium: getStatsValue(row, "# E.Premium", false),
+        total_event_cents: getStatsValue(row, "Total (event)", true),
+        deposits_event_cents: getStatsValue(row, "Acomptes (event)", true),
+        remaining_event_cents: getStatsValue(row, "Restants (event)", true),
+        transport_cents: getStatsValue(row, "€ transport (Ev. Réalisés)", true),
+        ca_total_cents: getStatsValue(row, "CA (Acomptes + Restants)", true),
+        student_hours: getStatsValue(row, "Heures étudiants", false),
+        student_cost_cents: getStatsValue(row, "Coût staff étudiants", true),
+        fuel_cost_cents: getStatsValue(row, "Essence", true),
+        commercial_commission_cents: getStatsValue(row, "Comm Commerciaux", true),
+        pack_cost_cents: getStatsValue(row, "Coût packs (Ev. Réalisés)", true),
+        gross_margin_cents: getStatsValue(row, "Marge brute opé. (Events)", true),
+        cashflow_gross_cents: getStatsValue(row, "Cashflow Brut (mensuel)", true),
+        leads_meta: getStatsValue(row, "# Leads META", false),
+        spent_meta_cents: getStatsValue(row, "Spent META", true),
+      };
     });
-  }, [monthlyStats, selectedYear]);
+  }, [statsForYear, statsHeaders]);
 
-  const yearlyTotalCA = useMemo(() => {
-    return statsForYear.reduce((sum, s) => sum + (s.ca_total_cents ?? 0), 0);
-  }, [statsForYear]);
-
-  const yearlyGrossMargin = useMemo(() => {
-    return statsForYear.reduce((sum, s) => sum + (s.gross_margin_cents ?? 0), 0);
-  }, [statsForYear]);
-
-  const yearlyCashflow = useMemo(() => {
-    return statsForYear.reduce((sum, s) => sum + (s.cashflow_gross_cents ?? 0), 0);
-  }, [statsForYear]);
-
-  const yearlyLeads = useMemo(() => {
-    return statsForYear.reduce((sum, s) => sum + (s.leads_meta ?? 0), 0);
-  }, [statsForYear]);
-
-  const yearlyClosings = useMemo(() => {
-    return statsForYear.reduce((sum, s) => sum + (s.closing_total ?? 0), 0);
-  }, [statsForYear]);
-
-  const yearlyEventsCount = useMemo(() => {
-    return statsForYear.reduce((sum, s) => sum + (s.events_count ?? 0), 0);
-  }, [statsForYear]);
-
-  const yearlyAdSpend = useMemo(() => {
-    return statsForYear.reduce((sum, s) => sum + (s.spent_meta_cents ?? 0), 0);
-  }, [statsForYear]);
-
-  if (loading && !events.length) {
+  if (isLoading && !events.length) {
     return (
       <div className="admin-card">
-        <p className="admin-muted">Chargement des événements...</p>
+        <p className="admin-muted">Chargement des données...</p>
       </div>
     );
   }
@@ -148,26 +246,44 @@ export default function DashboardPageClient({ monthlyStats, selectedYear }: Prop
       <section className="admin-kpi">
         <div className="admin-kpi-card">
           <h3>CA Total</h3>
-          <p>{formatCurrency(yearlyTotalCA || totalRevenue)}</p>
+          <p>{formatCurrency(kpis.caTotal || totalRevenue)}</p>
           <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-            {yearlyEventsCount || eventsForYear.length} événements
+            {kpis.eventsCount || eventsForYear.length} événements
           </span>
         </div>
         <div className="admin-kpi-card">
-          <h3>Marge brute</h3>
-          <p>{formatCurrency(yearlyGrossMargin)}</p>
-          {yearlyTotalCA > 0 && (
+          <h3>CA généré</h3>
+          <p>{formatCurrency(kpis.caGenere)}</p>
+          {kpis.caTotal > 0 && (
             <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-              {((yearlyGrossMargin / yearlyTotalCA) * 100).toFixed(1)}% du CA
+              {((kpis.caGenere / kpis.caTotal) * 100).toFixed(1)}% du CA total
+            </span>
+          )}
+        </div>
+        <div className="admin-kpi-card">
+          <h3>Marge brute opé.</h3>
+          <p>{formatCurrency(kpis.margeBruteOpe)}</p>
+          {kpis.caTotal > 0 && (
+            <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
+              {((kpis.margeBruteOpe / kpis.caTotal) * 100).toFixed(1)}% du CA
             </span>
           )}
         </div>
         <div className="admin-kpi-card">
           <h3>Cashflow brut</h3>
-          <p>{formatCurrency(yearlyCashflow)}</p>
-          {yearlyTotalCA > 0 && (
+          <p>{formatCurrency(kpis.cashflowBrut)}</p>
+          {kpis.caTotal > 0 && (
             <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-              {((yearlyCashflow / yearlyTotalCA) * 100).toFixed(1)}% du CA
+              {((kpis.cashflowBrut / kpis.caTotal) * 100).toFixed(1)}% du CA
+            </span>
+          )}
+        </div>
+        <div className="admin-kpi-card">
+          <h3>Cashflow net</h3>
+          <p>{formatCurrency(kpis.cashflowNet)}</p>
+          {kpis.caTotal > 0 && (
+            <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
+              {((kpis.cashflowNet / kpis.caTotal) * 100).toFixed(1)}% du CA
             </span>
           )}
         </div>
@@ -183,24 +299,11 @@ export default function DashboardPageClient({ monthlyStats, selectedYear }: Prop
       {/* Secondary KPIs */}
       <section className="admin-kpi" style={{ marginTop: 16 }}>
         <div className="admin-kpi-card">
-          <h3>Leads générés</h3>
-          <p>{yearlyLeads}</p>
-        </div>
-        <div className="admin-kpi-card">
-          <h3>Closings</h3>
-          <p>{yearlyClosings}</p>
-          {yearlyLeads > 0 && (
+          <h3>Marge nette opé.</h3>
+          <p>{formatCurrency(kpis.margeNetteOpe)}</p>
+          {kpis.caTotal > 0 && (
             <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-              {((yearlyClosings / yearlyLeads) * 100).toFixed(1)}% conversion
-            </span>
-          )}
-        </div>
-        <div className="admin-kpi-card">
-          <h3>Dépenses Pub</h3>
-          <p>{formatCurrency(yearlyAdSpend)}</p>
-          {yearlyLeads > 0 && (
-            <span className="admin-muted" style={{ fontSize: "0.875rem" }}>
-              {formatCurrency(yearlyAdSpend / yearlyLeads)} / lead
+              {((kpis.margeNetteOpe / kpis.caTotal) * 100).toFixed(1)}% du CA
             </span>
           )}
         </div>
@@ -222,7 +325,7 @@ export default function DashboardPageClient({ monthlyStats, selectedYear }: Prop
 
       {/* Interactive Charts Section */}
       <DashboardCharts
-        monthlyStats={monthlyStats}
+        monthlyStats={monthlyStatsForCharts}
         events={events}
         selectedYear={selectedYear}
       />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 import StudentsView from "@/components/StudentsView";
 
 export default function StudentsPageClient() {
@@ -30,7 +30,7 @@ export default function StudentsPageClient() {
           <p className="admin-muted">{error}</p>
         </div>
       )}
-      {loading && !events.length && (
+      {isLoading && !events.length && (
         <div className="admin-card" style={{ marginBottom: 24 }}>
           <p className="admin-muted">Chargement des événements...</p>
         </div>

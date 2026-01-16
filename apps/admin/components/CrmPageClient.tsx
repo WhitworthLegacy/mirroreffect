@@ -1,6 +1,6 @@
 "use client";
 
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 import CrmList from "@/components/CrmList";
 import type { PackRow } from "@/lib/adminData";
 
@@ -9,12 +9,12 @@ type Props = {
 };
 
 export default function CrmPageClient({ packs }: Props) {
-  const { rows: events, loading, error } = useClientsStore();
+  const { events, isLoading, error } = useSheetsStore();
 
   return (
     <>
       {error && <p className="admin-muted">Erreur events: {error}</p>}
-      {loading && !events.length && (
+      {isLoading && !events.length && (
         <p className="admin-muted">Chargement des événements...</p>
       )}
       <CrmList events={events} packs={packs} />

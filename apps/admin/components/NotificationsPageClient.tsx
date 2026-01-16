@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export default function NotificationsPageClient() {
-  const { rows: events, loading, error } = useClientsStore();
+  const { events, isLoading, error } = useSheetsStore();
 
   const upcoming = useMemo(() => {
     return events.filter((event) => {
@@ -24,7 +24,7 @@ export default function NotificationsPageClient() {
   return (
     <>
       {error && <p className="admin-muted">Erreur: {error}</p>}
-      {loading && !events.length && (
+      {isLoading && !events.length && (
         <p className="admin-muted">Chargement des événements...</p>
       )}
 

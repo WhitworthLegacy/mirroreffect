@@ -48,7 +48,7 @@ function toDateInput(value: string | null) {
 }
 
 export default function EventModal({ event, packs, onClose, onSaved, isNew = false }: Props) {
-  const { getLocalEvent, updateLocal, saveEvent, isDirty, loading: storeLoading, applyEventPatch, applyEventReplace } = useClientsStore();
+  const { getLocalEvent, updateLocal, saveEvent, isDirty, isLoading: storeLoading, applyEventPatch, applyEventReplace } = useSheetsStore();
   
   // Pour les nouveaux events, utiliser un state local
   // Pour les events existants, lire depuis le store (mais garder un draft local pour éviter les problèmes de sync)

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 import type { PackRow } from "@/lib/adminData";
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
 };
 
 export default function InventoryPageClient({ packs }: Props) {
-  const { rows: events, loading, error } = useClientsStore();
+  const { events, isLoading, error } = useSheetsStore();
 
   const packMap = useMemo(() => {
     return new Map(
@@ -28,7 +28,7 @@ export default function InventoryPageClient({ packs }: Props) {
   return (
     <>
       {error && <p className="admin-muted">Erreur: {error}</p>}
-      {loading && !events.length && (
+      {isLoading && !events.length && (
         <p className="admin-muted">Chargement des événements...</p>
       )}
 

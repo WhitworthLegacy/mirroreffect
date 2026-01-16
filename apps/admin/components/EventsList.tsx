@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import type { EventRow, PackRow } from "@/lib/adminData";
 import { formatDate } from "@/lib/format";
 import EventModal from "@/components/EventModal";
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 
 type Props = {
   events: EventRow[];
@@ -12,9 +12,9 @@ type Props = {
 };
 
 export default function EventsList({ events, packs }: Props) {
-  const { rows: storeRows, refreshClients } = useClientsStore();
+  const { events: storeEvents, refresh } = useSheetsStore();
   // Utiliser le store si disponible, sinon fallback sur props
-  const rows = storeRows.length > 0 ? storeRows : events;
+  const rows = storeEvents.length > 0 ? storeEvents : events;
   
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isNewEvent, setIsNewEvent] = useState(false);
@@ -49,7 +49,7 @@ export default function EventsList({ events, packs }: Props) {
       // (qui sera créé via /api/events, pas via le store)
       setIsNewEvent(false);
       // Refresh le store pour récupérer les dernières données
-      await refreshClients();
+      await refresh();
     } else {
       // Pour les events existants, le store a déjà été mis à jour par saveEvent
       setIsNewEvent(false);

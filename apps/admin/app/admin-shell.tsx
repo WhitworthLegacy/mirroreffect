@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
@@ -14,10 +14,10 @@ const NAV_ITEMS = [
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPublicRoute = pathname === "/health" || pathname === "/login";
-  const { refreshClients, loading, hasAnyDirty, lastLoadedAt } = useClientsStore();
+  const { refresh, isLoading, hasAnyDirty, lastSyncAt } = useSheetsStore();
 
   const handleRefresh = async () => {
-    await refreshClients();
+    await refresh();
   };
 
   const formatLastSync = (timestamp: number | null): string => {
@@ -48,21 +48,21 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 ⚠️ Modifications non sauvegardées
               </span>
             )}
-            {lastLoadedAt && (
+            {lastSyncAt && (
               <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                Dernière sync: {formatLastSync(lastLoadedAt)}
+                Dernière sync: {formatLastSync(lastSyncAt)}
               </span>
             )}
           </div>
-          <button
-            type="button"
-            className="admin-chip"
-            onClick={handleRefresh}
-            disabled={loading}
-            style={{ padding: '6px 12px', fontSize: '0.875rem' }}
-          >
-            {loading ? "Rafraîchissement..." : "🔄 Rafraîchir"}
-          </button>
+            <button
+              type="button"
+              className="admin-chip"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              style={{ padding: '6px 12px', fontSize: '0.875rem' }}
+            >
+              {isLoading ? "Rafraîchissement..." : "🔄 Rafraîchir"}
+            </button>
         </div>
         {children}
       </div>

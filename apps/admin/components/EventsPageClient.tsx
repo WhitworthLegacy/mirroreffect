@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useClientsStore } from "@/lib/clientsStore";
+import { useSheetsStore } from "@/lib/sheetsStore";
 import EventsList from "@/components/EventsList";
 import type { PackRow } from "@/lib/adminData";
 
@@ -10,24 +9,17 @@ type Props = {
 };
 
 export default function EventsPageClient({ packs }: Props) {
-  const { rows: events, loading, error, loadClients, loaded } = useClientsStore();
-
-  // Charger les clients une seule fois au mount
-  useEffect(() => {
-    if (!loaded && !loading) {
-      loadClients();
-    }
-  }, [loaded, loading, loadClients]);
+  const { events, isLoading, error, loaded } = useSheetsStore();
 
   return (
     <>
-      {error && (
+      {error && !loaded && (
         <div className="admin-card" style={{ marginBottom: 24 }}>
           <h2>Erreur de chargement</h2>
           <p className="admin-muted">{error}</p>
         </div>
       )}
-      {loading && !loaded && (
+      {isLoading && !events.length && (
         <div className="admin-card" style={{ marginBottom: 24 }}>
           <p className="admin-muted">Chargement des événements...</p>
         </div>
