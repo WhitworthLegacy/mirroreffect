@@ -220,9 +220,9 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "id missing" }, { status: 400 });
     }
 
-    // Delete the row from Google Sheets
+    // Delete the row from Google Sheets (feuille "Clients")
     try {
-      await deleteRowFromSheet("Events", body.id);
+      await deleteRowFromSheet("Clients", body.id);
     } catch (error) {
       // If row not found, that's okay - it might already be deleted
       if (error instanceof Error && !error.message.includes("not found")) {

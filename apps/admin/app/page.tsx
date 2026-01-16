@@ -1,5 +1,4 @@
 import { getAdminSnapshot, type EventRow } from "@/lib/adminData";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { formatCurrency } from "@/lib/format";
 import DashboardCharts from "@/components/DashboardCharts";
 
@@ -50,9 +49,7 @@ export default async function Page({
   let monthlyStats: MonthlyStats[] = [];
 
   try {
-    const supabase = createSupabaseServerClient();
-
-    // Get events
+    // Get events from Google Sheets (via getAdminSnapshot)
     const snapshot = await getAdminSnapshot();
     events = snapshot.events;
     eventsError = snapshot.error;
@@ -108,30 +105,9 @@ export default async function Page({
         throw new Error("No data from Google Sheets");
       }
     } catch (sheetsError) {
-      console.error("Failed to load stats from Google Sheets, falling back to Supabase:", sheetsError);
-      // Fallback vers Supabase
-      const [viewResult, marketingResult] = await Promise.all([
-        supabase.from("v_monthly_stats").select("*").order("month", { ascending: false }),
-        supabase.from("monthly_stats").select("month, leads_meta, spent_meta_cents")
-      ]);
-
-      if (viewResult.error) {
-        eventsError = eventsError || viewResult.error.message;
-      } else {
-        const marketingByMonth = new Map(
-          (marketingResult.data || []).map(m => [m.month?.substring(0, 7), m])
-        );
-
-        monthlyStats = (viewResult.data || []).map(stat => {
-          const monthKey = stat.month?.substring(0, 7);
-          const marketing = marketingByMonth.get(monthKey);
-          return {
-            ...stat,
-            leads_meta: marketing?.leads_meta ?? null,
-            spent_meta_cents: marketing?.spent_meta_cents ?? null,
-          };
-        }) as MonthlyStats[];
-      }
+      console.error("Failed to load stats from Google Sheets:", sheetsError);
+      eventsError = eventsError || (sheetsError instanceof Error ? sheetsError.message : "Failed to load stats from Google Sheets");
+      // ❌ NO FALLBACK - Google Sheets is the only source for stats
     }
   } catch (error) {
     eventsError = error instanceof Error ? error.message : "Impossible de charger les données.";

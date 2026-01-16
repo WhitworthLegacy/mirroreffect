@@ -186,6 +186,13 @@ async function gasRequest(action: string, data?: unknown): Promise<unknown> {
     throw new Error("GAS_WEBAPP_URL not configured");
   }
 
+  const keyToUse = cfg.gasKey || "p8V9kqJYwz0M_3rXy1tLZbQF5sNaC2h7"; // Default to your existing key
+  
+  // Log for debugging (only in development)
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[GAS Request] Action: ${action}, Key: ${keyToUse.substring(0, 10)}...`);
+  }
+
   const response = await fetch(cfg.gasWebAppUrl, {
     method: "POST",
     headers: {
@@ -193,7 +200,7 @@ async function gasRequest(action: string, data?: unknown): Promise<unknown> {
     },
     body: JSON.stringify({
       action,
-      key: cfg.gasKey || "p8V9kqJYwz0M_3rXy1tLZbQF5sNaC2h7", // Default to your existing key
+      key: keyToUse,
       data,
     }),
   });
@@ -225,8 +232,17 @@ async function gasRequest(action: string, data?: unknown): Promise<unknown> {
   }
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Google Apps Script error: ${error}`);
+    const errorText = await response.text();
+    let errorMessage = `Google Apps Script error: ${errorText}`;
+    try {
+      const errorJson = JSON.parse(errorText);
+      if (errorJson.error) {
+        errorMessage = errorJson.error;
+      }
+    } catch {
+      // Not JSON, use text as is
+    }
+    throw new Error(errorMessage);
   }
 
   const result = await response.json();

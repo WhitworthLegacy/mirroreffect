@@ -74,7 +74,7 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   let events: EventRow[] = [];
   let eventsError: string | null = null;
 
-  // ✅ Read events from Google Sheets (feuille "Clients" - primary source)
+  // ✅ Read events from Google Sheets (feuille "Clients" - UNIQUE source)
   try {
     const { readEventsFromSheets } = await import("./googleSheets");
     console.log("[getAdminSnapshot] Loading events from Google Sheets (sheet: 'Clients')");
@@ -83,37 +83,31 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   } catch (error) {
     eventsError = error instanceof Error ? error.message : "Failed to load events from Google Sheets";
     console.error("Error loading events from Google Sheets:", error);
-    
-    // Fallback to Supabase if Google Sheets fails
-    try {
-      const supabase = createSupabaseServerClient();
-      const { data: eventsData, error: supabaseError } = await supabase
-        .from("events")
-        .select("*")
-        .order("event_date", { ascending: true })
-        .limit(500);
-      
-      if (supabaseError) {
-        eventsError = eventsError + " | " + supabaseError.message;
-      } else {
-        events = (eventsData ?? []) as unknown as EventRow[];
-      }
-    } catch (fallbackError) {
-      eventsError = eventsError + " | Fallback failed: " + (fallbackError instanceof Error ? fallbackError.message : "Unknown error");
-    }
+    // ❌ NO FALLBACK - Google Sheets is the only source for events
   }
 
-  // Packs still come from Supabase (or could be moved to Google Sheets later)
-  const supabase = createSupabaseServerClient();
-  const { data: packsData, error: packsError } = await supabase
-    .from("packs")
-    .select("id, code, name_fr, name_nl, price_current_cents, price_original_cents, impressions_included");
+  // Packs still come from Supabase (temporary - can be moved to Google Sheets later)
+  let packs: PackRow[] = [];
+  let packsError: string | null = null;
+  try {
+    const supabase = createSupabaseServerClient();
+    const { data: packsData, error: supabaseError } = await supabase
+      .from("packs")
+      .select("id, code, name_fr, name_nl, price_current_cents, price_original_cents, impressions_included");
 
-  const packs = (packsData ?? []) as unknown as PackRow[];
+    if (supabaseError) {
+      packsError = supabaseError.message;
+    } else {
+      packs = (packsData ?? []) as unknown as PackRow[];
+    }
+  } catch (error) {
+    packsError = error instanceof Error ? error.message : "Failed to load packs from Supabase";
+    console.error("Error loading packs from Supabase:", error);
+  }
 
   return {
     events,
     packs,
-    error: eventsError ?? packsError?.message ?? null
+    error: eventsError ?? packsError ?? null
   };
 }

@@ -1,15 +1,17 @@
 /**
  * ==========================================================================
- * FONCTIONS À AJOUTER DANS VOTRE App.gs EXISTANT
+ * CODE COMPLET À COPIER-COLLER DANS VOTRE App.gs
  * ==========================================================================
  * 
- * Ajoutez ces fonctions dans votre fichier App.gs existant
- * pour permettre l'intégration avec votre application Next.js
- */
+ * 1. Remplacez votre fonction handleAdminActions_ existante par celle-ci
+ * 2. Remplacez votre fonction readSheetForAdmin_ existante par celle-ci
+ * 3. Ajoutez les 2 nouvelles fonctions : updateRowByEventIdForAdmin_ et updateRowByCompositeKeyForAdmin_
+ * 4. Modifiez votre doPost pour inclure les 2 nouvelles actions (voir en bas)
+ *
 
 /**
  * Actions pour l'intégration Next.js / Admin
- * Supporte: readSheet, appendRow, updateRow, deleteRow
+ * Supporte: readSheet, appendRow, updateRow, updateRowByEventId, updateRowByCompositeKey, deleteRow
  */
 function handleAdminActions_(body) {
   const action = body.action;
@@ -18,8 +20,8 @@ function handleAdminActions_(body) {
 
   // ✅ Vérification de la clé secrète (utilisez votre clé existante)
   const ADMIN_KEY = 'p8V9kqJYwz0M_3rXy1tLZbQF5sNaC2h7'; // Votre clé existante
-  if (key !== ADMIN_KEY) {
-    return { error: 'Unauthorized' };
+  if (!key || key !== ADMIN_KEY) {
+    return { error: 'Invalid key. Expected: ' + ADMIN_KEY.substring(0, 10) + '... Received: ' + (key ? key.substring(0, 10) + '...' : 'undefined') };
   }
 
   const sh = _sheet(); // Votre fonction existante qui retourne la feuille "Clients"
@@ -55,52 +57,47 @@ function handleAdminActions_(body) {
 
 /**
  * Lit toutes les lignes d'une feuille
+ * Supporte: Clients, Stats, Students, Commercial
  */
 function readSheetForAdmin_(sh, head, vals, sheetName) {
-  // Support pour "Events" (nouvelle feuille) ou "Clients" (feuille existante)
-  if (sheetName === 'Events') {
-    // Si vous créez une nouvelle feuille "Events", utilisez-la
-    const ss = SpreadsheetApp.openById(SS_ID);
-    const eventsSheet = ss.getSheetByName('Events');
-    if (!eventsSheet) {
-      return { error: 'Sheet "Events" not found. Please create it first.' };
-    }
-    const eventsVals = eventsSheet.getDataRange().getValues();
-    const eventsHead = eventsVals.shift().map(h => String(h).trim());
-    return { values: [eventsHead, ...eventsVals] };
+  const ss = SpreadsheetApp.openById(SS_ID);
+  
+  // Si c'est "Clients", utiliser la feuille existante
+  if (sheetName === 'Clients') {
+    return { values: [head, ...vals] };
   }
   
-  // Sinon, utilisez la feuille "Clients" existante
-  if (sheetName !== 'Clients') {
-    return { error: 'Sheet not found: ' + sheetName };
+  // Pour les autres feuilles (Stats, Students, Commercial)
+  const targetSheet = ss.getSheetByName(sheetName);
+  if (!targetSheet) {
+    return { error: 'Sheet "' + sheetName + '" not found' };
   }
   
-  // Retourne toutes les lignes (y compris l'en-tête)
-  return { values: [head, ...vals] };
+  const targetVals = targetSheet.getDataRange().getValues();
+  const targetHead = targetVals.shift().map(h => String(h).trim());
+  const targetData = targetVals;
+  
+  return { values: [targetHead, ...targetData] };
 }
 
 /**
  * Ajoute une ligne à la fin
  */
 function appendRowForAdmin_(sh, head, sheetName, values) {
-  if (sheetName === 'Events') {
-    const ss = SpreadsheetApp.openById(SS_ID);
-    let eventsSheet = ss.getSheetByName('Events');
-    if (!eventsSheet) {
-      // Créer la feuille si elle n'existe pas
-      eventsSheet = ss.insertSheet('Events');
-      // Ajouter les en-têtes (vous devrez adapter selon votre structure)
-      eventsSheet.appendRow(['ID', 'Date Event', 'Type Event', 'Langue', 'Nom Client', 'Email Client', 'Téléphone Client', 'Adresse', 'Pack ID', 'Total (€)', 'Transport (€)', 'Acompte (€)', 'Solde (€)', 'Statut', 'Étudiant', 'Heures Étudiant', 'Taux Étudiant (€/h)', 'KM Aller', 'KM Total', 'Coût Essence (€)', 'Commercial', 'Commission Commerciale (€)', 'Marge Brute (€)', 'Ref Facture Acompte', 'Ref Facture Solde', 'Acompte Payé', 'Solde Payé', 'Date Closing']);
-    }
-    eventsSheet.appendRow(values);
+  const ss = SpreadsheetApp.openById(SS_ID);
+  
+  if (sheetName === 'Clients') {
+    sh.appendRow(values);
     return { success: true };
   }
   
-  if (sheetName !== 'Clients') {
-    return { error: 'Sheet not found: ' + sheetName };
+  // Pour les autres feuilles
+  const targetSheet = ss.getSheetByName(sheetName);
+  if (!targetSheet) {
+    return { error: 'Sheet "' + sheetName + '" not found' };
   }
   
-  sh.appendRow(values);
+  targetSheet.appendRow(values);
   return { success: true };
 }
 
@@ -108,16 +105,14 @@ function appendRowForAdmin_(sh, head, sheetName, values) {
  * Met à jour une ligne par ID (colonne A ou Event ID pour Clients)
  */
 function updateRowForAdmin_(sh, head, sheetName, id, values) {
+  const ss = SpreadsheetApp.openById(SS_ID);
   let targetSheet = sh;
   
-  if (sheetName === 'Events') {
-    const ss = SpreadsheetApp.openById(SS_ID);
-    targetSheet = ss.getSheetByName('Events');
+  if (sheetName !== 'Clients') {
+    targetSheet = ss.getSheetByName(sheetName);
     if (!targetSheet) {
-      return { error: 'Sheet "Events" not found' };
+      return { error: 'Sheet "' + sheetName + '" not found' };
     }
-  } else if (sheetName !== 'Clients') {
-    return { error: 'Sheet not found: ' + sheetName };
   }
   
   const vals = targetSheet.getDataRange().getValues();
@@ -132,7 +127,7 @@ function updateRowForAdmin_(sh, head, sheetName, id, values) {
       rowIndex = dataRows.findIndex(row => String(row[eventIdIdx]) === String(id));
     }
   } else {
-    // Pour "Events", chercher dans la première colonne
+    // Pour les autres feuilles, chercher dans la première colonne
     rowIndex = dataRows.findIndex(row => String(row[0]) === String(id));
   }
   
@@ -186,12 +181,13 @@ function updateRowByEventIdForAdmin_(sh, head, eventId, values) {
 
 /**
  * Met à jour une ligne par clé composite (ex: month + student_name)
+ * Supporte: Stats, Students, Commercial
  */
 function updateRowByCompositeKeyForAdmin_(sh, head, sheetName, key1, key1Value, key2, key2Value, values) {
+  const ss = SpreadsheetApp.openById(SS_ID);
   let targetSheet = sh;
   
   if (sheetName === 'Students' || sheetName === 'Commercial' || sheetName === 'Stats') {
-    const ss = SpreadsheetApp.openById(SS_ID);
     targetSheet = ss.getSheetByName(sheetName);
     if (!targetSheet) {
       return { error: 'Sheet "' + sheetName + '" not found' };
@@ -242,16 +238,14 @@ function updateRowByCompositeKeyForAdmin_(sh, head, sheetName, key1, key1Value, 
  * Supprime une ligne par ID (Event ID pour Clients)
  */
 function deleteRowForAdmin_(sh, head, sheetName, id) {
+  const ss = SpreadsheetApp.openById(SS_ID);
   let targetSheet = sh;
   
-  if (sheetName === 'Events') {
-    const ss = SpreadsheetApp.openById(SS_ID);
-    targetSheet = ss.getSheetByName('Events');
+  if (sheetName !== 'Clients') {
+    targetSheet = ss.getSheetByName(sheetName);
     if (!targetSheet) {
-      return { error: 'Sheet "Events" not found' };
+      return { error: 'Sheet "' + sheetName + '" not found' };
     }
-  } else if (sheetName !== 'Clients') {
-    return { error: 'Sheet not found: ' + sheetName };
   }
   
   const vals = targetSheet.getDataRange().getValues();
@@ -266,7 +260,7 @@ function deleteRowForAdmin_(sh, head, sheetName, id) {
       rowIndex = dataRows.findIndex(row => String(row[eventIdIdx]) === String(id));
     }
   } else {
-    // Pour "Events", chercher dans la première colonne
+    // Pour les autres feuilles, chercher dans la première colonne
     rowIndex = dataRows.findIndex(row => String(row[0]) === String(id));
   }
   
@@ -283,43 +277,19 @@ function deleteRowForAdmin_(sh, head, sheetName, id) {
 
 /**
  * ==========================================================================
- * MODIFICATION DE VOTRE doPost EXISTANT
+ * MODIFICATION DE VOTRE doPost
  * ==========================================================================
  * 
- * Ajoutez ceci AU DÉBUT de votre fonction doPost existante :
+ * Dans votre fonction doPost existante (ligne ~500), remplacez cette partie :
+ * 
+ * AVANT :
+ * if (body.action && (body.action === 'readSheet' || body.action === 'appendRow' || 
+ *     body.action === 'updateRow' || body.action === 'deleteRow')) {
+ * 
+ * APRÈS :
+ * if (body.action && (body.action === 'readSheet' || body.action === 'appendRow' || 
+ *     body.action === 'updateRow' || body.action === 'updateRowByEventId' || 
+ *     body.action === 'updateRowByCompositeKey' || body.action === 'deleteRow')) {
+ * 
+ * C'est tout ! Le reste de votre doPost reste identique.
  */
-
-/*
-function doPost(e){
-  try {
-    // 🔹 1. Parse JSON si présent
-    let body = {};
-    if (e.postData && e.postData.contents) {
-      try {
-        body = JSON.parse(e.postData.contents);
-      } catch(_) {}
-    }
-
-    // ✅ NOUVEAU : Actions Admin (Next.js) - AJOUTEZ CETTE SECTION
-    if (body.action && (body.action === 'readSheet' || body.action === 'appendRow' || 
-        body.action === 'updateRow' || body.action === 'updateRowByEventId' || 
-        body.action === 'updateRowByCompositeKey' || body.action === 'deleteRow')) {
-      const result = handleAdminActions_(body);
-      return _json(result.error ? { error: result.error } : { data: result });
-    }
-
-    // 🔹 2. MANYCHAT — CHECK DATE AVAILABILITY (votre code existant)
-    if (body.action === "availability" && body.date) {
-      return _json(ME_checkAvailabilityClientsConfirmed_(body.date));
-    }
-
-    // 🔹 3. LOGIQUE EXISTANTE (le reste de votre code doPost actuel)
-    const p = e.parameter || {};
-    const key = String(p.key || '');
-    // ... reste de votre code ...
-    
-  } catch(err){
-    return _json({ ok:false, error:String(err) });
-  }
-}
-*/
