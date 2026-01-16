@@ -2,30 +2,26 @@ import { NextResponse } from "next/server";
 import { gasPostAdmin } from "@/lib/gas";
 import { readSheet } from "@/lib/googleSheets";
 
-/**
- * Debug endpoint pour tester /api/gas
- * GET: Teste readSheet "Clients"
- * POST: Teste une action spécifique
- */
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Test readSheet "Clients"
     const rows = await readSheet("Clients");
-    
+
     return NextResponse.json({
       ok: true,
       message: "GAS connection working",
       test: "readSheet",
       sheetName: "Clients",
-      rowCount: rows.length - 1, // Exclude header
-      sampleHeaders: rows[0]?.slice(0, 5) || [],
+      rowCount: Math.max(0, rows.length - 1),
+      sampleHeaders: (rows[0] as unknown[] | undefined)?.slice(0, 5) || [],
       env: {
         hasGAS_URL: !!process.env.GAS_WEBAPP_URL,
         hasGAS_KEY: !!process.env.GAS_KEY,
         hasSPREADSHEET_ID: !!process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-        gasUrlPreview: process.env.GAS_WEBAPP_URL?.substring(0, 50) + "..." || "not set",
+        gasUrlPreview: process.env.GAS_WEBAPP_URL
+          ? process.env.GAS_WEBAPP_URL.substring(0, 50) + "..."
+          : "not set",
       },
     });
   } catch (error) {
@@ -42,19 +38,20 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let action: unknown = undefined;
+
   try {
     const body = await request.json();
-    const { action, data } = body;
+    action = body?.action;
 
-    if (!action) {
+    if (!action || typeof action !== "string") {
       return NextResponse.json(
-        { ok: false, error: "action required" },
+        { ok: false, error: "action required (string)" },
         { status: 400 }
       );
     }
 
-    // Test l'action via gasPostAdmin
-    const result = await gasPostAdmin(action, data);
+    const result = await gasPostAdmin(action, body?.data);
 
     return NextResponse.json({
       ok: true,
@@ -67,7 +64,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         error: error instanceof Error ? error.message : "Unknown error",
-        action: body?.action,
+        action: typeof action === "string" ? action : undefined,
       },
       { status: 500 }
     );
