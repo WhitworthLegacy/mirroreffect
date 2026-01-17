@@ -77,30 +77,27 @@ export async function GET(req: Request) {
 
     const headers = (rows[0] as string[]).map(h => String(h).trim());
     const dateIdx = headers.findIndex(h => h === "Date Event");
-    const depositPaidIdx = headers.findIndex(h => h === "Date Acompte Payé" || h === "Date acompte payé");
+
+    console.log("[availability] Headers:", headers);
+    console.log("[availability] Date Event column index:", dateIdx);
 
     if (dateIdx === -1) {
-      console.error("[availability] Header 'Date Event' not found");
+      console.error("[availability] Header 'Date Event' not found in headers:", headers);
       return Response.json({ error: "sheet_format_error" }, { status: 500 });
     }
 
-    // Compter les events sur cette date
-    // IMPORTANT: Only count rows with a non-empty "Date Acompte Payé" (paid deposits only)
-    // Format date attendu: YYYY-MM-DD
+    // Compter TOUS les events sur cette date (comme dans admin)
+    // Pas de filtre sur "Date Acompte Paye" - on compte simplement les lignes avec cette date
     const reserved = rows.slice(1).filter(row => {
-      // Skip rows without paid deposit
-      if (depositPaidIdx >= 0) {
-        const depositPaid = String(row[depositPaidIdx] || "").trim();
-        if (!depositPaid) return false;
-      }
-
       const eventDateRaw = row[dateIdx];
       const eventDate = normalizeDate(eventDateRaw);
 
-      // Debug log
-      console.log("[availability] Row date:", eventDateRaw, "->", eventDate, "vs query:", date);
+      const matches = eventDate === date;
+      if (matches) {
+        console.log("[availability] MATCH:", eventDateRaw, "->", eventDate);
+      }
 
-      return eventDate === date;
+      return matches;
     }).length;
 
     console.log("[availability] Query date:", date, "Reserved:", reserved, "of", TOTAL_MIRRORS);
