@@ -32,8 +32,9 @@ export async function POST(req: Request) {
       data: { sheetName: "Payments" }
     });
 
-    if (paymentsResult.ok && paymentsResult.data) {
-      const rows = paymentsResult.data as unknown[][];
+    // GAS returns { values: [...] } for readSheet action
+    if (paymentsResult.values) {
+      const rows = paymentsResult.values as unknown[][];
       if (rows.length >= 2) {
         const headers = (rows[0] as string[]).map(h => String(h).trim());
         const paymentIdIdx = headers.findIndex(h => h === "Payment ID");

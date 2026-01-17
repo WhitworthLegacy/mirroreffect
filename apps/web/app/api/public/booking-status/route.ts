@@ -26,11 +26,14 @@ export async function GET(req: Request) {
       data: { sheetName: "Clients" }
     });
 
-    if (!clientsResult.ok || !clientsResult.data) {
+    // GAS returns { values: [...] } for readSheet action
+    const values = clientsResult.values as unknown[][] | undefined;
+    if (!values) {
+      console.error("[booking-status] No values in GAS response:", clientsResult);
       return Response.json({ error: "sheets_error" }, { status: 500 });
     }
 
-    const rows = clientsResult.data as unknown[][];
+    const rows = values;
     if (rows.length < 2) {
       return Response.json({ error: "event_not_found" }, { status: 404 });
     }
@@ -66,8 +69,9 @@ export async function GET(req: Request) {
     let depositPaid = false;
     let paymentStatus = "unknown";
 
-    if (paymentsResult.ok && paymentsResult.data) {
-      const paymentRows = paymentsResult.data as unknown[][];
+    // GAS returns { values: [...] } for readSheet action
+    if (paymentsResult.values) {
+      const paymentRows = paymentsResult.values as unknown[][];
       if (paymentRows.length >= 2) {
         const paymentHeaders = (paymentRows[0] as string[]).map(h => String(h).trim());
         const pEventIdIdx = paymentHeaders.findIndex(h => h === "Event ID");

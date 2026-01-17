@@ -40,8 +40,8 @@ export async function POST(req: Request) {
 
   try {
     if (data.lead_id) {
-      // Update existing lead
-      const result = await gasPost({
+      // Update existing lead - GAS returns { success: true } (errors throw)
+      await gasPost({
         action: "updateRowByLeadId",
         key: process.env.GAS_KEY,
         data: {
@@ -65,16 +65,12 @@ export async function POST(req: Request) {
         }
       });
 
-      if (!result.ok) {
-        console.error("[event-intent] Update failed:", result.error);
-        return Response.json({ error: "lead_update_failed" }, { status: 500 });
-      }
-
+      // GAS returns { success: true } for update actions (errors throw)
       return Response.json({ lead_id: data.lead_id });
     }
 
-    // Create new lead
-    const result = await gasPost({
+    // Create new lead - GAS returns { success: true } for appendRow (errors throw)
+    await gasPost({
       action: "appendRow",
       key: process.env.GAS_KEY,
       data: {
@@ -99,11 +95,6 @@ export async function POST(req: Request) {
         }
       }
     });
-
-    if (!result.ok) {
-      console.error("[event-intent] Create failed:", result.error);
-      return Response.json({ error: "lead_create_failed" }, { status: 500 });
-    }
 
     return Response.json({ lead_id: leadId });
   } catch (error) {

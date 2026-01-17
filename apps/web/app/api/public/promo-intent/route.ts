@@ -19,7 +19,8 @@ export async function POST(req: Request) {
   const sendAfter = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
 
   try {
-    const result = await gasPost({
+    // GAS returns { success: true } for appendRow (errors throw)
+    await gasPost({
       action: "appendRow",
       key: process.env.GAS_KEY,
       data: {
@@ -35,11 +36,6 @@ export async function POST(req: Request) {
         }
       }
     });
-
-    if (!result.ok) {
-      console.error("[promo-intent] GAS error:", result.error);
-      return Response.json({ error: "gas_error", details: result.error }, { status: 500 });
-    }
 
     return Response.json({ queued: true });
   } catch (error) {
