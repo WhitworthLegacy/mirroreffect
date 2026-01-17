@@ -30,7 +30,6 @@
 | `/api/public/availability` | GET | `app/api/public/availability/route.ts` | Supabase | ✅ Active | Vérifie stock mirrors |
 | `/api/public/booking-status` | GET | `app/api/public/booking-status/route.ts` | Supabase | ✅ Active | Status réservation |
 | `/api/public/checkout` | POST | `app/api/public/checkout/route.ts` | Supabase + Mollie | ✅ Active | Crée paiement |
-| `/api/public/event-intent` | POST | `app/api/public/event-intent/route.ts` | Supabase | ✅ Active | Crée event intent |
 | `/api/public/promo-intent` | POST | `app/api/public/promo-intent/route.ts` | Supabase | ✅ Active | Intent promo code |
 
 ### Webhooks
@@ -46,7 +45,7 @@
 | `/api/debug/env` | GET | `app/api/debug/env/route.ts` | Liste env vars | ✅ Active |
 | `/api/debug/health` | GET | `app/api/debug/health/route.ts` | Health check Supabase | ✅ Active |
 
-**Total routes web actives:** 9
+**Total routes web actives:** 8
 
 ### Routes Désactivées (`_disabled/`)
 
@@ -173,10 +172,10 @@
 |-----|-------|----------|----------|
 | **Admin** | Auth (login) | `lib/supabaseBrowser.ts`, `lib/supabaseServer.ts`, `app/admin-guard.tsx`, `app/login/page.tsx` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 | **Admin** | Packs (lecture) | `lib/adminData.ts:93` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
-| **Web** | Events (CRUD) | `app/api/public/event-intent/route.ts`, `app/api/public/booking-status/route.ts` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
+| **Web** | Events (CRUD) | `app/api/public/leads/route.ts`, `app/api/public/booking-status/route.ts` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 | **Web** | Payments (CRUD) | `app/api/public/checkout/route.ts`, `app/api/webhooks/mollie/route.ts` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 | **Web** | Stock (lecture) | `app/api/public/availability/route.ts` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
-| **Web** | Notifications | `app/api/public/event-intent/route.ts`, `app/api/public/promo-intent/route.ts` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
+| **Web** | Notifications | `app/api/public/leads/route.ts`, `app/api/public/promo-intent/route.ts` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 
 ### Tables Supabase Requises (Web App)
 

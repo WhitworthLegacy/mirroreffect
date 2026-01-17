@@ -9,13 +9,14 @@ Ce document décrit le système de tracking des leads et des CTAs (Call To Actio
 ### Source de vérité
 - **Google Sheets "Leads"** : Stockage principal de tous les leads
 - **sessionStorage** : Stockage temporaire côté client pour `lead_id` et paramètres UTM
+- **localStorage** : `me_reservation_draft` conserve tout le draft de réservation jusqu'au checkout
 
 ### Flux de données
 
 ```
 ┌─────────────────────┐
 │  ReservationFlow    │ (Client)
-│  - trackLeadStep()  │
+│  - persistLeadToLeads │
 │  - trackCTA()       │
 └──────────┬──────────┘
            │ POST /api/public/leads
@@ -50,14 +51,14 @@ Ce document décrit le système de tracking des leads et des CTAs (Call To Actio
 - **Action**: Capture les paramètres UTM depuis l'URL et les stocke dans `sessionStorage`
 - **Paramètres capturés**: `utm_source`, `utm_medium`, `utm_campaign`
 
-#### `trackLeadStep(stepNumber, status, partialPayload)`
-- **Usage**: Track une étape du parcours utilisateur
+#### `persistLeadToLeads(stepNumber, status, draft)`
+- **Usage**: Appelé par `ReservationFlow` à chaque clic "Continuer" (hors navigation) pour envoyer un snapshot du draft (localStorage) vers Google Sheets.
 - **Action**:
-  - Si `lead_id` existe dans `sessionStorage`, met à jour la ligne existante
-  - Sinon, crée une nouvelle ligne dans "Leads"
-  - Normalise les dates DD/MM/YYYY → YYYY-MM-DD
-  - Injecte automatiquement les UTM parameters
-- **Retour**: `lead_id` (string | null)
+  - Génère un `lead_id` si nécessaire et le stocke dans `localStorage`
+  - Crée la ligne dans "Leads" uniquement si l'email est présent et que la ligne n'existe pas encore
+  - Met à jour la ligne existante (`lead_id` connu) même si certains champs sont vides
+  - Envoie toujours les colonnes : Lead ID, Created At, Step, Status, Nom, Email, Phone, Language, Date Event, Lieu Event, Pack, Invités, Transport (€), Total, Acompte, UTM Source, UTM Campaign, UTM Medium
+- **Retour**: `{ leadId?: string; created?: boolean }` (résultat simplifié)
 
 #### `trackCTA(ctaId, label, step, extra)`
 - **Usage**: Track un CTA (bouton d'action business)
@@ -80,9 +81,9 @@ Ce document décrit le système de tracking des leads et des CTAs (Call To Actio
 - `cta_id`, `cta_label`, `cta_value`, `updated_at`: Champs pour tracking CTA
 
 **Logique**:
-1. **Si `cta_id` + `lead_id` fournis**: Update uniquement les champs CTA
-2. **Si `lead_id` fourni (sans `cta_id`)**: Update complet de la ligne du lead
-3. **Sinon**: Création d'une nouvelle ligne
+1. **`button_click`** (pas de `lead_id` ou logging de CTA sans `lead_id`) : uniquement des logs côté serveur, pas d'écriture dans Sheets.
+2. **`cta_update`**: Met à jour les colonnes `Last CTA`, `Last CTA Label`, `Last CTA Value`, `Last CTA At` pour `lead_id` existant.
+3. **`lead_progress`**: Reçoit les données du draft complet. Si `lead_id` existe, la ligne est mise à jour ; sinon, la ligne est créée uniquement si l'email est présent (garanti à partir de l'étape 5). Le helper `persistLeadToLeads()` s'assure que toutes les colonnes obligatoires sont présentes.
 
 **Normalisation des dates**:
 - Accepte les formats DD/MM/YYYY et YYYY-MM-DD
@@ -91,28 +92,31 @@ Ce document décrit le système de tracking des leads et des CTAs (Call To Actio
 ## Étape 5 → 6: Point critique
 
 ### Problème résolu
-Lors du clic sur "Continuer" à l'étape 5, le système:
-1. Appelle `captureLeadIntent()` qui utilise `trackLeadStep(5, "step_5_completed", ...)`
-2. `trackLeadStep` vérifie si un `lead_id` existe dans `sessionStorage`
-3. Si oui: met à jour la ligne existante via `updateRowByLeadId`
-4. Si non: crée une nouvelle ligne et stocke le `lead_id` retourné dans `sessionStorage`
-5. Les données sont toujours écrites dans "Leads", jamais dans "Clients"
+- `ReservationFlow` garde un `reservationDraft` complet dans `localStorage` (clé `me_reservation_draft`) à chaque étape, puis appelle le helper `persistLeadToLeads(step, status, draft)` sur chaque clic "Continuer" (hors navigation).
+- `persistLeadToLeads` écrit dans `/api/public/leads`. La création de ligne dans Google Sheets n'est effectuée que si un `email` est présent et qu'aucun `lead_id` n'existe encore (étape 5). Si un `lead_id` est déjà en mémoire, on met simplement à jour la ligne (même si certaines données sont vides).
+- Les étapes 6 et 7 (packs, options, checkout) réutilisent le même `lead_id` pour maintenir une seule ligne dans la feuille "Leads". Les données sont conservées en local jusqu'au paiement, sans écrire dans "Clients" avant le webhook Mollie.
 
-### Payload à l'étape 5
+### Payload relevé à l'étape 5 (et lors des updates suivantes)
 
 ```typescript
 {
+  lead_id: string, // généré client-side ou renvoyé par le serveur
   language: "fr" | "nl",
-  client_name: string,
+  client_name: string, // prénom + nom
   client_email: string,
   client_phone: string,
-  event_date: string, // Normalisé YYYY-MM-DD
+  event_date: string, // format DD/MM/YYYY (texte)
   address: string,
   pack_code?: string,
   guests?: string,
   transport_euros?: string,
   total_euros?: string,
-  deposit_euros?: string
+  deposit_euros?: string,
+  step: string, // "5", "6", etc.
+  status: string, // "step_5_completed", "step_6_completed"
+  utm_source?: string,
+  utm_campaign?: string,
+  utm_medium?: string
 }
 ```
 
@@ -179,7 +183,7 @@ Toujours **YYYY-MM-DD** dans Google Sheets
 
 ### Normalisation
 - **Côté client** (`lib/tracking.ts`): `normalizeDateToISO()` convertit DD/MM/YYYY → YYYY-MM-DD
-- **Côté serveur** (`app/api/public/leads/route.ts`): Utilise `normalizeDateToISO()` de `lib/date.ts` comme fallback
+- **Côté serveur** (`app/api/public/leads/route.ts`): Utilise `toDDMMYYYY()` de `lib/date.ts` pour produire les dates formatées en `DD/MM/YYYY` (texte pour Google Sheets)
 
 ## Logs de développement
 
@@ -189,7 +193,7 @@ Toujours **YYYY-MM-DD** dans Google Sheets
 
 ### Côté serveur
 - `console.log()` / `console.warn()` utilisés uniquement si `NODE_ENV !== "production"`
-- Préfixes: `[leads]`, `[event-intent]`, `[availability]`
+- Préfixes: `[leads]`, `[availability]`
 
 ## Plan de test manuel
 
@@ -239,11 +243,11 @@ Toujours **YYYY-MM-DD** dans Google Sheets
 ## Notes importantes
 
 ### Ne jamais écrire dans "Clients"
-- Le tracking utilise uniquement le sheet "Leads"
-- `/api/public/event-intent` peut écrire dans "Leads" (pas "Clients") si nécessaire
+- Le tracking utilise uniquement le sheet "Leads". Toutes les écritures passent par `/api/public/leads`.
+- `persistLeadToLeads()` et la webhook Mollie sont les seules voies qui touchent aux sheets : les `Clients` restent vierges tant que l'acompte n'est pas payé.
 
 ### Gestion des erreurs
-- Si `trackLeadStep` échoue, retourne `null` mais n'interrompt pas le flux utilisateur
+- Si `persistLeadToLeads` échoue (absence d'email, erreur GAS, etc.), on loggue le problème, on garde le draft, et on laisse l'utilisateur continuer
 - Les logs en dev permettent de diagnostiquer les problèmes
 - Les erreurs côté serveur retournent des codes HTTP appropriés (400, 500)
 
@@ -252,14 +256,16 @@ Toujours **YYYY-MM-DD** dans Google Sheets
 - Un nouvel onglet démarre avec un nouveau `lead_id`
 - Cela permet de distinguer les sessions utilisateur
 
-## Fichiers modifiés/créés
-
-### Nouveaux fichiers
-- `apps/web/lib/tracking.ts`: Helper de tracking
-- `docs/LEADS_TRACKING.md`: Cette documentation
+## Fichiers concernés
+- `apps/web/components/home/ReservationFlow.tsx`: Mise à jour du flux pour stocker le draft, appeler `persistLeadToLeads` et constituer le payload checkout depuis le draft.
+- `apps/web/lib/leads.ts`: Nouveau helper qui encapsule les requêtes vers `/api/public/leads`.
+- `apps/web/lib/reservationDraft.ts`: Nouvelle clé `me_reservation_draft`, migration de l'ancien stockage, champ `address`.
+- `apps/web/lib/tracking.ts`: Reste l'utilitaire pour les UTM, le `lead_id` et le tracking CTA (supprime `trackLeadStep`).
+- `apps/web/app/api/public/leads/route.ts`: Centralise la logique de création/mise à jour dans la feuille "Leads" et supporte les backups explicites (button_click, cta_update, lead_progress).
+- `docs/LEADS_TRACKING.md`: Cette documentation (mise à jour de la section lead_flow).
 
 ### Fichiers modifiés
-- `apps/web/components/home/ReservationFlow.tsx`: Utilise `trackLeadStep` et `trackCTA`
+- `apps/web/components/home/ReservationFlow.tsx`: Utilise `persistLeadToLeads` et `trackCTA`
 - `apps/web/app/api/public/leads/route.ts`: Support update via `updateRowByLeadId`, support CTAs
 
 ### Fichiers non modifiés (contrainte)

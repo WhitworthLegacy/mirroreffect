@@ -75,25 +75,6 @@ export async function POST(req: Request) {
                             b.lieuEvent || 
                             "";
 
-  // Vérifier que address est présent après normalisation
-  if (!normalizedAddress || normalizedAddress.trim().length < 2) {
-    return Response.json({
-      ok: false,
-      requestId,
-      error: {
-        type: "MISSING_ADDRESS",
-        message: "address, venue, or lieuEvent is required (minimum 2 characters)",
-        status: 400,
-        missingFields: ["address"],
-        received: {
-          address: b.address || undefined,
-          venue: b.venue || undefined,
-          lieuEvent: b.lieuEvent || undefined
-        }
-      }
-    }, { status: 400 });
-  }
-
   // Mettre à jour b avec address normalisé
   b = {
     ...b,
@@ -130,6 +111,7 @@ export async function POST(req: Request) {
 
     const webhookUrl = process.env.APP_URL ? `${process.env.APP_URL}/api/webhooks/mollie` : null;
     const redirectUrl = `${process.env.APP_URL}/booking/success?event_id=${eventId}&lang=${b.language}`;
+    const metadataAddress = normalizedAddress || "";
 
     const res = await fetch("https://api.mollie.com/v2/payments", {
       method: "POST",
@@ -144,16 +126,17 @@ export async function POST(req: Request) {
         webhookUrl: webhookUrl ?? undefined,
         metadata: {
           event_id: eventId,
-          lead_id: b.lead_id,
+          lead_id: b.lead_id || undefined,
           event_date: b.event_date,
           kind: "deposit",
           env: process.env.APP_ENV ?? "dev",
           app: "mirroreffect-web",
           // Stocker toutes les données pour le webhook
+          // CRITIQUE: client_email est OBLIGATOIRE pour le webhook
           client_name: b.client_name,
-          client_email: b.client_email,
+          client_email: b.client_email, // REQUIRED - validé par Zod
           client_phone: b.client_phone,
-          address: b.address,
+          address: metadataAddress,
           language: b.language,
           pack_code: b.pack_code,
           zone_code: b.zone_code,

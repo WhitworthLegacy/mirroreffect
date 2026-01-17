@@ -8,7 +8,12 @@ const MolliePaymentSchema = z.object({
     currency: z.string().min(1)
   }),
   paidAt: z.string().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
+  billingAddress: z
+    .object({
+      email: z.string().email().optional()
+    })
+    .optional()
 });
 
 function parseAmountToCents(amount: { value: string }) {
@@ -50,6 +55,7 @@ export async function fetchMolliePaymentStatus(paymentId: string) {
     amount_cents: parseAmountToCents(parsed.data.amount),
     currency: parsed.data.amount.currency,
     paid_at: parsed.data.paidAt ?? null,
-    metadata: parsed.data.metadata ?? null
+    metadata: parsed.data.metadata ?? null,
+    billingAddress: parsed.data.billingAddress ?? null
   };
 }

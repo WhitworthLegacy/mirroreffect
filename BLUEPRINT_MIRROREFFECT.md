@@ -356,7 +356,6 @@ Event ID | Date Event | Type Event | Language | Nom | Email | Phone | Lieu Event
 | `/api/public/availability` | GET | Vérifier disponibilité | Supabase (stock_mirrors) | ✅ Active (Supabase) |
 | `/api/public/booking-status` | GET | Status réservation | Supabase (events, payments) | ✅ Active (Supabase) |
 | `/api/public/checkout` | POST | Créer paiement Mollie | Supabase (payments) | ✅ Active (Supabase) |
-| `/api/public/event-intent` | POST | Créer intent event | Supabase (events, notification_queue) | ✅ Active (Supabase) |
 | `/api/public/promo-intent` | POST | Intent promo code | Supabase (notification_queue) | ✅ Active (Supabase) |
 
 #### ✅ Actives (Webhooks)

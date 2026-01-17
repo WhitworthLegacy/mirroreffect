@@ -26,37 +26,6 @@ L'application `apps/web` utilise actuellement **Supabase** pour toutes ses opér
 
 ### 1. Routes API Utilisant Supabase
 
-#### `/api/public/event-intent` (POST)
-**Fichier:** `app/api/public/event-intent/route.ts`
-
-**Opérations Supabase:**
-- ✅ CREATE `events` (ligne 56-73)
-- ✅ UPDATE `events` (ligne 32-47)
-
-**Données manipulées:**
-```typescript
-{
-  event_id?: UUID,
-  language: 'fr' | 'nl',
-  client_name: string,
-  client_email: string,
-  client_phone: string,
-  event_date: YYYY-MM-DD,
-  address: string,
-  pack_code: 'DISCOVERY' | 'ESSENTIAL' | 'PREMIUM',
-  transport_fee_cents: number,
-  total_cents: number,
-  deposit_cents: number,
-  balance_due_cents: number
-}
-```
-
-**Action Migration:**
-- ➡️ Utiliser `updateRowInSheet()` / `appendRowToSheet()` sur feuille "Clients"
-- ➡️ Générer `Event ID` si non fourni (format UUID ou custom)
-
----
-
 #### `/api/public/availability` (GET)
 **Fichier:** `app/api/public/availability/route.ts`
 
@@ -87,8 +56,8 @@ L'application `apps/web` utilise actuellement **Supabase** pour toutes ses opér
 - ✅ DELETE `notification_queue` (ligne 97-102)
 - ✅ CREATE `payments` (ligne 144-151)
 
-**Données manipulées:**
-- Event complet (comme `/api/public/event-intent`)
+- **Données manipulées:**
+- Event complet (comme `/api/public/leads` via `persistLeadToLeads`)
 - Payment Mollie (acompte 180€)
 - Suppression des notifications promo en attente
 
@@ -368,15 +337,8 @@ Item ID | Type | Status | Created At
 
 ### Phase 3: Migration Routes Complexes (Jour 4-5)
 
-#### 3.1 `/api/public/event-intent`
-- [ ] Remplacer `supabase.from("events").insert()` par `appendRowToSheet("Clients")`
-- [ ] Remplacer `supabase.from("events").update()` par `updateRowInSheet("Clients")`
-- [ ] Gérer génération `Event ID` (UUID ou custom)
-- [ ] Tester CREATE event
-- [ ] Tester UPDATE event
-
 #### 3.2 `/api/public/checkout`
-- [ ] Remplacer CREATE/UPDATE event (même logique que `/api/public/event-intent`)
+- [ ] Remplacer CREATE/UPDATE event (même logique que `/api/public/leads` via `persistLeadToLeads`)
 - [ ] Remplacer DELETE notification par `deleteNotification()` (si implémenté)
 - [ ] Remplacer CREATE payment par `createPayment()`
 - [ ] Tester checkout complet (event + payment)
@@ -420,7 +382,7 @@ Item ID | Type | Status | Created At
 ### Phase 6: Tests & Cleanup (Jour 9-10)
 
 #### 6.1 Tests E2E
-- [ ] Tester flow complet: availability → event-intent → checkout → webhook → booking-status
+- [ ] Tester flow complet: availability → leads → checkout → webhook → booking-status
 - [ ] Tester promo-intent → notification
 - [ ] Tester health check
 

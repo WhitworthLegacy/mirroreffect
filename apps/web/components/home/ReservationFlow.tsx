@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { formatEuros } from "@/lib/date-utils";
 import { captureUTMParams, getUTMParams, getLeadId, setLeadId, trackCTA } from "@/lib/tracking";
-import { getDraft, persistDraft, clearDraft, buildDraftFromState, type ReservationDraft } from "@/lib/reservationDraft";
+import { getDraft, persistDraft, clearDraft, buildDraftFromState } from "@/lib/reservationDraft";
+import { persistLeadToLeads } from "@/lib/leads";
 
 type AvailabilityState = "idle" | "checking" | "available" | "unavailable" | "error";
 type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
@@ -403,10 +403,6 @@ export function ReservationFlow() {
   const strings = copy[lang];
   const t = (key: Exclude<keyof typeof copy.fr, "proofItems" | "stories" | "testimonials">) => strings[key];
   const proofItems = strings.proofItems;
-  const utmSource = searchParams.get("utm_source") ?? "";
-  const utmCampaign = searchParams.get("utm_campaign") ?? "";
-  const utmMedium = searchParams.get("utm_medium") ?? "";
-
 const packs = useMemo(
     () => [
       {
@@ -557,10 +553,6 @@ const packs = useMemo(
   const [zoomLabel, setZoomLabel] = useState("");
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [promoQueued, setPromoQueued] = useState(false);
-  const [eventId, setEventId] = useState<string | null>(null);
-  const [isSavingIntent, setIsSavingIntent] = useState(false);
-  const [intentError, setIntentError] = useState("");
-  const leadCaptureRef = useRef({ inFlight: false, lastAttempt: 0 });
 
   const story = strings.stories[Math.max(0, Math.min(step - 1, strings.stories.length - 1))];
   const testimonials = strings.testimonials;
@@ -772,73 +764,126 @@ const packs = useMemo(
     }
   };
 
+  const handleNextStep = () => {
+    const statusLabel = `step_${step}_completed`;
+    const utmParams = getUTMParams();
+    const draftSnapshot = buildDraftFromState({
+      leadId: getLeadId() || undefined,
+      step,
+      eventType,
+      eventDate,
+      location,
+      zone,
+      vibe,
+      theme,
+      guests,
+      priority,
+      firstName,
+      lastName,
+      leadEmail,
+      contactPhone,
+      packCode,
+      options,
+      stanchionsEnabled,
+      stanchionsColor,
+      transportFee,
+      totalPrice,
+      depositAmount,
+      language: lang,
+      utm: {
+        source: utmParams.utm_source,
+        medium: utmParams.utm_medium,
+        campaign: utmParams.utm_campaign
+      }
+    });
+
+    void persistLeadToLeads({ step, status: statusLabel, draft: draftSnapshot }).then((result) => {
+      if (result.leadId) {
+        persistDraft({ leadId: result.leadId });
+      }
+    });
+
+    if (step === 5) {
+      enqueuePromo();
+    }
+
+    setStep((prev) => Math.min(7, prev + 1));
+  };
+
   const handleCheckout = async () => {
-    if (!selectedPack) return;
     setIsSubmitting(true);
     setCheckoutError("");
 
-    // Fallback sur draft si données manquantes dans state
     const draft = getDraft();
-    const leadId = getLeadId();
-    
-    // Construire payload avec merge draft + state (draft en priorité pour persistence)
-    const finalFirstName = firstName || draft?.customer.firstName || "";
-    const finalLastName = lastName || draft?.customer.lastName || "";
-    const finalEmail = leadEmail || draft?.customer.email || "";
-    const finalPhone = contactPhone || draft?.customer.phone || "";
-    const finalDateEvent = eventDate || draft?.event.dateEvent || "";
-    
-    // Normaliser address depuis plusieurs sources (location, lieuEvent, venue, etc.)
-    const finalAddress = location || 
-                         draft?.event.lieuEvent || 
-                         draft?.event.address || 
-                         "";
-
-    const finalPackCode = selectedPack.code || draft?.event.pack || "";
-    const finalZone = zone || draft?.event.zone || "BE";
-
-    // Si données essentielles manquent toujours, erreur
-    if (!finalEmail || !finalDateEvent || !finalPackCode || !finalAddress) {
+    if (!draft) {
       setCheckoutError(t("checkoutError"));
       setIsSubmitting(false);
       if (process.env.NODE_ENV !== "production") {
-        console.warn("[ReservationFlow] Checkout failed: missing essential data", {
+        console.warn("[ReservationFlow] Checkout failed: missing reservation draft");
+      }
+      return;
+    }
+
+    const finalFirstName = draft.customer.firstName?.trim() || "";
+    const finalLastName = draft.customer.lastName?.trim() || "";
+    const finalEmail = draft.customer.email?.trim() || "";
+    const finalPhone = draft.customer.phone?.trim() || "";
+    const finalDateEvent = draft.event.dateEvent || "";
+    const finalAddress = draft.event.address || draft.event.lieuEvent || "";
+    const finalPackCode = draft.event.pack;
+    const finalZone = draft.event.zone || "BE";
+
+    if (!finalEmail || !finalDateEvent || !finalPackCode) {
+      setCheckoutError(t("checkoutError"));
+      setIsSubmitting(false);
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[ReservationFlow] Checkout failed: missing essential draft fields", {
           email: finalEmail,
           dateEvent: finalDateEvent,
-          packCode: finalPackCode,
-          address: finalAddress,
-          hasLocation: !!location,
-          hasDraftLieuEvent: !!draft?.event.lieuEvent
+          packCode: finalPackCode
         });
       }
       return;
     }
 
-    try {
-      const stanchionsCode = stanchionsEnabled ? `STANCHIONS_${stanchionsColor}` : null;
-      const optionsPayload = stanchionsCode ? [...options, stanchionsCode] : options;
+    const leadId = getLeadId() || draft.leadId || undefined;
+    const optionsPayload = [...(draft.selections.options || [])];
+    const stanchionsCode =
+      draft.selections.stanchionsEnabled && draft.selections.stanchionsColor
+        ? `STANCHIONS_${draft.selections.stanchionsColor}`
+        : null;
+    if (stanchionsCode && !optionsPayload.includes(stanchionsCode)) {
+      optionsPayload.push(stanchionsCode);
+    }
 
-      const checkoutPayload = {
-        language: lang,
-        client_name: `${finalFirstName} ${finalLastName}`.trim(),
-        client_email: finalEmail,
-        client_phone: finalPhone,
-        event_date: finalDateEvent,
-        address: finalAddress, // IMPORTANT: envoyer address (requis par API)
-        zone_code: finalZone as "BE" | "FR_NORD",
-        pack_code: finalPackCode as "DISCOVERY" | "ESSENTIAL" | "PREMIUM",
-        options: optionsPayload,
-        lead_id: leadId || draft?.leadId || eventId || undefined
-      };
-
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("[ReservationFlow] Checkout payload:", {
-          ...checkoutPayload,
-          client_phone: finalPhone.substring(0, 5) + "...",
-          address_length: finalAddress.length
-        });
+    void persistLeadToLeads({ step: 7, status: "step_7_completed", draft }).then((result) => {
+      if (result.leadId) {
+        persistDraft({ leadId: result.leadId });
       }
+    });
 
+    const checkoutPayload = {
+      language: draft.customer.language || "fr",
+      client_name: `${finalFirstName} ${finalLastName}`.trim(),
+      client_email: finalEmail,
+      client_phone: finalPhone,
+      event_date: finalDateEvent,
+      address: finalAddress || undefined,
+      zone_code: finalZone as "BE" | "FR_NORD",
+      pack_code: finalPackCode as PackCode,
+      options: optionsPayload,
+      lead_id: leadId
+    };
+
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[ReservationFlow] Checkout payload:", {
+        ...checkoutPayload,
+        client_phone: finalPhone ? `${finalPhone.substring(0, 5)}...` : "",
+        address_length: finalAddress.length
+      });
+    }
+
+    try {
       const res = await fetch("/api/public/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -853,13 +898,10 @@ const packs = useMemo(
         if (process.env.NODE_ENV !== "production") {
           console.warn("[ReservationFlow] Checkout failed:", errorMsg, data);
         }
-        // Garder le draft en cas d'erreur pour retry
         return;
       }
 
-      // Succès: nettoyer le draft avant redirection
       clearDraft();
-
       window.location.href = data.checkout_url;
     } catch (error) {
       setCheckoutError(t("checkoutError"));
@@ -867,83 +909,8 @@ const packs = useMemo(
       if (process.env.NODE_ENV !== "production") {
         console.warn("[ReservationFlow] Checkout error:", error);
       }
-      // Garder le draft en cas d'erreur pour retry
     }
   };
-
-  const persistLeadProgress = async (stepNumber: number, status: string) => {
-    const now = Date.now();
-    if (leadCaptureRef.current.inFlight || now - leadCaptureRef.current.lastAttempt < 1000) {
-      return;
-    }
-    leadCaptureRef.current.inFlight = true;
-    leadCaptureRef.current.lastAttempt = now;
-
-    const leadId = getLeadId();
-    const utm = getUTMParams();
-
-    // Valeurs par défaut si pack pas encore sélectionné
-    const packCode = selectedPack ? selectedPack.code : "DISCOVERY"; // Par défaut pour calcul
-    const totalPriceCalculated = selectedPack ? selectedPack.promo + transportFee : 0;
-    const balancePriceCalculated = Math.max(0, totalPriceCalculated - depositAmount);
-
-    try {
-      const res = await fetch("/api/public/event-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lead_id: leadId || undefined,
-          language: lang,
-          client_name: `${firstName} ${lastName}`.trim(),
-          client_email: leadEmail,
-          client_phone: contactPhone,
-          event_date: eventDate, // Accepte YYYY-MM-DD ou DD/MM/YYYY (normalisé côté serveur)
-          address: location,
-          pack_code: selectedPack ? selectedPack.code : "DISCOVERY", // Requis mais peut être par défaut
-          transport_fee_cents: transportFee * 100,
-          total_cents: totalPriceCalculated * 100,
-          deposit_cents: depositAmount * 100,
-          balance_due_cents: balancePriceCalculated * 100,
-          options: [], // Pas encore sélectionnés à l'étape 5
-          step: stepNumber.toString(),
-          status,
-          guests: guests || "",
-          utm_source: utm.utm_source || "",
-          utm_campaign: utm.utm_campaign || "",
-          utm_medium: utm.utm_medium || ""
-        })
-      });
-
-      const data = (await res.json()) as { ok?: boolean; lead_id?: string; error?: { type: string; message: string } };
-
-      if (!res.ok || !data.ok) {
-        const errorMsg = data.error?.message || `HTTP ${res.status}`;
-        if (process.env.NODE_ENV !== "production") {
-          console.warn("[ReservationFlow] persistLeadProgress failed:", errorMsg, data);
-        }
-        throw new Error(errorMsg);
-      }
-
-      const returnedLeadId = data.lead_id || leadId;
-      if (returnedLeadId && !leadId) {
-        setLeadId(returnedLeadId);
-      }
-
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(`[ReservationFlow] Lead progress persisted (step ${stepNumber}):`, returnedLeadId);
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("[ReservationFlow] persistLeadProgress error:", error);
-      }
-      // Ne pas bloquer le flux utilisateur
-    } finally {
-      leadCaptureRef.current.inFlight = false;
-    }
-  };
-
-  // Alias pour compatibilité
-  const captureLeadIntent = () => persistLeadProgress(5, "step_5_completed");
 
   const waitlistLink = mailto(
     t("availabilityEmailSubject"),
@@ -998,48 +965,6 @@ const packs = useMemo(
     }).catch(() => {
       setPromoQueued(false);
     });
-  };
-
-  const saveIntent = async () => {
-    if (!selectedPack || isSavingIntent) return;
-    setIsSavingIntent(true);
-    setIntentError("");
-
-    const stanchionsCode = stanchionsEnabled ? `STANCHIONS_${stanchionsColor}` : null;
-    const optionsPayload = stanchionsCode ? [...options, stanchionsCode] : options;
-
-    try {
-      const res = await fetch("/api/public/event-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event_id: eventId ?? undefined,
-          language: lang,
-          client_name: `${firstName} ${lastName}`.trim(),
-          client_email: leadEmail,
-          client_phone: contactPhone,
-          event_date: eventDate,
-          address: location,
-          pack_code: selectedPack.code,
-          options: optionsPayload,
-          transport_fee_cents: transportFee * 100,
-          total_cents: totalPrice ? totalPrice * 100 : 0,
-          deposit_cents: depositAmount * 100,
-          balance_due_cents: balancePrice !== null ? balancePrice * 100 : 0
-        })
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.event_id) {
-        setIntentError(t("checkoutError"));
-        setIsSavingIntent(false);
-        return;
-      }
-      setEventId(data.event_id);
-      setIsSavingIntent(false);
-    } catch {
-      setIntentError(t("checkoutError"));
-      setIsSavingIntent(false);
-    }
   };
 
   return (
@@ -1526,11 +1451,6 @@ const packs = useMemo(
                   {checkoutError}
                 </div>
               )}
-              {intentError && (
-                <div className="rounded-2xl border border-[#f2dede] bg-white px-4 py-3 text-sm text-[#5a3a3a]">
-                  {intentError}
-                </div>
-              )}
             </div>
           )}
 
@@ -1555,16 +1475,7 @@ const packs = useMemo(
                   (step === 5 && !canContinueStep5) ||
                   (step === 6 && !canContinueStep6)
                 }
-                onClick={() => {
-                  if (step === 5) {
-                    captureLeadIntent();
-                    enqueuePromo();
-                  }
-                  if (step === 6) {
-                    void saveIntent();
-                  }
-                  setStep((prev) => Math.min(7, prev + 1));
-                }}
+                onClick={handleNextStep}
               >
                 {t("next")}
               </button>

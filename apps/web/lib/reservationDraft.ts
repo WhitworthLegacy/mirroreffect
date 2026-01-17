@@ -3,7 +3,8 @@
  * Clé: me_reservation_draft_v1
  */
 
-const DRAFT_KEY = "me_reservation_draft_v1";
+const DRAFT_KEY = "me_reservation_draft";
+const LEGACY_DRAFT_KEY = "me_reservation_draft_v1";
 
 export type ReservationDraft = {
   leadId?: string;
@@ -63,9 +64,15 @@ export function getDraft(): ReservationDraft | null {
   }
 
   try {
-    const stored = localStorage.getItem(DRAFT_KEY);
+    const primary = localStorage.getItem(DRAFT_KEY);
+    const fallback = localStorage.getItem(LEGACY_DRAFT_KEY);
+    const stored = primary || fallback;
     if (!stored) {
       return null;
+    }
+
+    if (!primary && fallback) {
+      localStorage.setItem(DRAFT_KEY, fallback);
     }
 
     const parsed = JSON.parse(stored) as ReservationDraft;
@@ -100,6 +107,7 @@ export function setDraft(draft: ReservationDraft): void {
     };
 
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draftWithTimestamps));
+    localStorage.removeItem(LEGACY_DRAFT_KEY);
 
     if (process.env.NODE_ENV !== "production") {
       console.warn("[reservationDraft] Draft saved:", { step: draft.step, updatedAt: now });
@@ -160,6 +168,7 @@ export function clearDraft(): void {
 
   try {
     localStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem(LEGACY_DRAFT_KEY);
     if (process.env.NODE_ENV !== "production") {
       console.warn("[reservationDraft] Draft cleared");
     }
@@ -218,6 +227,7 @@ export function buildDraftFromState(state: {
       eventType: state.eventType,
       dateEvent: state.eventDate,
       lieuEvent: state.location,
+      address: state.location,
       pack: state.packCode || undefined,
       invites: state.guests,
       transport: state.transportFee,
