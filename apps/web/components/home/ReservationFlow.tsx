@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { captureUTMParams, getUTMParams, getLeadId, setLeadId, trackCTA } from "@/lib/tracking";
 import { getDraft, persistDraft, clearDraft, buildDraftFromState } from "@/lib/reservationDraft";
 import { persistLeadToLeads } from "@/lib/leads";
+import { trackMetaLeadOnce, trackMetaInitiateCheckoutOnce } from "@/lib/metaPixel";
 
 type AvailabilityState = "idle" | "checking" | "available" | "unavailable" | "error";
 type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
@@ -798,6 +799,10 @@ const packs = useMemo(
     });
 
     void persistLeadToLeads({ step, status: statusLabel, draft: draftSnapshot }).then((result) => {
+      const leadIdToPersist = result.leadId || draftSnapshot.leadId;
+      if (leadIdToPersist) {
+        trackMetaLeadOnce(leadIdToPersist);
+      }
       if (result.leadId) {
         persistDraft({ leadId: result.leadId });
       }
@@ -882,6 +887,13 @@ const packs = useMemo(
         address_length: finalAddress.length
       });
     }
+
+    const trackedValue = typeof draft.event.total === "number" ? draft.event.total : totalPrice ?? 0;
+    trackMetaInitiateCheckoutOnce(leadId || finalPackCode, {
+      value: trackedValue,
+      currency: "EUR",
+      content_name: finalPackCode
+    });
 
     try {
       const res = await fetch("/api/public/checkout", {
