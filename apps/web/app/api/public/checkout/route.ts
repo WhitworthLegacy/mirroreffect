@@ -111,6 +111,7 @@ export async function POST(req: Request) {
     });
   }
 
+  try {
     // 1) Pricing (MVP hardcoded)
     const transport_fee_cents = b.zone_code === "BE" ? 9000 : 11000;
     const pack_total_cents =
