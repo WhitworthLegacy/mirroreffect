@@ -23,11 +23,14 @@ export async function GET(req: Request) {
       data: { sheetName: "Clients" }
     });
 
-    if (!result.ok || !result.data) {
+    // GAS returns { values: [...] } for readSheet action
+    const values = result.values as unknown[][] | undefined;
+    if (!values) {
+      console.error("[availability] No values in GAS response:", result);
       return Response.json({ error: "sheets_error" }, { status: 500 });
     }
 
-    const rows = result.data as unknown[][];
+    const rows = values;
     if (rows.length < 2) {
       // Pas d'events = tous les miroirs disponibles
       const output = PublicAvailabilityResponseSchema.parse({

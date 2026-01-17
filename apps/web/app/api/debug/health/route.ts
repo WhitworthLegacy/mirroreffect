@@ -15,8 +15,9 @@ export async function GET() {
     let todayReservations = 0;
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-    if (result.ok && result.data) {
-      const rows = result.data as unknown[][];
+    // GAS returns { values: [...] } for readSheet action
+    if (result.values) {
+      const rows = result.values as unknown[][];
       if (rows.length >= 2) {
         const headers = (rows[0] as string[]).map(h => String(h).trim());
         const dateIdx = headers.findIndex(h => h === "Date Event");
