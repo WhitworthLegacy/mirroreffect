@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const params = Object.fromEntries(url.searchParams.entries());
   const parsed = PublicAvailabilityQuerySchema.safeParse(params);
+  const debugMode = params.debug === "1";
 
   if (!parsed.success) {
     return Response.json(
@@ -64,6 +65,21 @@ export async function GET(req: Request) {
     let reserved = 0;
     const matchedEventIds: string[] = [];
 
+    // Quick local check (commented): assume Clients has 4 rows for 24/01/2026 → reserved_mirrors should be 4 for both formats.
+    const samples = rows.slice(1, 11).map((row, sampleIndex) => {
+      let normalized: string | null = null;
+      try {
+        normalized = normalizeDateToISO(row[dateIdx]);
+      } catch {
+        normalized = null;
+      }
+      return {
+        row: sampleIndex + 1,
+        raw: row[dateIdx],
+        normalized
+      };
+    });
+
     for (const row of rows.slice(1)) {
       let eventDateISO: string;
       try {
@@ -91,15 +107,17 @@ export async function GET(req: Request) {
       available: remaining > 0
     });
 
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" || debugMode) {
       return Response.json({
         ...output,
         debug: {
           query_date_raw: queryDateRaw,
           query_date_iso: queryDateISO,
+          date_column_index: dateIdx,
           rows_total: rows.length - 1,
           matched_rows: reserved,
-          sample_event_ids: matchedEventIds.slice(0, 5)
+          sample_event_ids: matchedEventIds.slice(0, 5),
+          sample_dates: samples
         }
       });
     }
