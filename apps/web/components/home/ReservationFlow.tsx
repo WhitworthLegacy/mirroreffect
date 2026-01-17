@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatEuros } from "@/lib/date-utils";
-import { captureUTMParams, trackLeadStep, trackCTA } from "@/lib/tracking";
+import { captureUTMParams, getUTMParams, getLeadId, setLeadId, trackCTA } from "@/lib/tracking";
 
 type AvailabilityState = "idle" | "checking" | "available" | "unavailable" | "error";
 type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
@@ -681,7 +681,7 @@ const packs = useMemo(
     }
   };
 
-  const captureLeadIntent = async () => {
+  const persistLeadProgress = async (stepNumber: number, status: string) => {
     const now = Date.now();
     if (leadCaptureRef.current.inFlight || now - leadCaptureRef.current.lastAttempt < 1000) {
       return;
@@ -689,32 +689,71 @@ const packs = useMemo(
     leadCaptureRef.current.inFlight = true;
     leadCaptureRef.current.lastAttempt = now;
 
+    const leadId = getLeadId();
+    const utm = getUTMParams();
+
+    // Valeurs par défaut si pack pas encore sélectionné
+    const packCode = selectedPack ? selectedPack.code : "DISCOVERY"; // Par défaut pour calcul
+    const totalPriceCalculated = selectedPack ? selectedPack.promo + transportFee : 0;
+    const balancePriceCalculated = Math.max(0, totalPriceCalculated - depositAmount);
+
     try {
-      const leadId = await trackLeadStep(5, "step_5_completed", {
-        language: lang,
-        client_name: `${firstName} ${lastName}`.trim(),
-        client_email: leadEmail,
-        client_phone: contactPhone,
-        event_date: eventDate,
-        address: location,
-        pack_code: selectedPack ? selectedPack.code : "",
-        guests,
-        transport_euros: formatEuros(transportFee),
-        total_euros: selectedPack ? formatEuros((selectedPack.promo ?? 0) + transportFee) : "",
-        deposit_euros: formatEuros(depositAmount)
+      const res = await fetch("/api/public/event-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lead_id: leadId || undefined,
+          language: lang,
+          client_name: `${firstName} ${lastName}`.trim(),
+          client_email: leadEmail,
+          client_phone: contactPhone,
+          event_date: eventDate, // Accepte YYYY-MM-DD ou DD/MM/YYYY (normalisé côté serveur)
+          address: location,
+          pack_code: selectedPack ? selectedPack.code : "DISCOVERY", // Requis mais peut être par défaut
+          transport_fee_cents: transportFee * 100,
+          total_cents: totalPriceCalculated * 100,
+          deposit_cents: depositAmount * 100,
+          balance_due_cents: balancePriceCalculated * 100,
+          options: [], // Pas encore sélectionnés à l'étape 5
+          step: stepNumber.toString(),
+          status,
+          guests: guests || "",
+          utm_source: utm.utm_source || "",
+          utm_campaign: utm.utm_campaign || "",
+          utm_medium: utm.utm_medium || ""
+        })
       });
 
-      if (leadId && process.env.NODE_ENV !== "production") {
-        console.warn("[ReservationFlow] Lead captured:", leadId);
+      const data = (await res.json()) as { ok?: boolean; lead_id?: string; error?: { type: string; message: string } };
+
+      if (!res.ok || !data.ok) {
+        const errorMsg = data.error?.message || `HTTP ${res.status}`;
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[ReservationFlow] persistLeadProgress failed:", errorMsg, data);
+        }
+        throw new Error(errorMsg);
+      }
+
+      const returnedLeadId = data.lead_id || leadId;
+      if (returnedLeadId && !leadId) {
+        setLeadId(returnedLeadId);
+      }
+
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(`[ReservationFlow] Lead progress persisted (step ${stepNumber}):`, returnedLeadId);
       }
     } catch (error) {
       if (process.env.NODE_ENV !== "production") {
-        console.warn("[ReservationFlow] Lead capture error:", error);
+        console.warn("[ReservationFlow] persistLeadProgress error:", error);
       }
+      // Ne pas bloquer le flux utilisateur
     } finally {
       leadCaptureRef.current.inFlight = false;
     }
   };
+
+  // Alias pour compatibilité
+  const captureLeadIntent = () => persistLeadProgress(5, "step_5_completed");
 
   const waitlistLink = mailto(
     t("availabilityEmailSubject"),

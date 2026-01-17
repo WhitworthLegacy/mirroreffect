@@ -6,7 +6,7 @@
  */
 
 const LEAD_ID_KEY = "mirroreffect_lead_id";
-const UTM_KEY = "mirroreffect_utm";
+const UTM_KEY = "me_utms"; // localStorage key
 
 type UTMParams = {
   utm_source?: string;
@@ -15,7 +15,7 @@ type UTMParams = {
 };
 
 /**
- * Capture et stocke les UTM parameters depuis l'URL
+ * Capture et stocke les UTM parameters depuis l'URL dans localStorage
  * À appeler au premier chargement de la page
  */
 export function captureUTMParams(): UTMParams {
@@ -23,8 +23,8 @@ export function captureUTMParams(): UTMParams {
     return {};
   }
 
-  // Vérifier si déjà enregistrés
-  const existing = sessionStorage.getItem(UTM_KEY);
+  // Vérifier si déjà enregistrés dans localStorage
+  const existing = localStorage.getItem(UTM_KEY);
   if (existing) {
     try {
       return JSON.parse(existing) as UTMParams;
@@ -33,6 +33,7 @@ export function captureUTMParams(): UTMParams {
     }
   }
 
+  // Parser window.location.search
   const params = new URLSearchParams(window.location.search);
   const utm: UTMParams = {
     utm_source: params.get("utm_source") || undefined,
@@ -42,9 +43,9 @@ export function captureUTMParams(): UTMParams {
 
   // Stocker seulement si au moins un paramètre existe
   if (utm.utm_source || utm.utm_medium || utm.utm_campaign) {
-    sessionStorage.setItem(UTM_KEY, JSON.stringify(utm));
+    localStorage.setItem(UTM_KEY, JSON.stringify(utm));
     if (process.env.NODE_ENV !== "production") {
-      console.warn("[tracking] UTM captured:", utm);
+      console.warn("[tracking] UTM captured and stored in localStorage:", utm);
     }
   }
 
@@ -52,14 +53,14 @@ export function captureUTMParams(): UTMParams {
 }
 
 /**
- * Récupère les UTM parameters stockés
+ * Récupère les UTM parameters stockés depuis localStorage
  */
 export function getUTMParams(): UTMParams {
   if (typeof window === "undefined") {
     return {};
   }
 
-  const stored = sessionStorage.getItem(UTM_KEY);
+  const stored = localStorage.getItem(UTM_KEY);
   if (!stored) {
     return {};
   }
@@ -72,27 +73,27 @@ export function getUTMParams(): UTMParams {
 }
 
 /**
- * Récupère le lead_id depuis sessionStorage
+ * Récupère le lead_id depuis localStorage
  */
 export function getLeadId(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  return sessionStorage.getItem(LEAD_ID_KEY);
+  return localStorage.getItem(LEAD_ID_KEY);
 }
 
 /**
- * Stocke le lead_id dans sessionStorage
+ * Stocke le lead_id dans localStorage
  */
 export function setLeadId(leadId: string): void {
   if (typeof window === "undefined") {
     return;
   }
 
-  sessionStorage.setItem(LEAD_ID_KEY, leadId);
+  localStorage.setItem(LEAD_ID_KEY, leadId);
   if (process.env.NODE_ENV !== "production") {
-    console.warn("[tracking] Lead ID stored:", leadId);
+    console.warn("[tracking] Lead ID stored in localStorage:", leadId);
   }
 }
 

@@ -111,6 +111,22 @@ export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
   const text = await response.text();
   const contentType = response.headers.get("content-type") || "";
 
+  // Vérifier le status HTTP d'abord (avant parsing)
+  if (response.status >= 400) {
+    const preview = text.substring(0, 300);
+    const error = new Error(`GAS_HTTP_ERROR: HTTP ${response.status}`) as Error & {
+      type: string;
+      status: number;
+      preview: string;
+      url: string;
+    };
+    error.type = "GAS_HTTP_ERROR";
+    error.status = response.status;
+    error.preview = preview;
+    error.url = finalUrl;
+    throw error;
+  }
+
   // Detecter HTML (commence par "<" ou content-type text/html)
   if (text.trim().startsWith("<") || contentType.includes("text/html")) {
     const preview = text.substring(0, 500);
@@ -129,29 +145,61 @@ export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
     );
   }
 
+  // Vérifier que le content-type est JSON
+  if (!contentType.includes("application/json") && !contentType.includes("text/json")) {
+    const preview = text.substring(0, 300);
+    const error = new Error(`GAS_NON_JSON: Expected JSON but got ${contentType}`) as Error & {
+      type: string;
+      status: number;
+      preview: string;
+      url: string;
+    };
+    error.type = "GAS_NON_JSON";
+    error.status = response.status;
+    error.preview = preview;
+    error.url = finalUrl;
+    throw error;
+  }
+
   // Parser le JSON
   let result: GasResponse;
   try {
     result = JSON.parse(text) as GasResponse;
-  } catch {
+  } catch (parseError) {
     console.error(`[GAS] JSON parse error:`, {
       status: response.status,
       contentType,
-      textPreview: text.substring(0, 200),
+      textPreview: text.substring(0, 300),
       url: finalUrl,
     });
-    throw new Error(
-      `GAS returned invalid JSON. Status: ${response.status}, Content-Type: ${contentType}. Preview: ${text.substring(0, 200)}`
-    );
+    const jsonError = new Error(`GAS_INVALID_JSON: Failed to parse JSON`) as Error & {
+      type: string;
+      status: number;
+      preview: string;
+      url: string;
+    };
+    jsonError.type = "GAS_INVALID_JSON";
+    jsonError.status = response.status;
+    jsonError.preview = text.substring(0, 300);
+    jsonError.url = finalUrl;
+    throw jsonError;
   }
 
-  // Verifier les erreurs dans la reponse GAS
+  // Vérifier les erreurs dans la réponse GAS
   if (result.error) {
-    console.error(`[GAS] GAS error:`, result.error);
-    throw new Error(`GAS error: ${result.error}`);
+    console.error(`[GAS] GAS app error:`, result.error);
+    const error = new Error(`GAS_APP_ERROR: ${String(result.error)}`) as Error & {
+      type: string;
+      message: string;
+      status: number;
+    };
+    error.type = "GAS_APP_ERROR";
+    error.message = String(result.error);
+    error.status = response.status;
+    throw error;
   }
 
-  // Log en developpement
+  // Log en développement
   if (process.env.NODE_ENV === "development") {
     console.log(`[GAS] Success -> ${response.status}`);
   }

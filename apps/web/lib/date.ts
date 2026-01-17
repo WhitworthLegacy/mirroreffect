@@ -81,3 +81,78 @@ export function formatISOToDDMMYYYY(iso: string): string | null {
   const [year, month, day] = iso.split("-");
   return `${day}/${month}/${year}`;
 }
+
+/**
+ * Convertit n'importe quel format de date en "DD/MM/YYYY" (texte pour Google Sheets)
+ * Accepte: YYYY-MM-DD, DD/MM/YYYY, Date object, ISO datetime
+ * Retourne toujours "DD/MM/YYYY" ou null si invalide
+ */
+export function toDDMMYYYY(input: unknown): string | null {
+  if (!input) {
+    return null;
+  }
+
+  // Si déjà au format DD/MM/YYYY
+  const ddmm = typeof input === "string" ? input.trim() : String(input).trim();
+  const ddmmMatch = ddmm.match(DDMMYYYY_REGEX);
+  if (ddmmMatch) {
+    const day = pad(ddmmMatch[1]);
+    const month = pad(ddmmMatch[2]);
+    const year = ddmmMatch[3];
+    return `${day}/${month}/${year}`;
+  }
+
+  // Convertir en ISO d'abord, puis en DD/MM/YYYY
+  const iso = normalizeDateToISO(input);
+  if (!iso) {
+    return null;
+  }
+
+  return formatISOToDDMMYYYY(iso);
+}
+
+/**
+ * Convertit une date/heure en format "DD/MM/YYYY HH:mm" (texte pour Google Sheets)
+ * Accepte: ISO datetime, Date object
+ */
+export function toDDMMYYYYHHmm(input: unknown): string | null {
+  if (!input) {
+    return null;
+  }
+
+  let date: Date | null = null;
+
+  if (input instanceof Date) {
+    if (Number.isNaN(input.getTime())) {
+      return null;
+    }
+    date = input;
+  } else if (typeof input === "string") {
+    const trimmed = input.trim();
+    // Si c'est déjà un format ISO datetime
+    if (trimmed.includes("T")) {
+      date = new Date(trimmed);
+      if (Number.isNaN(date.getTime())) {
+        return null;
+      }
+    } else {
+      // Sinon, essayer de normaliser comme date seule
+      const iso = normalizeDateToISO(input);
+      if (iso) {
+        date = new Date(`${iso}T00:00:00`);
+      }
+    }
+  }
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const day = pad(String(date.getDate()));
+  const month = pad(String(date.getMonth() + 1));
+  const year = date.getFullYear();
+  const hours = pad(String(date.getHours()));
+  const minutes = pad(String(date.getMinutes()));
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
