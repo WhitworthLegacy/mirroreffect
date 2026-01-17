@@ -86,19 +86,25 @@ export async function GET(req: Request) {
     });
 
     // Compter les réservations pour la date demandée
+    // ⚠️ IMPORTANT: Utiliser la même logique que l'admin (mapClientsRowToEventRow)
+    // - Ignorer les lignes SANS Event ID (comme l'admin ligne 1077: if (!eventId) return null)
+    // - Normaliser les dates AVANT comparaison (comme formatDate dans admin)
     for (const row of rows.slice(1)) {
+      // Ignorer les lignes sans Event ID (comme l'admin fait)
+      const eventIdValue = eventIdIdx >= 0 ? String(row[eventIdIdx] || "").trim() : "";
+      if (!eventIdValue) {
+        continue; // Ignorer les lignes sans Event ID, comme l'admin
+      }
+
+      // Normaliser la date de l'événement
       const eventDateISO = normalizeDateToISO(row[dateIdx]);
       if (!eventDateISO || eventDateISO !== queryDateISO) {
         continue;
       }
 
+      // Ligne valide : Event ID présent ET date qui match
       reserved += 1;
-      if (eventIdIdx >= 0) {
-        const eventIdValue = String(row[eventIdIdx] || "").trim();
-        if (eventIdValue) {
-          matchedEventIds.push(eventIdValue);
-        }
-      }
+      matchedEventIds.push(eventIdValue);
     }
 
     const remaining = Math.max(0, TOTAL_MIRRORS - reserved);

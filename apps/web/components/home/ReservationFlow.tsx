@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatEuros } from "@/lib/date-utils";
+import { captureUTMParams, trackLeadStep, trackCTA } from "@/lib/tracking";
 
 type AvailabilityState = "idle" | "checking" | "available" | "unavailable" | "error";
 type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
@@ -572,6 +573,11 @@ const packs = useMemo(
     return stanchionsCode ? [...options, stanchionsCode] : options;
   }, [options, stanchionsEnabled, stanchionsColor]);
 
+  // Capture UTM parameters au premier chargement
+  useEffect(() => {
+    captureUTMParams();
+  }, []);
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
@@ -599,11 +605,23 @@ const packs = useMemo(
   const canContinueStep7 = Boolean(leadEmail);
 
   const toggleOption = (code: string) => {
-    setOptions((prev) => (prev.includes(code) ? prev.filter((item) => item !== code) : [...prev, code]));
+    const isSelected = options.includes(code);
+    setOptions((prev) => (isSelected ? prev.filter((item) => item !== code) : [...prev, code]));
+    // Track CTA seulement si on sélectionne (pas si on désélectionne)
+    if (!isSelected) {
+      const optionLabel = optionLabels[code] || code;
+      void trackCTA(`option_${code}`, optionLabel, 6, { code, action: "selected" });
+    }
   };
 
   const toggleStanchions = () => {
+    const wasEnabled = stanchionsEnabled;
     setStanchionsEnabled((prev) => !prev);
+    // Track CTA seulement si on active (pas si on désactive)
+    if (!wasEnabled) {
+      const label = `${strings.optionStanchions} — ${stanchionsColor === "GOLD" ? "Doré" : "Argenté"}`;
+      void trackCTA("option_stanchions", label, 6, { color: stanchionsColor, action: "selected" });
+    }
   };
 
   const handleAvailability = async () => {
@@ -663,7 +681,7 @@ const packs = useMemo(
     }
   };
 
-  const captureLeadIntent = () => {
+  const captureLeadIntent = async () => {
     const now = Date.now();
     if (leadCaptureRef.current.inFlight || now - leadCaptureRef.current.lastAttempt < 1000) {
       return;
@@ -671,40 +689,31 @@ const packs = useMemo(
     leadCaptureRef.current.inFlight = true;
     leadCaptureRef.current.lastAttempt = now;
 
-    const payload = {
-      language: lang,
-      client_name: `${firstName} ${lastName}`.trim(),
-      client_email: leadEmail,
-      client_phone: contactPhone,
-      event_date: eventDate,
-      address: location,
-      pack_code: selectedPack ? selectedPack.code : "",
-      guests,
-      transport_euros: formatEuros(transportFee),
-      total_euros: selectedPack ? formatEuros((selectedPack.promo ?? 0) + transportFee) : "",
-      deposit_euros: formatEuros(depositAmount),
-      utm_source: utmSource,
-      utm_campaign: utmCampaign,
-      utm_medium: utmMedium
-    };
-
-    void fetch("/api/public/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`lead capture failed (${res.status})`);
-        }
-        return res.json();
-      })
-      .catch((error) => {
-        console.error("[lead-capture] Failed to send lead", error);
-      })
-      .finally(() => {
-        leadCaptureRef.current.inFlight = false;
+    try {
+      const leadId = await trackLeadStep(5, "step_5_completed", {
+        language: lang,
+        client_name: `${firstName} ${lastName}`.trim(),
+        client_email: leadEmail,
+        client_phone: contactPhone,
+        event_date: eventDate,
+        address: location,
+        pack_code: selectedPack ? selectedPack.code : "",
+        guests,
+        transport_euros: formatEuros(transportFee),
+        total_euros: selectedPack ? formatEuros((selectedPack.promo ?? 0) + transportFee) : "",
+        deposit_euros: formatEuros(depositAmount)
       });
+
+      if (leadId && process.env.NODE_ENV !== "production") {
+        console.warn("[ReservationFlow] Lead captured:", leadId);
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[ReservationFlow] Lead capture error:", error);
+      }
+    } finally {
+      leadCaptureRef.current.inFlight = false;
+    }
   };
 
   const waitlistLink = mailto(
@@ -965,7 +974,10 @@ const packs = useMemo(
                         ? "border-[#C1950E] shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
                         : "border-[#eee]"
                     }`}
-                    onClick={() => setVibe(item.id)}
+                    onClick={() => {
+                      setVibe(item.id);
+                      void trackCTA(`vibe_${item.id}`, item.label, 2, { vibe_id: item.id, action: "selected" });
+                    }}
                   >
                     <div className="relative h-[180px] overflow-hidden rounded-xl">
                       <Image src={item.image} alt={item.label} fill className="object-cover" />
@@ -996,7 +1008,10 @@ const packs = useMemo(
                           ? "border-[#C1950E] shadow-[0_10px_28px_rgba(193,149,14,0.18)]"
                           : "border-[#eee]"
                       }`}
-                      onClick={() => setTheme(item.id)}
+                      onClick={() => {
+                        setTheme(item.id);
+                        void trackCTA(`theme_${item.id}`, item.label, 3, { theme_id: item.id, action: "selected" });
+                      }}
                     >
                       <div className="flex items-center gap-3">
                         <span
@@ -1124,7 +1139,14 @@ const packs = useMemo(
                         ? "border-[#C1950E] shadow-[0_12px_28px_rgba(193,149,14,0.18)]"
                         : "border-[#eee]"
                     }`}
-                    onClick={() => setPackCode(pack.code)}
+                    onClick={() => {
+                      setPackCode(pack.code);
+                      void trackCTA(`pack_${pack.code}`, pack.name, 6, {
+                        pack_code: pack.code,
+                        price: pack.promo,
+                        action: "selected"
+                      });
+                    }}
                   >
                     <h3 className="text-lg font-black">
                       {pack.name} — {pack.included[0]}
@@ -1172,7 +1194,12 @@ const packs = useMemo(
                           <select
                             className={`${baseClass} mt-2 text-sm`}
                             value={stanchionsColor}
-                            onChange={(event) => setStanchionsColor(event.target.value as "GOLD" | "SILVER")}
+                            onChange={(event) => {
+                              const newColor = event.target.value as "GOLD" | "SILVER";
+                              setStanchionsColor(newColor);
+                              const label = `${strings.optionStanchions} — ${newColor === "GOLD" ? "Doré" : "Argenté"}`;
+                              void trackCTA("option_stanchions_color", label, 6, { color: newColor, action: "color_changed" });
+                            }}
                           >
                             <option value="GOLD">Doré</option>
                             <option value="SILVER">Argenté</option>

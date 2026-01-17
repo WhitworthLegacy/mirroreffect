@@ -1,5 +1,6 @@
 export const ISO_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const DDMMYYYY_REGEX = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+// Accepter slash OU tiret comme séparateur (comme l'admin formatDate ligne 1063)
+const DDMMYYYY_REGEX = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/;
 
 function pad(value: string): string {
   return value.padStart(2, "0");
@@ -36,8 +37,16 @@ export function normalizeDateToISO(value: unknown): string | null {
     return input;
   }
 
-  // Si format ISO avec heure (YYYY-MM-DDTHH:mm:ss)
+  // Si format ISO avec heure (YYYY-MM-DDTHH:mm:ss ou YYYY-MM-DDTHH:mm:ss.000Z)
+  // ⚠️ IMPORTANT: Extraire directement YYYY-MM-DD de la chaîne pour éviter les problèmes de timezone
+  // Sinon "2026-01-24T23:00:00.000Z" peut devenir "2026-01-25" selon le timezone local
   if (input.includes("T")) {
+    // Extraire directement la partie date (avant le "T")
+    const datePart = input.split("T")[0];
+    if (ISO_REGEX.test(datePart)) {
+      return datePart; // Retourner directement YYYY-MM-DD sans conversion Date
+    }
+    // Fallback: essayer Date si le format n'est pas standard
     const date = new Date(input);
     if (!Number.isNaN(date.getTime())) {
       return formatFromDate(date);
