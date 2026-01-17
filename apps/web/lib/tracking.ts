@@ -224,8 +224,8 @@ export async function trackLeadStep(
 }
 
 /**
- * Track un CTA (Call To Action)
- * Stocke dans Leads via "Last CTA" et "Last CTA At"
+ * Track un CTA (Call To Action) - fire-and-forget, ne bloque jamais l'UX
+ * Envoie event: "button_click" ou "cta_update" selon si on a un lead_id
  */
 export async function trackCTA(
   ctaId: string,
@@ -234,42 +234,49 @@ export async function trackCTA(
   extra: Record<string, unknown> = {}
 ): Promise<void> {
   const leadId = getLeadId();
-  if (!leadId) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[tracking] No lead_id, skipping CTA tracking:", ctaId);
-    }
-    return;
-  }
+  const utm = getUTMParams();
+
+  // Si pas de lead_id, envoyer button_click qui sera loggé seulement
+  const event = leadId ? "cta_update" : "button_click";
 
   const payload = {
-    lead_id: leadId,
+    event,
+    step: step.toString(),
+    buttonLabel: label,
+    leadId: leadId || undefined,
+    utm: utm.utm_source || utm.utm_medium || utm.utm_campaign ? {
+      source: utm.utm_source,
+      medium: utm.utm_medium,
+      campaign: utm.utm_campaign
+    } : undefined,
+    // Champs pour cta_update si leadId existe
+    lead_id: leadId || undefined,
     cta_id: ctaId,
     cta_label: label,
-    step: step.toString(),
     cta_value: JSON.stringify(extra),
     updated_at: new Date().toISOString()
   };
 
   try {
-    const res = await fetch("/api/public/leads", {
+    // Fire-and-forget: ne pas attendre la réponse, ne jamais throw
+    void fetch("/api/public/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
+    }).catch(() => {
+      // Ignorer silencieusement les erreurs réseau (fire-and-forget)
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(`[tracking] CTA tracking network error (ignored):`, ctaId);
+      }
     });
 
-    if (!res.ok) {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(`[tracking] CTA tracking failed (${res.status}):`, ctaId);
-      }
-      return;
-    }
-
     if (process.env.NODE_ENV !== "production") {
-      console.warn(`[tracking] CTA tracked:`, { ctaId, label, step });
+      console.warn(`[tracking] CTA tracked (fire-and-forget):`, { ctaId, label, step, event });
     }
   } catch (error) {
+    // Ne jamais throw - ignorer silencieusement
     if (process.env.NODE_ENV !== "production") {
-      console.warn("[tracking] CTA tracking error:", error);
+      console.warn("[tracking] CTA tracking error (ignored):", error);
     }
   }
 }
