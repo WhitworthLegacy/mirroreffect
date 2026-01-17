@@ -6,7 +6,7 @@
     "build": "next build",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:date-utils": "ts-node --esm ./lib/date-utils.test.ts"
+    "test:date-utils": "ts-node --esm ./lib/date.test.ts"
   },
   "dependencies": {
     "@mirroreffect/core": "workspace:*",

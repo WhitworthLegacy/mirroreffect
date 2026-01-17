@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { gasPost } from "@/lib/gas";
-import { generateLeadId, normalizeToFR } from "@/lib/date-utils";
+import { generateLeadId } from "@/lib/date-utils";
+import { normalizeDateToISO } from "@/lib/date";
 
 const LeadPayloadSchema = z.object({
   lead_id: z.string().optional(),
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
 
   const data = parsed.data;
   const leadId = data.lead_id || generateLeadId();
-  const eventDateFr = normalizeToFR(data.event_date) || sanitize(data.event_date);
+  const eventDateIso = normalizeDateToISO(data.event_date) || sanitize(data.event_date);
 
   try {
     const result = await gasPost({
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
           Email: data.client_email,
           Phone: data.client_phone,
           Language: data.language,
-          "Date Event": eventDateFr,
+          "Date Event": eventDateIso,
           "Lieu Event": data.address,
           Pack: sanitize(data.pack_code),
           "Invités": sanitize(data.guests),

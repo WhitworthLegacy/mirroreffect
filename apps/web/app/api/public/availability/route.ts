@@ -1,6 +1,6 @@
 import { PublicAvailabilityQuerySchema, PublicAvailabilityResponseSchema } from "@mirroreffect/core";
 import { gasPost } from "@/lib/gas";
-import { normalizeToFR, normalizeToISO } from "@/lib/date-utils";
+import { normalizeDateToISO } from "@/lib/date";
 
 const TOTAL_MIRRORS = 4;
 type GstRow = unknown[];
@@ -18,10 +18,9 @@ export async function GET(req: Request) {
   }
 
   const queryDateRaw = parsed.data.date;
-  const queryDateFR = normalizeToFR(queryDateRaw);
-  const queryDateISO = normalizeToISO(queryDateRaw);
+  const queryDateISO = normalizeDateToISO(queryDateRaw);
 
-  if (!queryDateFR || !queryDateISO) {
+  if (!queryDateISO) {
     return Response.json(
       { error: "invalid_date", message: "Date must be YYYY-MM-DD or DD/MM/YYYY" },
       { status: 400 }
@@ -64,9 +63,9 @@ export async function GET(req: Request) {
     const matchedEventIds: string[] = [];
 
     for (const row of rows.slice(1)) {
-      const eventDateFR = normalizeToFR(row[dateIdx]);
-      if (!eventDateFR) continue;
-      if (eventDateFR !== queryDateFR) continue;
+      const eventDateISO = normalizeDateToISO(row[dateIdx]);
+      if (!eventDateISO) continue;
+      if (eventDateISO !== queryDateISO) continue;
 
       reserved += 1;
       if (eventIdIdx >= 0) {
@@ -92,7 +91,6 @@ export async function GET(req: Request) {
         debug: {
           query_date_raw: queryDateRaw,
           query_date_iso: queryDateISO,
-          query_date_fr: queryDateFR,
           rows_total: rows.length - 1,
           matched_rows: reserved,
           sample_event_ids: matchedEventIds.slice(0, 5)
