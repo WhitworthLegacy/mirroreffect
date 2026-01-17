@@ -34,12 +34,8 @@ export async function GET(req: Request) {
       data: { sheetName: "Clients" }
     });
 
-    if (!result.ok || !result.data) {
-      return Response.json({ error: "sheets_error" }, { status: 500 });
-    }
-
-    const rows = result.data as GstRow[];
-    if (rows.length < 2) {
+    const rows = result.values as GstRow[] | undefined;
+    if (!rows || rows.length < 2) {
       const output = PublicAvailabilityResponseSchema.parse({
         date: queryDateISO,
         total_mirrors: TOTAL_MIRRORS,
