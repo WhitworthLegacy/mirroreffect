@@ -106,7 +106,7 @@ export async function persistLeadToLeads({ step, status, draft, requestId }: Per
       ? (data as Record<string, unknown>).lead_id
       : leadId) || null;
 
-    if (returnedLeadId && returnedLeadId !== leadId) {
+    if (typeof returnedLeadId === "string" && returnedLeadId !== leadId) {
       setLeadId(returnedLeadId);
       leadId = returnedLeadId;
     }
