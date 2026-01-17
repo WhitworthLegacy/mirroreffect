@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const DateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const FrenchDateSchema = z.string().regex(/^\d{1,2}\/\d{1,2}\/\d{4}$/);
 
 export const AvailabilityQuerySchema = z.object({
   date: z.string().min(1)
@@ -13,7 +14,7 @@ export const AvailabilityOutputSchema = z.object({
 });
 
 export const PublicAvailabilityQuerySchema = z.object({
-  date: DateStringSchema
+  date: z.union([DateStringSchema, FrenchDateSchema])
 });
 
 export const PublicAvailabilityResponseSchema = z.object({

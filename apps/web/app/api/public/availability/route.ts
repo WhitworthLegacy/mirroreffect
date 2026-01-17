@@ -18,13 +18,19 @@ export async function GET(req: Request) {
   }
 
   const queryDateRaw = parsed.data.date;
-  const queryDateISO = normalizeDateToISO(queryDateRaw);
-
-  if (!queryDateISO) {
+  let queryDateISO: string;
+  try {
+    queryDateISO = normalizeDateToISO(queryDateRaw);
+  } catch (error) {
+    console.error("[availability] Invalid query date:", queryDateRaw, error);
     return Response.json(
       { error: "invalid_date", message: "Date must be YYYY-MM-DD or DD/MM/YYYY" },
       { status: 400 }
     );
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[availability] query date raw=${queryDateRaw} normalized=${queryDateISO}`);
   }
 
   try {
@@ -59,8 +65,12 @@ export async function GET(req: Request) {
     const matchedEventIds: string[] = [];
 
     for (const row of rows.slice(1)) {
-      const eventDateISO = normalizeDateToISO(row[dateIdx]);
-      if (!eventDateISO) continue;
+      let eventDateISO: string;
+      try {
+        eventDateISO = normalizeDateToISO(row[dateIdx]);
+      } catch {
+        continue;
+      }
       if (eventDateISO !== queryDateISO) continue;
 
       reserved += 1;

@@ -14,7 +14,7 @@ for (const fixture of passing) {
 
 const invalid = ["2026/13/01", "", "abc"];
 for (const value of invalid) {
-  assert.strictEqual(normalizeDateToISO(value), null, `Expected null for ${value}`);
+  assert.throws(() => normalizeDateToISO(value), /(Invalid date format|Date value is empty)/, `Expected throw for ${value}`);
 }
 
 console.log("date helpers ok");
