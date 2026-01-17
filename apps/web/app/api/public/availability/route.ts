@@ -1,69 +1,9 @@
 import { PublicAvailabilityQuerySchema, PublicAvailabilityResponseSchema } from "@mirroreffect/core";
 import { gasPost } from "@/lib/gas";
+import { normalizeToFR, normalizeToISO } from "@/lib/date-utils";
 
 const TOTAL_MIRRORS = 4;
-
 type GstRow = unknown[];
-
-function toNumber(value: unknown): number | null {
-  if (value === null || value === undefined) return null;
-  const str = String(value).replace(",", ".").trim();
-  if (!str) return null;
-  const num = Number(str);
-  return Number.isFinite(num) ? num : null;
-}
-
-function normalizeToISO(value: unknown): string | null {
-  if (!value) return null;
-  const str = String(value).trim();
-  if (!str) return null;
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-    return str;
-  }
-
-  if (str.includes("T")) {
-    const date = new Date(str);
-    if (!Number.isNaN(date.getTime())) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    }
-  }
-
-  const match = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (match) {
-    const dd = match[1].padStart(2, "0");
-    const mm = match[2].padStart(2, "0");
-    const yyyy = match[3];
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  return null;
-}
-
-function normalizeToFR(value: unknown): string | null {
-  if (!value) return null;
-  const str = String(value).trim();
-  if (!str) return null;
-
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
-    return str;
-  }
-
-  const iso = normalizeToISO(str);
-  if (!iso) return null;
-  const [year, month, day] = iso.split("-");
-  return `${day}/${month}/${year}`;
-}
-
-function sameDate(a: unknown, b: unknown): boolean {
-  const isoA = normalizeToISO(a);
-  const isoB = normalizeToISO(b);
-  if (!isoA || !isoB) return false;
-  return isoA === isoB;
-}
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -78,8 +18,10 @@ export async function GET(req: Request) {
   }
 
   const queryDateRaw = parsed.data.date;
+  const queryDateFR = normalizeToFR(queryDateRaw);
   const queryDateISO = normalizeToISO(queryDateRaw);
-  if (!queryDateISO) {
+
+  if (!queryDateFR || !queryDateISO) {
     return Response.json(
       { error: "invalid_date", message: "Date must be YYYY-MM-DD or DD/MM/YYYY" },
       { status: 400 }
@@ -109,11 +51,9 @@ export async function GET(req: Request) {
       return Response.json(output);
     }
 
-    const headers = (rows[0] as string[]).map(h => String(h).trim());
-    const dateIdx = headers.findIndex(h => h === "Date Event");
-    const depositDateIdx = headers.findIndex(h => h === "Date acompte payé");
-    const depositIdx = headers.findIndex(h => h === "Acompte" || h === "Acompte (€)");
-    const eventIdIdx = headers.findIndex(h => h === "Event ID");
+    const headers = (rows[0] as string[]).map((column) => String(column).trim());
+    const dateIdx = headers.findIndex((column) => column === "Date Event");
+    const eventIdIdx = headers.findIndex((column) => column === "Event ID");
 
     if (dateIdx === -1) {
       console.error("[availability] Header 'Date Event' not found", headers);
@@ -121,29 +61,19 @@ export async function GET(req: Request) {
     }
 
     let reserved = 0;
-    let confirmed = 0;
     const matchedEventIds: string[] = [];
 
     for (const row of rows.slice(1)) {
-      const eventDateISO = normalizeToISO(row[dateIdx]);
-      if (!eventDateISO) continue;
-
-      const depositDateRaw = depositDateIdx >= 0 ? row[depositDateIdx] : null;
-      const depositAmountRaw = depositIdx >= 0 ? row[depositIdx] : null;
-      const depositAmount = toNumber(depositAmountRaw);
-      const hasDepositPaid =
-        (depositDateRaw && String(depositDateRaw).trim().length > 0) ||
-        (depositAmount !== null && depositAmount > 0);
-
-      if (!hasDepositPaid) continue;
-      confirmed += 1;
-
-      if (eventDateISO !== queryDateISO) continue;
+      const eventDateFR = normalizeToFR(row[dateIdx]);
+      if (!eventDateFR) continue;
+      if (eventDateFR !== queryDateFR) continue;
 
       reserved += 1;
       if (eventIdIdx >= 0) {
-        const eventId = String(row[eventIdIdx] || "").trim();
-        if (eventId) matchedEventIds.push(eventId);
+        const eventIdValue = String(row[eventIdIdx] || "").trim();
+        if (eventIdValue) {
+          matchedEventIds.push(eventIdValue);
+        }
       }
     }
 
@@ -162,10 +92,10 @@ export async function GET(req: Request) {
         debug: {
           query_date_raw: queryDateRaw,
           query_date_iso: queryDateISO,
+          query_date_fr: queryDateFR,
           rows_total: rows.length - 1,
-          confirmed_rows: confirmed,
           matched_rows: reserved,
-          sample_matched_event_ids: matchedEventIds.slice(0, 5)
+          sample_event_ids: matchedEventIds.slice(0, 5)
         }
       });
     }

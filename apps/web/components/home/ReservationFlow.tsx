@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { formatEuros } from "@/lib/date-utils";
 
 type AvailabilityState = "idle" | "checking" | "available" | "unavailable" | "error";
 type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
@@ -400,6 +401,9 @@ export function ReservationFlow() {
   const strings = copy[lang];
   const t = (key: Exclude<keyof typeof copy.fr, "proofItems" | "stories" | "testimonials">) => strings[key];
   const proofItems = strings.proofItems;
+  const utmSource = searchParams.get("utm_source") ?? "";
+  const utmCampaign = searchParams.get("utm_campaign") ?? "";
+  const utmMedium = searchParams.get("utm_medium") ?? "";
 
 const packs = useMemo(
     () => [
@@ -554,6 +558,7 @@ const packs = useMemo(
   const [eventId, setEventId] = useState<string | null>(null);
   const [isSavingIntent, setIsSavingIntent] = useState(false);
   const [intentError, setIntentError] = useState("");
+  const leadCaptureRef = useRef({ inFlight: false, lastAttempt: 0 });
 
   const story = strings.stories[Math.max(0, Math.min(step - 1, strings.stories.length - 1))];
   const testimonials = strings.testimonials;
@@ -656,6 +661,50 @@ const packs = useMemo(
       setCheckoutError(t("checkoutError"));
       setIsSubmitting(false);
     }
+  };
+
+  const captureLeadIntent = () => {
+    const now = Date.now();
+    if (leadCaptureRef.current.inFlight || now - leadCaptureRef.current.lastAttempt < 1000) {
+      return;
+    }
+    leadCaptureRef.current.inFlight = true;
+    leadCaptureRef.current.lastAttempt = now;
+
+    const payload = {
+      language: lang,
+      client_name: `${firstName} ${lastName}`.trim(),
+      client_email: leadEmail,
+      client_phone: contactPhone,
+      event_date: eventDate,
+      address: location,
+      pack_code: selectedPack ? selectedPack.code : "",
+      guests,
+      transport_euros: formatEuros(transportFee),
+      total_euros: selectedPack ? formatEuros((selectedPack.promo ?? 0) + transportFee) : "",
+      deposit_euros: formatEuros(depositAmount),
+      utm_source: utmSource,
+      utm_campaign: utmCampaign,
+      utm_medium: utmMedium
+    };
+
+    void fetch("/api/public/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`lead capture failed (${res.status})`);
+        }
+        return res.json();
+      })
+      .catch((error) => {
+        console.error("[lead-capture] Failed to send lead", error);
+      })
+      .finally(() => {
+        leadCaptureRef.current.inFlight = false;
+      });
   };
 
   const waitlistLink = mailto(
@@ -1251,7 +1300,10 @@ const packs = useMemo(
                   (step === 6 && !canContinueStep6)
                 }
                 onClick={() => {
-                  if (step === 5) enqueuePromo();
+                  if (step === 5) {
+                    captureLeadIntent();
+                    enqueuePromo();
+                  }
                   if (step === 6) {
                     void saveIntent();
                   }
