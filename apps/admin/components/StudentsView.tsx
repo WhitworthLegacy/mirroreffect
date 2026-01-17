@@ -9,8 +9,7 @@ type StudentEvent = {
   client_name: string | null;
   student_name: string;
   student_hours: number | null;
-  student_rate_cents: number | null;
-  total_cents: number | null;
+  student_total_cents: number | null; // Total from "Etudiant €/Event" column
 };
 
 type Props = {
@@ -19,11 +18,8 @@ type Props = {
 
 type EditingCell = {
   eventId: string;
-  field: "student_hours" | "student_rate_cents";
+  field: "student_hours";
 } | null;
-
-// Default student rate in cents (14€/h)
-const DEFAULT_RATE_CENTS = 1400;
 
 export default function StudentsView({ studentEvents }: Props) {
   const [activeTab, setActiveTab] = useState<"events" | "monthly">("events");
@@ -69,9 +65,8 @@ export default function StudentsView({ studentEvents }: Props) {
       if (!byMonthStudent[key]) {
         byMonthStudent[key] = { hours: 0, remuneration: 0, count: 0 };
       }
-      const rate = e.student_rate_cents ?? DEFAULT_RATE_CENTS;
       byMonthStudent[key].hours += e.student_hours ?? 0;
-      byMonthStudent[key].remuneration += (e.student_hours ?? 0) * rate;
+      byMonthStudent[key].remuneration += e.student_total_cents ?? 0;
       byMonthStudent[key].count += 1;
     }
 
@@ -97,20 +92,13 @@ export default function StudentsView({ studentEvents }: Props) {
     const uniqueStudents = new Set(filteredEvents.map(e => e.student_name)).size;
     const totalEvents = filteredEvents.length;
     const totalHours = filteredEvents.reduce((sum, e) => sum + (e.student_hours ?? 0), 0);
-    const totalRemuneration = filteredEvents.reduce((sum, e) => {
-      const rate = e.student_rate_cents ?? DEFAULT_RATE_CENTS;
-      return sum + (e.student_hours ?? 0) * rate;
-    }, 0);
+    const totalRemuneration = filteredEvents.reduce((sum, e) => sum + (e.student_total_cents ?? 0), 0);
     return { uniqueStudents, totalEvents, totalHours, totalRemuneration };
   }, [filteredEvents]);
 
-  const startEdit = (eventId: string, field: "student_hours" | "student_rate_cents", currentValue: number | null) => {
-    setEditingCell({ eventId, field });
-    if (field === "student_rate_cents") {
-      setEditValue(currentValue ? (currentValue / 100).toFixed(2).replace(".", ",") : "");
-    } else {
-      setEditValue(currentValue?.toString() ?? "");
-    }
+  const startEdit = (eventId: string, currentValue: number | null) => {
+    setEditingCell({ eventId, field: "student_hours" });
+    setEditValue(currentValue?.toString() ?? "");
   };
 
   const cancelEdit = () => {
@@ -127,7 +115,7 @@ export default function StudentsView({ studentEvents }: Props) {
       if (editValue.trim()) {
         const parsed = parseFloat(editValue.replace(",", "."));
         if (!isNaN(parsed)) {
-          value = editingCell.field === "student_rate_cents" ? Math.round(parsed * 100) : parsed;
+          value = parsed;
         }
       }
 
@@ -176,11 +164,6 @@ export default function StudentsView({ studentEvents }: Props) {
     const [year, m] = month.split("-");
     const date = new Date(parseInt(year), parseInt(m) - 1, 1);
     return date.toLocaleDateString("fr-BE", { month: "long", year: "numeric" });
-  };
-
-  const formatRate = (cents: number | null) => {
-    if (cents === null) return "14,00 €/h";
-    return (cents / 100).toFixed(2).replace(".", ",") + " €/h";
   };
 
   return (
@@ -270,16 +253,13 @@ export default function StudentsView({ studentEvents }: Props) {
                   <th>Étudiant</th>
                   <th>Client</th>
                   <th style={{ textAlign: "right" }}>Heures</th>
-                  <th style={{ textAlign: "right" }}>Taux horaire</th>
                   <th style={{ textAlign: "right" }}>Rémunération</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredEvents.map((event) => {
-                  const rate = event.student_rate_cents ?? DEFAULT_RATE_CENTS;
-                  const remuneration = (event.student_hours ?? 0) * rate;
+                  const remuneration = event.student_total_cents ?? 0;
                   const isEditingHours = editingCell?.eventId === event.event_id && editingCell?.field === "student_hours";
-                  const isEditingRate = editingCell?.eventId === event.event_id && editingCell?.field === "student_rate_cents";
 
                   return (
                     <tr key={event.event_id} className="admin-row">
@@ -294,7 +274,7 @@ export default function StudentsView({ studentEvents }: Props) {
                       <td className="admin-muted">{event.client_name || "—"}</td>
                       <td
                         style={{ textAlign: "right", cursor: "pointer" }}
-                        onClick={() => !isEditingHours && startEdit(event.event_id, "student_hours", event.student_hours)}
+                        onClick={() => !isEditingHours && startEdit(event.event_id, event.student_hours)}
                       >
                         {isEditingHours ? (
                           <input
@@ -321,35 +301,6 @@ export default function StudentsView({ studentEvents }: Props) {
                           </span>
                         )}
                       </td>
-                      <td
-                        style={{ textAlign: "right", cursor: "pointer" }}
-                        onClick={() => !isEditingRate && startEdit(event.event_id, "student_rate_cents", event.student_rate_cents)}
-                      >
-                        {isEditingRate ? (
-                          <input
-                            type="text"
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            onBlur={saveEdit}
-                            autoFocus
-                            disabled={saving}
-                            style={{
-                              width: 80,
-                              textAlign: "right",
-                              padding: "4px 8px",
-                              borderRadius: 6,
-                              border: "1px solid var(--accent)",
-                              background: "var(--bg-tertiary)",
-                              color: "var(--text-primary)",
-                            }}
-                          />
-                        ) : (
-                          <span style={{ padding: "4px 8px", borderRadius: 6, background: "var(--bg-tertiary)" }}>
-                            {formatRate(event.student_rate_cents)}
-                          </span>
-                        )}
-                      </td>
                       <td style={{ textAlign: "right", fontWeight: 600 }}>
                         {formatCurrency(remuneration)}
                       </td>
@@ -358,7 +309,7 @@ export default function StudentsView({ studentEvents }: Props) {
                 })}
                 {filteredEvents.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="admin-muted" style={{ textAlign: "center" }}>
+                    <td colSpan={5} className="admin-muted" style={{ textAlign: "center" }}>
                       Aucun événement trouvé.
                     </td>
                   </tr>
@@ -371,7 +322,6 @@ export default function StudentsView({ studentEvents }: Props) {
                     <td style={{ textAlign: "right" }}>
                       {filteredEvents.reduce((sum, e) => sum + (e.student_hours ?? 0), 0).toFixed(1)}h
                     </td>
-                    <td></td>
                     <td style={{ textAlign: "right" }}>
                       {formatCurrency(kpis.totalRemuneration)}
                     </td>

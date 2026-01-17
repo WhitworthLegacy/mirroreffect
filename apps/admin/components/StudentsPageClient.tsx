@@ -29,10 +29,7 @@ export default function StudentsPageClient() {
         client_name: event.client_name,
         student_name: event.student_name!,
         student_hours: event.student_hours,
-        student_rate_cents: event.student_rate_cents,
-        total_cents: event.student_rate_cents && event.student_hours
-          ? Math.round(event.student_rate_cents * event.student_hours)
-          : null,
+        student_total_cents: event.student_rate_cents, // Total from "Etudiant €/Event" column
       }));
   }, [events]);
 
