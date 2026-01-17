@@ -281,6 +281,8 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
       console.log("[SheetsStore] Events parsed:", events.length);
       if (events.length > 0) {
         console.log("[SheetsStore] First event:", events[0]);
+        console.log("[SheetsStore] First event student_name:", events[0].student_name);
+        console.log("[SheetsStore] Events with student_name:", events.filter(e => e.student_name).length);
       }
 
       // Parse Stats (peut être vide, pas grave)
