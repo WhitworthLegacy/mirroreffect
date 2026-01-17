@@ -40,9 +40,17 @@ export default function StudentsPageClient() {
       if (!value) return null;
       const str = String(value).trim();
       if (!str) return null;
+      // Format YYYY-MM-DD
       if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-      // Gérer format YYYY-MM si besoin
+      // Format YYYY-MM
       if (/^\d{4}-\d{2}$/.test(str)) return `${str}-01`;
+      // Format MM-YYYY (ex: 10-2025) - convert to YYYY-MM-01
+      const mmYYYY = str.match(/^(\d{1,2})-(\d{4})$/);
+      if (mmYYYY) {
+        const month = mmYYYY[1].padStart(2, "0");
+        const year = mmYYYY[2];
+        return `${year}-${month}-01`;
+      }
       return str;
     };
 
@@ -53,51 +61,43 @@ export default function StudentsPageClient() {
           return idx >= 0 ? row[idx] : null;
         };
 
-        // Mapper selon les headers de la feuille Students (chercher plusieurs variantes)
+        // Mapper selon les headers de la feuille Students
+        // Headers attendus: Date, Etudiant, Heures, Heures corrigés, Rémunération, Total
         const event_date = parseDate(
-          getRowCol("event_date") || 
-          getRowCol("Date Event") || 
           getRowCol("Date") ||
-          getRowCol("date")
+          getRowCol("date") ||
+          getRowCol("Date Event") ||
+          getRowCol("event_date")
         );
-        
-        const student_name = getRowCol("student_name") 
-          ? String(getRowCol("student_name")).trim() 
-          : getRowCol("Etudiant") 
-            ? String(getRowCol("Etudiant")).trim() 
+
+        const student_name = getRowCol("Etudiant")
+          ? String(getRowCol("Etudiant")).trim()
+          : getRowCol("student_name")
+            ? String(getRowCol("student_name")).trim()
             : null;
-        
+
         // Si pas de student_name ou event_date, ignorer cette ligne
         if (!student_name || !event_date) return null;
 
         return {
-          event_id: getRowCol("event_id") || getRowCol("Event ID") 
-            ? String(getRowCol("event_id") || getRowCol("Event ID")).trim() 
-            : `student-${rowIndex}`,
+          event_id: `student-${rowIndex}`,
           event_date: event_date,
-          client_name: (getRowCol("client_name") || getRowCol("Nom")) 
-            ? String(getRowCol("client_name") || getRowCol("Nom")).trim() 
-            : null,
+          client_name: null, // Pas de colonne Nom dans ta feuille Students
           student_name: student_name,
           student_hours: parseEuropeanNumber(
-            getRowCol("hours") || 
-            getRowCol("Heures Etudiant") || 
             getRowCol("Heures") ||
-            getRowCol("student_hours")
+            getRowCol("Heures corrigés") ||
+            getRowCol("hours") ||
+            getRowCol("Heures Etudiant")
           ),
           student_rate_cents: parseEuropeanNumberToCents(
-            getRowCol("rate") || 
-            getRowCol("Etudiant €/Event") || 
-            getRowCol("Taux") ||
-            getRowCol("student_rate_cents") ||
-            getRowCol("avg_rate_cents")
+            getRowCol("Rémunération") ||
+            getRowCol("rate") ||
+            getRowCol("Etudiant €/Event")
           ),
           total_cents: parseEuropeanNumberToCents(
-            getRowCol("total") || 
-            getRowCol("Total") || 
-            getRowCol("Total (€)") ||
-            getRowCol("total_cents") ||
-            getRowCol("remuneration_cents")
+            getRowCol("Total") ||
+            getRowCol("total")
           ),
         };
       })

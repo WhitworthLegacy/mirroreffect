@@ -9,7 +9,7 @@ import type { EventRow } from "./adminData";
  */
 
 // Mapping Clients row -> EventRow
-function mapClientsRowToEventRow(headers: string[], row: unknown[]): EventRow | null {
+function mapClientsRowToEventRow(headers: string[], row: unknown[], rowIndex: number): EventRow | null {
   const getCol = (label: string): unknown => {
     const idx = headers.findIndex((h) => String(h).trim() === label);
     return idx >= 0 ? row[idx] : null;
@@ -54,16 +54,27 @@ function mapClientsRowToEventRow(headers: string[], row: unknown[]): EventRow | 
     }
     const str = String(value).trim();
     if (!str) return null;
+    // Format YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    // Format ISO 8601 with timezone (e.g., 2025-01-10T23:00:00.000Z)
+    if (str.includes("T")) {
+      const date = new Date(str);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+    }
+    // Format DD/MM/YYYY or DD-MM-YYYY
     const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
     if (m) return `${m[3]}-${("0" + m[2]).slice(-2)}-${("0" + m[1]).slice(-2)}`;
     return str;
   };
 
   const eventId = getCol("Event ID");
-  if (!eventId) return null;
-
-  const id = String(eventId);
+  // Generate fallback ID if Event ID column is empty
+  const id = eventId ? String(eventId) : `row-${rowIndex}`;
   const event_date = formatDate(getCol("Date Event"));
   const event_type = getCol("Type Event") ? String(getCol("Type Event")).trim() : null;
   const language = getCol("Language") ? String(getCol("Language")).trim().toLowerCase() : null;
@@ -245,8 +256,20 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
       const clientsHeaders = (clientsValues[0] as string[]).map((h) => String(h).trim());
       const clientsDataRows = clientsValues.slice(1) as unknown[][];
 
+      console.log("[SheetsStore] Clients headers:", clientsHeaders);
+      console.log("[SheetsStore] Clients rows count:", clientsDataRows.length);
+      if (clientsDataRows.length > 0) {
+        console.log("[SheetsStore] First row sample:", clientsDataRows[0]);
+      }
+
       const events = clientsDataRows
-        .map((row) => mapClientsRowToEventRow(clientsHeaders, row))
+        .map((row, idx) => {
+          const event = mapClientsRowToEventRow(clientsHeaders, row, idx);
+          if (!event && idx < 3) {
+            console.log(`[SheetsStore] Row ${idx} skipped:`, row);
+          }
+          return event;
+        })
         .filter((event): event is EventRow => event !== null)
         .sort((a, b) => {
           if (!a.event_date && !b.event_date) return 0;
@@ -254,6 +277,11 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
           if (!b.event_date) return -1;
           return a.event_date.localeCompare(b.event_date);
         });
+
+      console.log("[SheetsStore] Events parsed:", events.length);
+      if (events.length > 0) {
+        console.log("[SheetsStore] First event:", events[0]);
+      }
 
       // Parse Stats (peut être vide, pas grave)
       const statsValues = statsData.data?.values || statsData.data;
