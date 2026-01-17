@@ -1,4 +1,4 @@
-type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
+export type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
 
 const PACK_PRICES: Record<PackCode, number> = {
   DISCOVERY: 480,
@@ -12,4 +12,3 @@ export function getFinalPriceByPack(packCode?: PackCode): number {
   }
   return PACK_PRICES[packCode] ?? 0;
 }
-
