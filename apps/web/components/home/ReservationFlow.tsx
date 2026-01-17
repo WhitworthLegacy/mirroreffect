@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatEuros } from "@/lib/date-utils";
 import { captureUTMParams, getUTMParams, getLeadId, setLeadId, trackCTA } from "@/lib/tracking";
+import { getDraft, persistDraft, clearDraft, buildDraftFromState, type ReservationDraft } from "@/lib/reservationDraft";
 
 type AvailabilityState = "idle" | "checking" | "available" | "unavailable" | "error";
 type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
@@ -578,6 +579,38 @@ const packs = useMemo(
     captureUTMParams();
   }, []);
 
+  // Hydrate depuis le draft au mount
+  useEffect(() => {
+    const draft = getDraft();
+    if (!draft) {
+      return;
+    }
+
+    // Restaurer toutes les valeurs depuis le draft
+    if (draft.step) setStep(draft.step);
+    if (draft.customer.firstName) setFirstName(draft.customer.firstName);
+    if (draft.customer.lastName) setLastName(draft.customer.lastName);
+    if (draft.customer.email) setLeadEmail(draft.customer.email);
+    if (draft.customer.phone) setContactPhone(draft.customer.phone);
+    if (draft.event.eventType) setEventType(draft.event.eventType);
+    if (draft.event.dateEvent) setEventDate(draft.event.dateEvent);
+    if (draft.event.lieuEvent) setLocation(draft.event.lieuEvent);
+    if (draft.event.zone) setZone(draft.event.zone);
+    if (draft.event.pack) setPackCode(draft.event.pack as PackCode);
+    if (draft.event.invites) setGuests(draft.event.invites);
+    if (draft.selections.vibe) setVibe(draft.selections.vibe);
+    if (draft.selections.theme) setTheme(draft.selections.theme);
+    if (draft.selections.priority) setPriority(draft.selections.priority);
+    if (draft.selections.options) setOptions(draft.selections.options);
+    if (draft.selections.stanchionsEnabled !== undefined) setStanchionsEnabled(draft.selections.stanchionsEnabled);
+    if (draft.selections.stanchionsColor) setStanchionsColor(draft.selections.stanchionsColor);
+    if (draft.leadId) setLeadId(draft.leadId);
+
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[ReservationFlow] Draft hydrated:", { step: draft.step, updatedAt: draft.timestamps.updatedAt });
+    }
+  }, []);
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
@@ -585,11 +618,104 @@ const packs = useMemo(
     return () => window.clearInterval(timer);
   }, [testimonials.length]);
 
+  // Persister le draft à chaque changement important
+  useEffect(() => {
+    // Débounce pour éviter trop d'écritures
+    const timeoutId = setTimeout(() => {
+      saveDraft();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    step,
+    firstName,
+    lastName,
+    leadEmail,
+    contactPhone,
+    eventType,
+    eventDate,
+    location,
+    zone,
+    packCode,
+    guests,
+    vibe,
+    theme,
+    priority,
+    options,
+    stanchionsEnabled,
+    stanchionsColor
+  ]);
+
   const transportFee = 90;
   const selectedPack = packs.find((pack) => pack.code === packCode) ?? null;
   const totalPrice = selectedPack ? selectedPack.promo + transportFee : null;
   const depositAmount = 180;
   const balancePrice = totalPrice !== null ? Math.max(0, totalPrice - depositAmount) : null;
+
+  // Helper pour persister le draft à chaque changement important
+  const saveDraft = () => {
+    const leadId = getLeadId();
+    const utm = getUTMParams();
+    persistDraft({
+      leadId: leadId || undefined,
+      step,
+      customer: {
+        firstName,
+        lastName,
+        email: leadEmail,
+        phone: contactPhone,
+        language: lang
+      },
+      event: {
+        eventType,
+        dateEvent: eventDate,
+        lieuEvent: location,
+        pack: packCode || undefined,
+        invites: guests,
+        transport: transportFee,
+        total: totalPrice || undefined,
+        acompte: depositAmount,
+        zone
+      },
+      selections: {
+        vibe,
+        theme,
+        priority,
+        options,
+        stanchionsEnabled,
+        stanchionsColor
+      },
+      utm: {
+        source: utm.utm_source,
+        medium: utm.utm_medium,
+        campaign: utm.utm_campaign
+      }
+    });
+  };
+
+  // Guard anti-bug: si step >= 6 et données essentielles manquent, restaurer depuis draft
+  useEffect(() => {
+    if (step >= 6) {
+      const draft = getDraft();
+      if (!draft) return;
+
+      const hasEssentialData = leadEmail && eventDate && packCode;
+      if (!hasEssentialData) {
+        // Restaurer depuis draft
+        if (draft.customer.email && !leadEmail) setLeadEmail(draft.customer.email);
+        if (draft.event.dateEvent && !eventDate) setEventDate(draft.event.dateEvent);
+        if (draft.event.pack && !packCode) setPackCode(draft.event.pack as PackCode);
+        if (draft.customer.firstName && !firstName) setFirstName(draft.customer.firstName);
+        if (draft.customer.lastName && !lastName) setLastName(draft.customer.lastName);
+        if (draft.customer.phone && !contactPhone) setContactPhone(draft.customer.phone);
+        if (draft.event.lieuEvent && !location) setLocation(draft.event.lieuEvent);
+
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[ReservationFlow] Guard: restored essential data from draft");
+        }
+      }
+    }
+  }, [step, leadEmail, eventDate, packCode, firstName, lastName, contactPhone, location]);
 
   const canContinueStep1 = Boolean(
     eventType &&
@@ -647,6 +773,30 @@ const packs = useMemo(
     setIsSubmitting(true);
     setCheckoutError("");
 
+    // Fallback sur draft si données manquantes dans state
+    const draft = getDraft();
+    const finalFirstName = firstName || draft?.customer.firstName || "";
+    const finalLastName = lastName || draft?.customer.lastName || "";
+    const finalEmail = leadEmail || draft?.customer.email || "";
+    const finalPhone = contactPhone || draft?.customer.phone || "";
+    const finalDateEvent = eventDate || draft?.event.dateEvent || "";
+    const finalLocation = location || draft?.event.lieuEvent || "";
+    const finalPackCode = selectedPack.code || draft?.event.pack || "";
+
+    // Si données essentielles manquent toujours, erreur
+    if (!finalEmail || !finalDateEvent || !finalPackCode) {
+      setCheckoutError(t("checkoutError"));
+      setIsSubmitting(false);
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[ReservationFlow] Checkout failed: missing essential data", {
+          email: finalEmail,
+          dateEvent: finalDateEvent,
+          packCode: finalPackCode
+        });
+      }
+      return;
+    }
+
     try {
       const stanchionsCode = stanchionsEnabled ? `STANCHIONS_${stanchionsColor}` : null;
       const optionsPayload = stanchionsCode ? [...options, stanchionsCode] : options;
@@ -656,12 +806,12 @@ const packs = useMemo(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           language: lang,
-          client_name: `${firstName} ${lastName}`.trim(),
-          client_email: leadEmail,
-          client_phone: contactPhone,
-          event_date: eventDate,
+          client_name: `${finalFirstName} ${finalLastName}`.trim(),
+          client_email: finalEmail,
+          client_phone: finalPhone,
+          event_date: finalDateEvent,
           zone_code: zone,
-          pack_code: selectedPack.code,
+          pack_code: finalPackCode,
           options: optionsPayload,
           event_id: eventId ?? undefined
         })
@@ -671,13 +821,18 @@ const packs = useMemo(
       if (!res.ok || !data?.checkout_url) {
         setCheckoutError(t("checkoutError"));
         setIsSubmitting(false);
+        // Garder le draft en cas d'erreur pour retry
         return;
       }
+
+      // Succès: nettoyer le draft avant redirection
+      clearDraft();
 
       window.location.href = data.checkout_url;
     } catch {
       setCheckoutError(t("checkoutError"));
       setIsSubmitting(false);
+      // Garder le draft en cas d'erreur pour retry
     }
   };
 
