@@ -19,6 +19,7 @@ export type ReservationDraft = {
     eventType?: string;
     dateEvent?: string;
     lieuEvent?: string;
+    address?: string; // Alias pour lieuEvent (pour compatibilité)
     pack?: string;
     invites?: string;
     transport?: number;
