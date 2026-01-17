@@ -1,8 +1,40 @@
 import { PublicAvailabilityQuerySchema, PublicAvailabilityResponseSchema } from "@mirroreffect/core";
 import { gasPost } from "@/lib/gas";
 
-// Miroirs hardcodés pour MVP (pas de sheet inventory)
+// Miroirs hardcodes pour MVP (pas de sheet inventory)
 const TOTAL_MIRRORS = 4;
+
+/**
+ * Normalise une date vers le format YYYY-MM-DD
+ * Supporte: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, ISO 8601 (2025-01-24T23:00:00.000Z)
+ */
+function normalizeDate(value: unknown): string | null {
+  if (!value) return null;
+  const str = String(value).trim();
+  if (!str) return null;
+
+  // Format YYYY-MM-DD (deja bon)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+  // Format ISO 8601 with timezone (e.g., 2025-01-24T23:00:00.000Z)
+  if (str.includes("T")) {
+    const date = new Date(str);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  // Format DD/MM/YYYY or DD-MM-YYYY
+  const match = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (match) {
+    return `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
+  }
+
+  return null;
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -62,17 +94,16 @@ export async function GET(req: Request) {
         if (!depositPaid) return false;
       }
 
-      const eventDate = String(row[dateIdx] || "").trim();
-      // Normaliser les formats de date possibles
-      if (eventDate === date) return true;
-      // Format DD/MM/YYYY -> YYYY-MM-DD
-      const match = eventDate.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-      if (match) {
-        const normalized = `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
-        return normalized === date;
-      }
-      return false;
+      const eventDateRaw = row[dateIdx];
+      const eventDate = normalizeDate(eventDateRaw);
+
+      // Debug log
+      console.log("[availability] Row date:", eventDateRaw, "->", eventDate, "vs query:", date);
+
+      return eventDate === date;
     }).length;
+
+    console.log("[availability] Query date:", date, "Reserved:", reserved, "of", TOTAL_MIRRORS);
 
     const remaining = Math.max(0, TOTAL_MIRRORS - reserved);
 
