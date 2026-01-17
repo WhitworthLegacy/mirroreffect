@@ -20,17 +20,6 @@ type GasResponse = {
   [key: string]: unknown;
 };
 
-function buildUrlWithQuery(baseUrl: string, payload: GasPostOptions): string {
-  const u = new URL(baseUrl);
-  if (payload.action) u.searchParams.set("action", String(payload.action));
-  if (payload.key) u.searchParams.set("key", String(payload.key));
-  if (payload.data !== undefined) {
-    // JSON compact + encode (OK pour la majorité des payloads admin)
-    u.searchParams.set("data", encodeURIComponent(JSON.stringify(payload.data)));
-  }
-  return u.toString();
-}
-
 export type GasError = {
   type: "HTML_RESPONSE" | "REDIRECT_FAILED" | "JSON_PARSE_ERROR" | "GAS_ERROR" | "NETWORK_ERROR";
   message: string;
@@ -102,54 +91,24 @@ export async function gasPost(
 ): Promise<{ result: unknown; requestId: string; duration: number }> {
   const startTime = Date.now();
   const reqId = requestId || generateUUID();
-  const { url, key } = validateEnv();
+  const { url } = validateEnv();
 
-  // Construire le body JSON
-  const body = JSON.stringify(payload);
-  let finalUrl = url;
+  // Construire le body JSON selon le format requis: { action, key, data }
+  const bodyPayload = {
+    action: payload.action,
+    key: payload.key,
+    data: payload.data,
+  };
+  const body = JSON.stringify(bodyPayload);
 
   try {
-    // Première tentative avec redirect: "manual" - TOUJOURS POST
-    const urlWithQuery = buildUrlWithQuery(url, payload);
-
-    let response = await fetch(urlWithQuery, {
+    // POST uniquement avec body JSON, pas de paramètres GET
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
-      redirect: "manual",
       cache: "no-store",
     });
-
-    // Gérer les redirects 302/303 - RE-POST (jamais GET)
-    if (response.status === 302 || response.status === 303) {
-      const location = response.headers.get("location");
-      if (!location) {
-        const error: GasError = {
-          type: "REDIRECT_FAILED",
-          message: `GAS returned ${response.status} redirect but no Location header`,
-          status: response.status,
-          contentType: response.headers.get("content-type") || "",
-          url: finalUrl,
-        };
-        console.error(`[GAS] ${reqId} Redirect failed:`, error);
-        throw error;
-      }
-
-      // Nettoyer l'URL de redirect (peut être relative ou absolue)
-      const redirectUrl = location.trim().startsWith("http")
-        ? location.trim()
-        : new URL(location.trim(), url).toString();
-
-      console.log(`[GAS] ${reqId} Redirect detected: ${response.status} → ${redirectUrl.substring(0, 100)}...`);
-      finalUrl = redirectUrl;
-
-      // ✅ Follow redirect as GET (302/303 often expect GET)
-      response = await fetch(redirectUrl, {
-        method: "GET",
-        redirect: "manual",
-        cache: "no-store",
-      });
-    }
 
     // Lire le texte d'abord pour détecter HTML
     const text = await response.text();
@@ -158,16 +117,14 @@ export async function gasPost(
     // Détecter HTML (commence par "<" ou content-type text/html) - y compris 405
     if (text.trim().startsWith("<") || contentType.includes("text/html")) {
       const preview = text.substring(0, 500);
-      const location = response.headers.get("location");
       
       const error: GasError = {
         type: "HTML_RESPONSE",
         message: `GAS returned HTML instead of JSON (likely 405 Page Not Found - check GAS deployment and URL)`,
         status: response.status,
         contentType,
-        location: location || undefined,
         preview,
-        url: finalUrl,
+        url: url,
       };
 
       console.error(`[GAS] ${reqId} HTML response detected:`, error);
@@ -186,7 +143,7 @@ export async function gasPost(
         status: response.status,
         contentType,
         preview: text.substring(0, 200),
-        url: finalUrl,
+        url: url,
       };
       console.error(`[GAS] ${reqId} JSON parse error:`, error);
       throw error;
@@ -199,7 +156,7 @@ export async function gasPost(
         message: result.error,
         status: response.status,
         contentType,
-        url: finalUrl,
+        url: url,
       };
       console.error(`[GAS] ${reqId} GAS error:`, error);
       throw error;
@@ -211,14 +168,14 @@ export async function gasPost(
         message: `GAS request failed: ${response.status} ${response.statusText}`,
         status: response.status,
         contentType,
-        url: finalUrl,
+        url: url,
       };
       console.error(`[GAS] ${reqId} Request failed:`, error);
       throw error;
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[GAS] ${reqId} ${payload.action || "custom"} → ${response.status} (${duration}ms) [${finalUrl.substring(0, 50)}...]`);
+    console.log(`[GAS] ${reqId} ${payload.action || "custom"} → ${response.status} (${duration}ms) [${url.substring(0, 50)}...]`);
 
     return { result, requestId: reqId, duration };
   } catch (error) {
@@ -235,7 +192,7 @@ export async function gasPost(
       message: error instanceof Error ? error.message : "Unknown error",
       status: 0,
       contentType: "",
-      url: finalUrl,
+      url: url,
     };
     console.error(`[GAS] ${reqId} Network error (${duration}ms):`, gasError);
     throw gasError;

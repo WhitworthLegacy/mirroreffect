@@ -7,12 +7,26 @@ type PersistLeadOptions = {
   step: number;
   status?: string;
   draft: ReservationDraft;
+  requestId?: string;
 };
 
 export type PersistLeadResult = {
   leadId: string | null;
   created: boolean;
+  error?: LeadsPersistenceError;
 };
+
+export class LeadsPersistenceError extends Error {
+  constructor(
+    public requestId: string,
+    public status?: number,
+    public responseBody?: unknown,
+    message?: string
+  ) {
+    super(message || `Leads persistence failed (requestId=${requestId})`);
+    this.name = "LeadsPersistenceError";
+  }
+}
 
 const DEFAULT_LANGUAGE: ReservationDraft["customer"]["language"] = "fr";
 
@@ -52,16 +66,18 @@ export async function persistLeadToLeads({ step, status, draft }: PersistLeadOpt
   const total = formatEurosValue(draft.event.total);
   const deposit = formatEurosValue(draft.event.acompte);
   const utm = draft.utm || getUTMParams();
+  const reqId = requestId || crypto.randomUUID();
 
   const hasLeadRow = Boolean(storedLeadId);
   const canCreate = !hasLeadRow && Boolean(clientEmail);
   const canUpdate = Boolean(hasLeadRow);
 
   if (!canCreate && !canUpdate) {
+    console.warn(`[leads][${reqId}] Skipping persistence (missing leadId/email)`);
     return { leadId, created: false };
   }
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     event: "lead_progress" as const,
     lead_id: leadId,
     step: step.toString(),
@@ -83,31 +99,89 @@ export async function persistLeadToLeads({ step, status, draft }: PersistLeadOpt
   };
 
   try {
-    const res = await fetch("/api/public/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    const { status, data, rawText } = await sendLeadPayload(payload, reqId);
+    console.log(`[leads][${reqId}] Received response`, { status, data, rawText });
 
-    const data = await res.json().catch(() => ({}));
-    const returnedLeadId = (data && typeof data.lead_id === "string" ? data.lead_id : leadId) || null;
+    const returnedLeadId = (data && typeof (data as Record<string, unknown>).lead_id === "string"
+      ? (data as Record<string, unknown>).lead_id
+      : leadId) || null;
 
     if (returnedLeadId && returnedLeadId !== leadId) {
       setLeadId(returnedLeadId);
       leadId = returnedLeadId;
     }
 
-    const created = Boolean(data && data.created) || (!hasLeadRow && Boolean(clientEmail) && res.ok);
-
-    if (!res.ok && process.env.NODE_ENV !== "production") {
-      console.warn("[leads] persistLeadToLeads: non-200 response", res.status, data);
-    }
+    const created =
+      Boolean(data && (data as Record<string, unknown>).created) || (!hasLeadRow && Boolean(clientEmail));
 
     return { leadId, created };
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[leads] persistLeadToLeads error:", error);
-    }
-    return { leadId, created: false };
+    const persistenceError =
+      error instanceof LeadsPersistenceError
+        ? error
+        : new LeadsPersistenceError(reqId, undefined, undefined, (error as Error).message);
+    console.error(`[leads][${reqId}] persistLeadToLeads failed`, persistenceError);
+    return { leadId, created: false, error: persistenceError };
   }
+}
+
+async function sendLeadPayload(
+  payload: Record<string, unknown>,
+  requestId: string,
+  attempt = 1
+): Promise<{ status: number; data: unknown; rawText: string }> {
+  const body = JSON.stringify({ ...payload, request_id: requestId });
+  const url = "/api/public/leads";
+
+  try {
+    console.log(`[leads][${requestId}] Sending payload (attempt ${attempt}):`, {
+      step: String(payload.step ?? ""),
+      client_email: String(payload.client_email ?? ""),
+      client_phone: String(payload.client_phone ?? ""),
+      pack_code: String(payload.pack_code ?? ""),
+      event_date: String(payload.event_date ?? "")
+    });
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-request-id": requestId
+      },
+      body
+    });
+
+    const rawText = await response.text();
+    let parsed: unknown = null;
+    try {
+      parsed = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      parsed = rawText;
+    }
+
+    if (!response.ok) {
+      throw new LeadsPersistenceError(
+        requestId,
+        response.status,
+        parsed,
+        `HTTP ${response.status}`
+      );
+    }
+
+    return { status: response.status, data: parsed, rawText };
+  } catch (error) {
+    if (attempt < 2) {
+      console.warn(`[leads][${requestId}] Attempt ${attempt} failed, retrying...`, error);
+      await delay(200 * attempt);
+      return sendLeadPayload(payload, requestId, attempt + 1);
+    }
+    if (error instanceof LeadsPersistenceError) {
+      throw error;
+    }
+    throw new LeadsPersistenceError(requestId, undefined, null, (error as Error).message);
+  }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

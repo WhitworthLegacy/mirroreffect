@@ -3,10 +3,10 @@ import { gasPost } from "@/lib/gas";
 import { generateLeadId } from "@/lib/date-utils";
 import { toDDMMYYYY, toDDMMYYYYHHmm } from "@/lib/date";
 
-const LeadPayloadSchema = z.object({
-  event: z.enum(["button_click", "lead_progress", "cta_update"]).optional().default("button_click"),
-  step: z.string().optional(),
-  buttonLabel: z.string().optional(),
+  const LeadPayloadSchema = z.object({
+    event: z.enum(["button_click", "lead_progress", "cta_update"]).optional().default("button_click"),
+    step: z.string().optional(),
+    buttonLabel: z.string().optional(),
   leadId: z.string().optional(),
   utm: z.object({
     source: z.string().optional(),
@@ -28,12 +28,13 @@ const LeadPayloadSchema = z.object({
   utm_source: z.string().optional(),
   utm_campaign: z.string().optional(),
   utm_medium: z.string().optional(),
+  request_id: z.string().optional(),
   status: z.string().optional(),
   cta_id: z.string().optional(),
   cta_label: z.string().optional(),
   cta_value: z.string().optional(),
-  updated_at: z.string().optional()
-}).passthrough();
+    updated_at: z.string().optional()
+  }).passthrough();
 
 function sanitize(value?: string): string {
   return value ? value.trim() : "";
@@ -93,12 +94,15 @@ function buildLeadValues(record: Record<string, unknown>): Record<string, string
 
 export async function POST(req: Request) {
   const requestId = crypto.randomUUID();
+  const forwardedRequestId = req.headers.get("x-request-id") ?? undefined;
+  console.log(`[leads][${requestId}] Incoming request`, { forwardedRequestId });
   const hasGAS_URL = !!process.env.GAS_WEBAPP_URL;
   const hasGAS_KEY = !!process.env.GAS_KEY;
 
   let raw: unknown = null;
   try {
     raw = await req.json();
+    console.log(`[leads][${requestId}] Raw body`, raw);
   } catch {
     return Response.json(
       {
@@ -117,6 +121,7 @@ export async function POST(req: Request) {
 
   const parsed = LeadPayloadSchema.safeParse(raw);
   if (!parsed.success) {
+    console.warn(`[leads][${requestId}] Validation failed`, parsed.error.format());
     return Response.json(
       {
         ok: false,
@@ -133,6 +138,10 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data;
+  console.log(`[leads][${requestId}] Parsed payload`, {
+    ...data,
+    forwardedRequestId
+  });
   const event = data.event || "button_click";
   const leadId = data.leadId || data.lead_id;
   const step = data.step || "";
@@ -142,6 +151,7 @@ export async function POST(req: Request) {
 
   const logContext = {
     requestId,
+    forwardedRequestId,
     event,
     step,
     hasLeadId: Boolean(leadId),
@@ -153,16 +163,16 @@ export async function POST(req: Request) {
 
   if (event === "button_click") {
     if (isDup) {
-      console.log(`[leads] Event skipped (duplicate):`, logContext);
+    console.log(`[leads][${requestId}] Event skipped (duplicate):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "duplicate" }, { status: 200 });
     }
 
     if (!leadId) {
-      console.log(`[leads] button_click skipped (no leadId):`, logContext);
+      console.log(`[leads][${requestId}] button_click skipped (no leadId):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "no_lead_id" }, { status: 200 });
     }
 
-    console.log(`[leads] button_click logged:`, {
+    console.log(`[leads][${requestId}] button_click logged:`, {
       ...logContext,
       buttonLabel,
       leadId
@@ -181,7 +191,7 @@ export async function POST(req: Request) {
     logContext.isWriteAttempt = true;
 
     try {
-      await gasPost({
+      const updatePayload = {
         action: "updateRowByLeadId",
         key: process.env.GAS_KEY,
         data: {
@@ -194,16 +204,19 @@ export async function POST(req: Request) {
             "Last CTA At": sanitize(data.updated_at) || new Date().toISOString()
           }
         }
-      });
+      };
+      console.log(`[leads][${requestId}] GAS update payload`, updatePayload);
+
+      await gasPost(updatePayload);
 
       logContext.gasStatus = "success";
-      console.log(`[leads] cta_update success:`, logContext);
+      console.log(`[leads][${requestId}] cta_update success`, logContext);
 
       return Response.json({ ok: true, requestId, lead_id: updatedLeadId }, { status: 200 });
     } catch (error) {
       const gasError = error as Error & { type?: string; status?: number; preview?: string; message?: string };
       logContext.gasStatus = `error:${gasError.type || "unknown"}`;
-      console.warn(`[leads] cta_update error:`, { ...logContext, error: gasError.message });
+      console.warn(`[leads][${requestId}] cta_update error`, { ...logContext, error: gasError.message });
 
       return Response.json(
         {
@@ -223,7 +236,7 @@ export async function POST(req: Request) {
   if (event === "lead_progress") {
     const clientEmail = sanitize(data.client_email || "");
     if (!leadId && !clientEmail) {
-      console.log(`[leads] lead_progress skipped (missing leadId/email):`, logContext);
+      console.log(`[leads][${requestId}] lead_progress skipped (missing leadId/email):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "missing_lead_id_or_email" }, { status: 200 });
     }
 
@@ -267,7 +280,7 @@ export async function POST(req: Request) {
         });
 
         logContext.gasStatus = "success";
-        console.log(`[leads] lead_progress update success:`, logContext);
+        console.log(`[leads][${requestId}] lead_progress update success`, logContext);
 
         return Response.json({ ok: true, requestId, lead_id: leadId }, { status: 200 });
       }
@@ -281,23 +294,26 @@ export async function POST(req: Request) {
         Status: sanitize(data.status || "step_5_completed")
       });
 
-      await gasPost({
+      const createPayload = {
         action: "appendRow",
         key: process.env.GAS_KEY,
         data: {
           sheetName: "Leads",
           values: createValues
         }
-      });
+      };
+      console.log(`[leads][${requestId}] GAS append payload`, createPayload);
+
+      await gasPost(createPayload);
 
       logContext.gasStatus = "success";
-      console.log(`[leads] lead_progress create success:`, { ...logContext, leadId: newLeadId });
+      console.log(`[leads][${requestId}] lead_progress create success`, { ...logContext, leadId: newLeadId });
 
       return Response.json({ ok: true, requestId, lead_id: newLeadId, created: true }, { status: 200 });
     } catch (error) {
       const gasError = error as Error & { type?: string; status?: number; preview?: string; message?: string };
       logContext.gasStatus = `error:${gasError.type || "unknown"}`;
-      console.warn(`[leads] lead_progress error:`, { ...logContext, error: gasError.message });
+      console.warn(`[leads][${requestId}] lead_progress error`, { ...logContext, error: gasError.message });
 
       return Response.json(
         {
@@ -314,6 +330,6 @@ export async function POST(req: Request) {
     }
   }
 
-  console.log(`[leads] Unknown event type:`, logContext);
+  console.log(`[leads][${requestId}] Unknown event type:`, logContext);
   return Response.json({ ok: true, requestId, skipped: true, reason: "unknown_event_type" }, { status: 200 });
 }

@@ -798,22 +798,40 @@ const packs = useMemo(
       }
     });
 
-    void persistLeadToLeads({ step, status: statusLabel, draft: draftSnapshot }).then((result) => {
-    const leadIdToPersist = result.leadId || draftSnapshot.leadId;
-    if (leadIdToPersist) {
-      const leadValue = packCode ? getFinalPriceByPack(packCode) : 0;
-      trackMetaLeadOnce(leadIdToPersist, {
-        value: leadValue,
-        currency: "EUR"
-      });
-    }
+    const leadRequestId = crypto.randomUUID();
+    console.log(`[leads][${leadRequestId}] handleNextStep`, {
+      step,
+      email: leadEmail,
+      phone: contactPhone,
+      pack_code: packCode,
+      event_date: eventDate
+    });
+
+    void persistLeadToLeads({ step, status: statusLabel, draft: draftSnapshot, requestId: leadRequestId }).then((result) => {
+      if (result.error) {
+        console.error(`[leads][${leadRequestId}] persist lead error`, {
+          error: result.error,
+          leadId: result.leadId
+        });
+      }
+
+      const leadIdToPersist = result.leadId || draftSnapshot.leadId;
+      if (leadIdToPersist) {
+        const leadValue = packCode ? getFinalPriceByPack(packCode) : 0;
+        trackMetaLeadOnce(leadIdToPersist, {
+          value: leadValue,
+          currency: "EUR"
+        });
+      }
       if (result.leadId) {
         persistDraft({ leadId: result.leadId });
       }
     });
 
     if (step === 5) {
-      enqueuePromo();
+      const promoRequestId = crypto.randomUUID();
+      console.log(`[promo][${promoRequestId}] enqueuePromo`, { email: leadEmail, locale: lang });
+      enqueuePromo(promoRequestId);
     }
 
     setStep((prev) => Math.min(7, prev + 1));
@@ -959,13 +977,18 @@ const packs = useMemo(
     setZoomLabel("");
   };
 
-  const enqueuePromo = () => {
+  const enqueuePromo = (requestId?: string) => {
     if (!leadEmail || promoQueued) return;
     setPromoQueued(true);
+    const effectiveRequestId = requestId || crypto.randomUUID();
     void fetch("/api/public/promo-intent", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-request-id": effectiveRequestId
+      },
       body: JSON.stringify({
+        request_id: effectiveRequestId,
         email: leadEmail,
         locale: lang,
         payload: {
@@ -978,9 +1001,21 @@ const packs = useMemo(
           priority: priority || ""
         }
       })
-    }).catch(() => {
-      setPromoQueued(false);
-    });
+    })
+      .then(async (res) => {
+        const text = await res.text().catch(() => "");
+        console.log(`[promo][${effectiveRequestId}] promo-intent response`, {
+          status: res.status,
+          body: text
+        });
+        if (!res.ok) {
+          console.warn(`[promo][${effectiveRequestId}] promo-intent failed`);
+        }
+      })
+      .catch((error) => {
+        console.error(`[promo][${effectiveRequestId}] promo-intent error`, error);
+        setPromoQueued(false);
+      });
   };
 
   return (

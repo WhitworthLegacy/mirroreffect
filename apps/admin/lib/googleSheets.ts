@@ -315,10 +315,28 @@ export async function updateRowInSheet(
   });
 }
 
+// Cache en mémoire pour readSheet (15 secondes)
+type CacheEntry = {
+  data: unknown[][];
+  timestamp: number;
+};
+
+const readSheetCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 15 * 1000; // 15 secondes
+
 /**
  * Read all rows from a sheet
  */
 export async function readSheet(sheetName: string): Promise<unknown[][]> {
+  // Vérifier le cache
+  const cacheKey = sheetName;
+  const cached = readSheetCache.get(cacheKey);
+  const now = Date.now();
+  
+  if (cached && (now - cached.timestamp) < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
   const cfg = getConfig();
   
   // Use Google Apps Script if configured
@@ -329,18 +347,23 @@ export async function readSheet(sheetName: string): Promise<unknown[][]> {
       // GAS returns { values: [...] } directly, not wrapped in { data: { values: [...] } }
       // But gasRequest returns result.data, so if GAS returns { data: { values: [...] } },
       // then result is { values: [...] }
+      let values: unknown[][] = [];
       if (result && typeof result === 'object' && 'values' in result) {
-        const values = (result as { values: unknown[][] }).values;
-        return Array.isArray(values) ? values : [];
+        values = (result as { values: unknown[][] }).values;
+        if (!Array.isArray(values)) {
+          values = [];
+        }
+      } else if (Array.isArray(result)) {
+        values = result;
+      } else {
+        console.error("[readSheet] Unexpected GAS response format:", result);
+        values = [];
       }
+
+      // Mettre en cache
+      readSheetCache.set(cacheKey, { data: values, timestamp: now });
       
-      // Fallback: if result is directly an array or has a different structure
-      if (Array.isArray(result)) {
-        return result;
-      }
-      
-      console.error("[readSheet] Unexpected GAS response format:", result);
-      return [];
+      return values;
     } catch (error) {
       console.error(`[readSheet] Error reading sheet "${sheetName}" from GAS:`, error);
       throw error;
@@ -351,7 +374,12 @@ export async function readSheet(sheetName: string): Promise<unknown[][]> {
   const response = await sheetsRequest("GET", `/values/${sheetName}`) as {
     values?: unknown[][];
   };
-  return response.values || [];
+  const values = response.values || [];
+  
+  // Mettre en cache
+  readSheetCache.set(cacheKey, { data: values, timestamp: now });
+  
+  return values;
 }
 
 /**

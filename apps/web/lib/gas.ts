@@ -18,16 +18,6 @@ type GasResponse = {
   [key: string]: unknown;
 };
 
-function buildUrlWithQuery(baseUrl: string, payload: GasPostOptions): string {
-  const u = new URL(baseUrl);
-  if (payload.action) u.searchParams.set("action", String(payload.action));
-  if (payload.key) u.searchParams.set("key", String(payload.key));
-  if (payload.data !== undefined) {
-    u.searchParams.set("data", encodeURIComponent(JSON.stringify(payload.data)));
-  }
-  return u.toString();
-}
-
 /**
  * Valide et nettoie l'URL GAS (supprime les espaces, trailing slashes)
  */
@@ -66,46 +56,21 @@ function validateEnv(): { url: string } {
 export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
   const { url } = validateEnv();
 
-  // Construire le body JSON
-  const body = JSON.stringify(payload);
-  let finalUrl = url;
+  // Construire le body JSON selon le format requis: { action, key, data }
+  const bodyPayload = {
+    action: payload.action,
+    key: payload.key,
+    data: payload.data,
+  };
+  const body = JSON.stringify(bodyPayload);
 
-  // Construire URL avec query params (comme admin)
-  const urlWithQuery = buildUrlWithQuery(url, payload);
-
-  // Premiere tentative avec redirect: "manual" - POST
-  let response = await fetch(urlWithQuery, {
+  // POST uniquement avec body JSON, pas de paramètres GET
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body,
-    redirect: "manual",
     cache: "no-store",
   });
-
-  // Gerer les redirects 302/303 - Follow as GET (GAS expects GET after redirect)
-  if (response.status === 302 || response.status === 303) {
-    const location = response.headers.get("location");
-    if (!location) {
-      throw new Error(
-        `GAS returned ${response.status} redirect but no Location header. Status: ${response.status}, Content-Type: ${response.headers.get("content-type")}`
-      );
-    }
-
-    // Nettoyer l'URL de redirect
-    const redirectUrl = location.trim().startsWith("http")
-      ? location.trim()
-      : new URL(location.trim(), url).toString();
-
-    console.log(`[GAS] Redirect detected: ${response.status} -> ${redirectUrl.substring(0, 100)}...`);
-    finalUrl = redirectUrl;
-
-    // Follow redirect as GET (302/303 expect GET, not POST)
-    response = await fetch(redirectUrl, {
-      method: "GET",
-      redirect: "manual",
-      cache: "no-store",
-    });
-  }
 
   // Lire le texte d'abord pour detecter HTML
   const text = await response.text();
@@ -123,25 +88,23 @@ export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
     error.type = "GAS_HTTP_ERROR";
     error.status = response.status;
     error.preview = preview;
-    error.url = finalUrl;
+    error.url = url;
     throw error;
   }
 
   // Detecter HTML (commence par "<" ou content-type text/html)
   if (text.trim().startsWith("<") || contentType.includes("text/html")) {
     const preview = text.substring(0, 500);
-    const location = response.headers.get("location");
 
     console.error(`[GAS] HTML response detected:`, {
       status: response.status,
       contentType,
-      location: location || "none",
       preview,
-      url: finalUrl,
+      url: url,
     });
 
     throw new Error(
-      `GAS returned HTML instead of JSON (likely 405 Page Not Found - check GAS deployment and URL). Status: ${response.status}, Content-Type: ${contentType}, Location: ${location || "none"}. Preview: ${preview}`
+      `GAS returned HTML instead of JSON (likely 405 Page Not Found - check GAS deployment and URL). Status: ${response.status}, Content-Type: ${contentType}. Preview: ${preview}`
     );
   }
 
@@ -157,7 +120,7 @@ export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
     error.type = "GAS_NON_JSON";
     error.status = response.status;
     error.preview = preview;
-    error.url = finalUrl;
+    error.url = url;
     throw error;
   }
 
@@ -170,7 +133,7 @@ export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
       status: response.status,
       contentType,
       textPreview: text.substring(0, 300),
-      url: finalUrl,
+      url: url,
     });
     const jsonError = new Error(`GAS_INVALID_JSON: Failed to parse JSON`) as Error & {
       type: string;
@@ -181,7 +144,7 @@ export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
     jsonError.type = "GAS_INVALID_JSON";
     jsonError.status = response.status;
     jsonError.preview = text.substring(0, 300);
-    jsonError.url = finalUrl;
+    jsonError.url = url;
     throw jsonError;
   }
 
