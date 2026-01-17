@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { formatCurrency } from "@/lib/format";
 
 type StudentEvent = {
@@ -33,6 +33,11 @@ export default function StudentsView({ studentEvents }: Props) {
   const [saving, setSaving] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+
+  // Sync events when studentEvents prop changes
+  useEffect(() => {
+    setEvents(studentEvents);
+  }, [studentEvents]);
 
   // Get unique months and students for filters
   const months = useMemo(() => {
