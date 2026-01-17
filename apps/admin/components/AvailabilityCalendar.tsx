@@ -7,8 +7,8 @@ type Props = {
   events: EventRow[];
 };
 
-// Figma design uses Sunday first
-const dayLabels = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+// Week starts on Monday (European format)
+const dayLabels = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
 // Nombre total de miroirs disponibles (HARD-CODED per requirements)
 const TOTAL_MIRRORS = 4;
@@ -22,14 +22,16 @@ function buildCalendarDays(viewDate: Date) {
   const month = viewDate.getMonth();
   const firstDay = new Date(year, month, 1);
   // Get day of week (0 = Sunday, 1 = Monday, ...)
-  const startingDayOfWeek = firstDay.getDay();
+  // Convert to Monday-first: Monday=0, Tuesday=1, ..., Sunday=6
+  const dayOfWeek = firstDay.getDay();
+  const startingDayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
 
   // Return array with empty slots for days before month starts
   const days: (Date | null)[] = [];
 
-  // Add empty slots for days before month starts
+  // Add empty slots for days before month starts (Monday-first)
   for (let i = 0; i < startingDayOfWeek; i++) {
     days.push(null);
   }
