@@ -41,7 +41,7 @@ function buildFullName(firstName?: string, lastName?: string): string {
   return `${firstName?.trim() || ""} ${lastName?.trim() || ""}`.trim();
 }
 
-export async function persistLeadToLeads({ step, status, draft }: PersistLeadOptions): Promise<PersistLeadResult> {
+export async function persistLeadToLeads({ step, status, draft, requestId }: PersistLeadOptions): Promise<PersistLeadResult> {
   if (typeof window === "undefined") {
     return { leadId: null, created: false };
   }
