@@ -109,9 +109,19 @@ export async function POST(req: Request) {
     const apiKey = process.env.MOLLIE_API_KEY;
     if (!apiKey) return Response.json({ error: "missing_mollie_key" }, { status: 500 });
 
-    const webhookUrl = process.env.APP_URL ? `${process.env.APP_URL}/api/webhooks/mollie` : null;
+    // Webhook URL (sécurité assurée par validation via Mollie API, pas par token)
+    const webhookUrl = process.env.APP_URL
+      ? `${process.env.APP_URL}/api/webhooks/mollie`
+      : null;
     const redirectUrl = `${process.env.APP_URL}/booking/success?event_id=${eventId}&lang=${b.language}`;
     const metadataAddress = normalizedAddress || "";
+
+    console.log(`[checkout] Mollie payment config (${requestId}):`, {
+      eventId,
+      webhookUrlConfigured: !!webhookUrl,
+      redirectUrlConfigured: !!redirectUrl,
+      appUrl: process.env.APP_URL ? "[SET]" : "[MISSING]"
+    });
 
     const res = await fetch("https://api.mollie.com/v2/payments", {
       method: "POST",

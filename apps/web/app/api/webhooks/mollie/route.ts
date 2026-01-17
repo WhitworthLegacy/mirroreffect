@@ -155,43 +155,15 @@ export async function POST(req: Request) {
   console.log(`[mollie-webhook] Request received:`, {
     requestId,
     method: req.method,
-    url: req.url,
     headers: Object.keys(logHeaders),
     timestamp: new Date().toISOString()
   });
 
-  // Protection webhook: Mollie n'envoie PAS x-webhook-secret nativement
-  // Options: 1) Token dans URL (?key=xxx), 2) Vérifier que payment existe dans Mollie (déjà fait)
-  // Pour backward compatibility, on accepte soit header, soit query param, soit aucun (validation via Mollie API)
-  const url = new URL(req.url);
-  const queryKey = url.searchParams.get("key");
-  const headerSecret = req.headers.get("x-webhook-secret");
-  const expectedSecret = process.env.MOLLIE_WEBHOOK_SECRET;
-
-  // Si MOLLIE_WEBHOOK_SECRET est défini, on l'utilise (header OU query param)
-  // Sinon, on valide uniquement via Mollie API (moins sécurisé mais compatible)
-  if (expectedSecret) {
-    const providedSecret = headerSecret || queryKey;
-    if (!providedSecret || providedSecret !== expectedSecret) {
-      console.warn(`[mollie-webhook] Unauthorized (missing/invalid secret):`, {
-        requestId,
-        hasHeaderSecret: !!headerSecret,
-        hasQueryKey: !!queryKey,
-        hasExpectedSecret: !!expectedSecret
-      });
-      return Response.json(
-        {
-          ok: false,
-          requestId,
-          error: {
-            type: "UNAUTHORIZED",
-            message: "Invalid or missing webhook secret"
-          }
-        },
-        { status: 401 }
-      );
-    }
-  }
+  // Sécurité: On ne valide pas via token/secret car Mollie n'envoie pas de header custom.
+  // La sécurité est assurée par la validation du payment via l'API Mollie:
+  // - On reçoit juste un `id=tr_xxx`
+  // - On fetch le vrai statut depuis Mollie API (authentifié avec notre API key)
+  // - Un attaquant ne peut pas forger un payment "paid" sans accès à notre compte Mollie
 
   // Mollie envoie id=tr_... (form-urlencoded)
   let raw: string;
@@ -315,8 +287,6 @@ export async function POST(req: Request) {
           if (rows.length >= 2) {
             const headers = (rows[0] as string[]).map((h) => String(h).trim());
             const paymentIdIdx = headers.findIndex((h) => h === "Payment ID");
-            const statusIdx = headers.findIndex((h) => h === "Status");
-            const updatedAtIdx = headers.findIndex((h) => h === "Updated At");
 
             const rowIndex = rows.slice(1).findIndex(
               (row) => String(row[paymentIdIdx]).trim() === molliePaymentId
@@ -546,10 +516,6 @@ export async function POST(req: Request) {
         if (rows.length >= 2) {
           const headers = (rows[0] as string[]).map((h) => String(h).trim());
           const paymentIdIdx = headers.findIndex((h) => h === "Payment ID");
-          const statusIdx = headers.findIndex((h) => h === "Status");
-          const paidAtIdx = headers.findIndex((h) => h === "Paid At");
-          const updatedAtIdx = headers.findIndex((h) => h === "Updated At");
-          const providerPaymentIdIdx = headers.findIndex((h) => h === "Provider Payment ID");
 
           const rowIndex = rows.slice(1).findIndex(
             (row) => String(row[paymentIdIdx]).trim() === molliePaymentId
@@ -638,12 +604,21 @@ export async function POST(req: Request) {
     }
 
     const duration = Date.now() - startTime;
+    const gasResults = {
+      updateLeads: leadIdFound ? "success" : "skipped",
+      appendClients: "success",
+      updatePayments: "success",
+      appendNotifications: clientEmail ? "success" : "skipped"
+    };
+
     console.log(`[mollie-webhook] Success:`, {
       ...logContext,
+      mollieStatus: payment.status,
       email: clientEmail,
       eventId,
       leadId: leadId || null,
       leadIdFound,
+      gasResults,
       duration: `${duration}ms`
     });
 
@@ -655,6 +630,7 @@ export async function POST(req: Request) {
       email: clientEmail,
       leadId: leadId || null,
       leadIdFound,
+      gasResults,
       duration: `${duration}ms`
     });
   } catch (error) {
