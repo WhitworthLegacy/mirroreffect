@@ -141,28 +141,88 @@ export async function POST(req: Request) {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
 
-  // Protection webhook
-  const secret = req.headers.get("x-webhook-secret");
-  if (!process.env.MOLLIE_WEBHOOK_SECRET || secret !== process.env.MOLLIE_WEBHOOK_SECRET) {
+  // Logs structurés (sans secrets)
+  const logHeaders: Record<string, string> = {};
+  req.headers.forEach((value, key) => {
+    // Ne pas logger les secrets
+    if (!key.toLowerCase().includes("secret") && !key.toLowerCase().includes("authorization")) {
+      logHeaders[key] = value;
+    } else {
+      logHeaders[key] = "[REDACTED]";
+    }
+  });
+
+  console.log(`[mollie-webhook] Request received:`, {
+    requestId,
+    method: req.method,
+    url: req.url,
+    headers: Object.keys(logHeaders),
+    timestamp: new Date().toISOString()
+  });
+
+  // Protection webhook: Mollie n'envoie PAS x-webhook-secret nativement
+  // Options: 1) Token dans URL (?key=xxx), 2) Vérifier que payment existe dans Mollie (déjà fait)
+  // Pour backward compatibility, on accepte soit header, soit query param, soit aucun (validation via Mollie API)
+  const url = new URL(req.url);
+  const queryKey = url.searchParams.get("key");
+  const headerSecret = req.headers.get("x-webhook-secret");
+  const expectedSecret = process.env.MOLLIE_WEBHOOK_SECRET;
+
+  // Si MOLLIE_WEBHOOK_SECRET est défini, on l'utilise (header OU query param)
+  // Sinon, on valide uniquement via Mollie API (moins sécurisé mais compatible)
+  if (expectedSecret) {
+    const providedSecret = headerSecret || queryKey;
+    if (!providedSecret || providedSecret !== expectedSecret) {
+      console.warn(`[mollie-webhook] Unauthorized (missing/invalid secret):`, {
+        requestId,
+        hasHeaderSecret: !!headerSecret,
+        hasQueryKey: !!queryKey,
+        hasExpectedSecret: !!expectedSecret
+      });
+      return Response.json(
+        {
+          ok: false,
+          requestId,
+          error: {
+            type: "UNAUTHORIZED",
+            message: "Invalid or missing webhook secret"
+          }
+        },
+        { status: 401 }
+      );
+    }
+  }
+
+  // Mollie envoie id=tr_... (form-urlencoded)
+  let raw: string;
+  try {
+    raw = await req.text();
+  } catch (error) {
+    console.error(`[mollie-webhook] Failed to read body:`, {
+      requestId,
+      error: error instanceof Error ? error.message : String(error)
+    });
     return Response.json(
       {
         ok: false,
         requestId,
         error: {
-          type: "UNAUTHORIZED",
-          message: "Invalid webhook secret"
+          type: "INVALID_BODY",
+          message: "Failed to read request body"
         }
       },
-      { status: 401 }
+      { status: 400 }
     );
   }
 
-  // Mollie envoie id=tr_... (form-urlencoded)
-  const raw = await req.text();
   const params = new URLSearchParams(raw);
   const molliePaymentId = params.get("id");
 
   if (!molliePaymentId) {
+    console.warn(`[mollie-webhook] Missing payment ID in body:`, {
+      requestId,
+      bodyPreview: raw.substring(0, 100)
+    });
     return Response.json(
       {
         ok: false,
@@ -181,6 +241,8 @@ export async function POST(req: Request) {
     paymentId: molliePaymentId,
     timestamp: new Date().toISOString()
   };
+
+  console.log(`[mollie-webhook] Processing payment:`, logContext);
 
   try {
     // Idempotence: vérifier si payment déjà traité dans Payments sheet
@@ -213,7 +275,10 @@ export async function POST(req: Request) {
     // Fetch status Mollie
     const payment = await fetchMolliePaymentStatus(molliePaymentId);
     if (!payment) {
-      console.warn(`[mollie-webhook] Payment not found:`, logContext);
+      console.warn(`[mollie-webhook] Payment not found in Mollie API:`, {
+        ...logContext,
+        mollieApiStatus: "not_found"
+      });
       return Response.json(
         {
           ok: false,
@@ -227,25 +292,71 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log(`[mollie-webhook] Payment fetched from Mollie:`, {
+      ...logContext,
+      status: payment.status,
+      amount_cents: payment.amount_cents,
+      hasMetadata: !!payment.metadata
+    });
+
     // On ne traite que paid
     if (payment.status !== "paid") {
-      // Update payment status
-      await gasPost({
-        action: "updateRowByPaymentId",
-        key: process.env.GAS_KEY,
-        data: {
-          sheetName: "Payments",
-          paymentId: molliePaymentId,
-          values: {
-            "Status": payment.status,
-            "Updated At": new Date().toISOString()
+      // Update payment status dans Payments sheet
+      try {
+        // Lire Payments pour trouver la ligne
+        const paymentsResult = await gasPost({
+          action: "readSheet",
+          key: process.env.GAS_KEY,
+          data: { sheetName: "Payments" }
+        });
+
+        if (paymentsResult.values) {
+          const rows = paymentsResult.values as unknown[][];
+          if (rows.length >= 2) {
+            const headers = (rows[0] as string[]).map((h) => String(h).trim());
+            const paymentIdIdx = headers.findIndex((h) => h === "Payment ID");
+            const statusIdx = headers.findIndex((h) => h === "Status");
+            const updatedAtIdx = headers.findIndex((h) => h === "Updated At");
+
+            const rowIndex = rows.slice(1).findIndex(
+              (row) => String(row[paymentIdIdx]).trim() === molliePaymentId
+            );
+
+            if (rowIndex >= 0) {
+              // Construire values array dans l'ordre des colonnes
+              const valuesArray = headers.map((header) => {
+                if (header === "Payment ID") return molliePaymentId;
+                if (header === "Status") return payment.status;
+                if (header === "Updated At") return new Date().toISOString();
+                return ""; // Garder les autres colonnes vides (sera ignoré par updateRow)
+              });
+
+              await gasPost({
+                action: "updateRow",
+                key: process.env.GAS_KEY,
+                data: {
+                  sheetName: "Payments",
+                  id: molliePaymentId,
+                  values: valuesArray
+                }
+              });
+
+              console.log(`[mollie-webhook] Payment status updated (not paid):`, {
+                ...logContext,
+                status: payment.status,
+                updatePaymentsSuccess: true
+              });
+            }
           }
         }
-      });
-      console.log(`[mollie-webhook] Payment status updated (not paid):`, {
-        ...logContext,
-        status: payment.status
-      });
+      } catch (error) {
+        console.error(`[mollie-webhook] Failed to update payment status:`, {
+          ...logContext,
+          status: payment.status,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+
       return Response.json({ ok: true, requestId, received: true, status: payment.status });
     }
 
@@ -407,32 +518,89 @@ export async function POST(req: Request) {
         ...logContext,
         email: clientEmail,
         eventId,
-        leadIdFound
+        leadIdFound,
+        appendClientsSuccess: true
       });
     } catch (error) {
       console.error(`[mollie-webhook] Failed to append client row:`, {
         ...logContext,
         email: clientEmail,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
+        appendClientsSuccess: false
       });
       // Erreur critique - on throw pour que le webhook soit retenté
       throw error;
     }
 
-    // 5) Update payment status dans Payments sheet
-    await gasPost({
-      action: "updateRowByPaymentId",
-      key: process.env.GAS_KEY,
-      data: {
-        sheetName: "Payments",
-        paymentId: molliePaymentId,
-        values: {
-          "Status": "paid",
-          "Paid At": paidAt,
-          "Updated At": new Date().toISOString()
+    // 5) Update payment status dans Payments sheet (CRITIQUE: doit être fait)
+    try {
+      // Lire Payments pour trouver la ligne et mapper les colonnes
+      const paymentsResult = await gasPost({
+        action: "readSheet",
+        key: process.env.GAS_KEY,
+        data: { sheetName: "Payments" }
+      });
+
+      if (paymentsResult.values) {
+        const rows = paymentsResult.values as unknown[][];
+        if (rows.length >= 2) {
+          const headers = (rows[0] as string[]).map((h) => String(h).trim());
+          const paymentIdIdx = headers.findIndex((h) => h === "Payment ID");
+          const statusIdx = headers.findIndex((h) => h === "Status");
+          const paidAtIdx = headers.findIndex((h) => h === "Paid At");
+          const updatedAtIdx = headers.findIndex((h) => h === "Updated At");
+          const providerPaymentIdIdx = headers.findIndex((h) => h === "Provider Payment ID");
+
+          const rowIndex = rows.slice(1).findIndex(
+            (row) => String(row[paymentIdIdx]).trim() === molliePaymentId
+          );
+
+          if (rowIndex >= 0) {
+            // Construire values array dans l'ordre des colonnes
+            const existingRow = rows[rowIndex + 1] as unknown[];
+            const valuesArray = headers.map((header, idx) => {
+              if (header === "Payment ID") return molliePaymentId;
+              if (header === "Status") return "paid";
+              if (header === "Paid At") return paidAt;
+              if (header === "Updated At") return new Date().toISOString();
+              if (header === "Provider Payment ID") return molliePaymentId; // Stocker aussi le Payment ID de Mollie
+              // Garder les valeurs existantes pour les autres colonnes
+              return existingRow[idx] || "";
+            });
+
+            await gasPost({
+              action: "updateRow",
+              key: process.env.GAS_KEY,
+              data: {
+                sheetName: "Payments",
+                id: molliePaymentId,
+                values: valuesArray
+              }
+            });
+
+            console.log(`[mollie-webhook] Payment updated in Payments sheet:`, {
+              ...logContext,
+              status: "paid",
+              paidAt,
+              updatePaymentsSuccess: true
+            });
+          } else {
+            console.warn(`[mollie-webhook] Payment ID not found in Payments sheet:`, {
+              ...logContext,
+              updatePaymentsSuccess: false
+            });
+          }
         }
       }
-    });
+    } catch (error) {
+      console.error(`[mollie-webhook] Failed to update Payments sheet:`, {
+        ...logContext,
+        error: error instanceof Error ? error.message : String(error),
+        updatePaymentsSuccess: false
+      });
+      // Erreur critique - on throw pour que le webhook soit retenté
+      throw error;
+    }
 
     // 5) Ajouter notifications
     if (clientEmail) {

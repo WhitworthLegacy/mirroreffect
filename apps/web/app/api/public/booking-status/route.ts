@@ -48,7 +48,43 @@ export async function GET(req: Request) {
     const eventRow = rows.slice(1).find(row => String(row[eventIdIdx]).trim() === event_id);
 
     if (!eventRow) {
-      return Response.json({ error: "event_not_found" }, { status: 404 });
+      // Si pas dans Clients, vérifier dans Payments uniquement
+      // Lire Payments sheet
+      const paymentsResult = await gasPost({
+        action: "readSheet",
+        key: process.env.GAS_KEY,
+        data: { sheetName: "Payments" }
+      });
+
+      if (paymentsResult.values) {
+        const paymentRows = paymentsResult.values as unknown[][];
+        if (paymentRows.length >= 2) {
+          const paymentHeaders = (paymentRows[0] as string[]).map(h => String(h).trim());
+          const pEventIdIdx = paymentHeaders.findIndex(h => h === "Event ID");
+          const pStatusIdx = paymentHeaders.findIndex(h => h === "Status");
+
+          const eventPayment = paymentRows.slice(1).find(row =>
+            String(row[pEventIdIdx]).trim() === event_id
+          );
+
+          if (eventPayment) {
+            const paymentStatus = String(eventPayment[pStatusIdx] || "unknown").trim();
+            return Response.json({
+              ok: true,
+              event_id,
+              client_name: null,
+              event_date: null,
+              total_cents: null,
+              status: "pending",
+              deposit_paid: paymentStatus === "paid",
+              payment_status: paymentStatus,
+              paid_at: null
+            });
+          }
+        }
+      }
+
+      return Response.json({ ok: false, error: "not_found" }, { status: 404 });
     }
 
     // Parser le total en cents
@@ -68,6 +104,7 @@ export async function GET(req: Request) {
 
     let depositPaid = false;
     let paymentStatus = "unknown";
+    let paidAt: string | null = null;
 
     // GAS returns { values: [...] } for readSheet action
     if (paymentsResult.values) {
@@ -76,38 +113,51 @@ export async function GET(req: Request) {
         const paymentHeaders = (paymentRows[0] as string[]).map(h => String(h).trim());
         const pEventIdIdx = paymentHeaders.findIndex(h => h === "Event ID");
         const pStatusIdx = paymentHeaders.findIndex(h => h === "Status");
-        const pAmountIdx = paymentHeaders.findIndex(h => h === "Amount");
+        const pAmountIdx = paymentHeaders.findIndex(h => h === "Amount Cents");
+        const pPaidAtIdx = paymentHeaders.findIndex(h => h === "Paid At");
 
         const eventPayments = paymentRows.slice(1).filter(row =>
           String(row[pEventIdIdx]).trim() === event_id
         );
 
         // Vérifier si acompte payé
-        depositPaid = eventPayments.some(row => {
+        const paidPayment = eventPayments.find(row => {
           const status = String(row[pStatusIdx] || "").trim().toLowerCase();
           const amount = parseCents(row[pAmountIdx]);
           return status === "paid" && amount === DEPOSIT_CENTS;
         });
 
-        // Dernier statut
+        if (paidPayment) {
+          depositPaid = true;
+          if (pPaidAtIdx >= 0) {
+            paidAt = String(paidPayment[pPaidAtIdx] || "").trim() || null;
+          }
+        }
+
+        // Dernier statut (prendre le plus récent)
         if (eventPayments.length > 0) {
-          paymentStatus = String(eventPayments[0][pStatusIdx] || "unknown").trim();
+          // Trier par Created At ou prendre le premier
+          paymentStatus = String(eventPayments[eventPayments.length - 1][pStatusIdx] || "unknown").trim();
         }
       }
     }
 
     // Si dans Clients sheet = acompte payé (par définition de la règle)
     // Clients ne contient que les events avec acompte payé
-    depositPaid = true;
+    if (eventRow) {
+      depositPaid = true;
+    }
 
     return Response.json({
+      ok: true,
       event_id,
       client_name: eventRow[clientNameIdx] ? String(eventRow[clientNameIdx]).trim() : null,
       event_date: eventRow[eventDateIdx] ? String(eventRow[eventDateIdx]).trim() : null,
       total_cents: parseCents(eventRow[totalIdx]),
       status: "active",
       deposit_paid: depositPaid,
-      payment_status: paymentStatus
+      payment_status: paymentStatus,
+      paid_at: paidAt
     });
   } catch (error) {
     console.error("[booking-status] Error:", error);
