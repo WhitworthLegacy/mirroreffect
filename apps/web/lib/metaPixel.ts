@@ -28,7 +28,7 @@ function persistGuard(key: string): boolean {
   return true;
 }
 
-export function trackMetaLeadOnce(leadId?: string): void {
+export function trackMetaLeadOnce(leadId?: string, payload?: Record<string, unknown>): void {
   if (!leadId) {
     return;
   }
@@ -40,7 +40,8 @@ export function trackMetaLeadOnce(leadId?: string): void {
 
   trackMetaEvent("Lead", {
     content_name: "MirrorEffect Booking",
-    content_category: "Photobooth"
+    content_category: "Photobooth",
+    ...(payload ?? {})
   });
 }
 

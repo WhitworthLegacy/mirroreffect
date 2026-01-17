@@ -7,9 +7,9 @@ import { captureUTMParams, getUTMParams, getLeadId, setLeadId, trackCTA } from "
 import { getDraft, persistDraft, clearDraft, buildDraftFromState } from "@/lib/reservationDraft";
 import { persistLeadToLeads } from "@/lib/leads";
 import { trackMetaLeadOnce, trackMetaInitiateCheckoutOnce } from "@/lib/metaPixel";
+import { getFinalPriceByPack, type PackCode } from "@/lib/pricing/packPricing";
 
 type AvailabilityState = "idle" | "checking" | "available" | "unavailable" | "error";
-type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
 
 const baseClass =
   "w-full rounded-xl border border-[#E6E6E6] bg-white px-4 py-3 text-base text-[#12130F] focus:outline-none focus:ring-2 focus:ring-[#C1950E]/40";
@@ -799,10 +799,14 @@ const packs = useMemo(
     });
 
     void persistLeadToLeads({ step, status: statusLabel, draft: draftSnapshot }).then((result) => {
-      const leadIdToPersist = result.leadId || draftSnapshot.leadId;
-      if (leadIdToPersist) {
-        trackMetaLeadOnce(leadIdToPersist);
-      }
+    const leadIdToPersist = result.leadId || draftSnapshot.leadId;
+    if (leadIdToPersist) {
+      const leadValue = packCode ? getFinalPriceByPack(packCode) : 0;
+      trackMetaLeadOnce(leadIdToPersist, {
+        value: leadValue,
+        currency: "EUR"
+      });
+    }
       if (result.leadId) {
         persistDraft({ leadId: result.leadId });
       }
@@ -888,9 +892,9 @@ const packs = useMemo(
       });
     }
 
-    const trackedValue = typeof draft.event.total === "number" ? draft.event.total : totalPrice ?? 0;
+    const packValue = getFinalPriceByPack(finalPackCode as PackCode);
     trackMetaInitiateCheckoutOnce(leadId || finalPackCode, {
-      value: trackedValue,
+      value: packValue,
       currency: "EUR",
       content_name: finalPackCode
     });
