@@ -132,6 +132,19 @@ export async function POST(req: Request) {
   const now = new Date();
   const createdAtDDMM = toDDMMYYYYHHmm(now) || now.toISOString();
 
+  // Normaliser invites/guests (peut être string ou number)
+  const invitesValue = data.guests ? String(data.guests).trim() : "";
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[event-intent] Debug invites (${requestId}):`, {
+      leadId,
+      step: data.step,
+      guests_received: data.guests,
+      invites_final: invitesValue,
+      typeof_guests: typeof data.guests
+    });
+  }
+
   try {
     const baseValues = {
       "Lead ID": leadId,
@@ -142,7 +155,7 @@ export async function POST(req: Request) {
       "Date Event": dateEventDDMM, // TEXTE DD/MM/YYYY
       "Lieu Event": data.address,
       Pack: data.pack_code,
-      "Invités": data.guests || "",
+      "Invités": invitesValue, // String normalisé depuis guests
       "Transport (€)": centsToEuros(data.transport_fee_cents),
       Total: centsToEuros(data.total_cents),
       Acompte: centsToEuros(data.deposit_cents),

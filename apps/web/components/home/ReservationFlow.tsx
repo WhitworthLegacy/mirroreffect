@@ -700,7 +700,7 @@ const packs = useMemo(
       if (!draft) return;
 
       const hasEssentialData = leadEmail && eventDate && packCode;
-      if (!hasEssentialData) {
+      if (!hasEssentialData || !guests) {
         // Restaurer depuis draft
         if (draft.customer.email && !leadEmail) setLeadEmail(draft.customer.email);
         if (draft.event.dateEvent && !eventDate) setEventDate(draft.event.dateEvent);
@@ -709,13 +709,17 @@ const packs = useMemo(
         if (draft.customer.lastName && !lastName) setLastName(draft.customer.lastName);
         if (draft.customer.phone && !contactPhone) setContactPhone(draft.customer.phone);
         if (draft.event.lieuEvent && !location) setLocation(draft.event.lieuEvent);
+        // Restaurer invites/guests aussi
+        if (draft.event.invites && !guests) setGuests(draft.event.invites);
 
         if (process.env.NODE_ENV !== "production") {
-          console.warn("[ReservationFlow] Guard: restored essential data from draft");
+          console.warn("[ReservationFlow] Guard: restored essential data from draft", {
+            restoredGuests: draft.event.invites && !guests
+          });
         }
       }
     }
-  }, [step, leadEmail, eventDate, packCode, firstName, lastName, contactPhone, location]);
+  }, [step, leadEmail, eventDate, packCode, firstName, lastName, contactPhone, location, guests]);
 
   const canContinueStep1 = Boolean(
     eventType &&
@@ -775,23 +779,36 @@ const packs = useMemo(
 
     // Fallback sur draft si données manquantes dans state
     const draft = getDraft();
+    const leadId = getLeadId();
+    
+    // Construire payload avec merge draft + state (draft en priorité pour persistence)
     const finalFirstName = firstName || draft?.customer.firstName || "";
     const finalLastName = lastName || draft?.customer.lastName || "";
     const finalEmail = leadEmail || draft?.customer.email || "";
     const finalPhone = contactPhone || draft?.customer.phone || "";
     const finalDateEvent = eventDate || draft?.event.dateEvent || "";
-    const finalLocation = location || draft?.event.lieuEvent || "";
+    
+    // Normaliser address depuis plusieurs sources (location, lieuEvent, venue, etc.)
+    const finalAddress = location || 
+                         draft?.event.lieuEvent || 
+                         draft?.event.address || 
+                         "";
+
     const finalPackCode = selectedPack.code || draft?.event.pack || "";
+    const finalZone = zone || draft?.event.zone || "BE";
 
     // Si données essentielles manquent toujours, erreur
-    if (!finalEmail || !finalDateEvent || !finalPackCode) {
+    if (!finalEmail || !finalDateEvent || !finalPackCode || !finalAddress) {
       setCheckoutError(t("checkoutError"));
       setIsSubmitting(false);
       if (process.env.NODE_ENV !== "production") {
         console.warn("[ReservationFlow] Checkout failed: missing essential data", {
           email: finalEmail,
           dateEvent: finalDateEvent,
-          packCode: finalPackCode
+          packCode: finalPackCode,
+          address: finalAddress,
+          hasLocation: !!location,
+          hasDraftLieuEvent: !!draft?.event.lieuEvent
         });
       }
       return;
@@ -801,26 +818,41 @@ const packs = useMemo(
       const stanchionsCode = stanchionsEnabled ? `STANCHIONS_${stanchionsColor}` : null;
       const optionsPayload = stanchionsCode ? [...options, stanchionsCode] : options;
 
+      const checkoutPayload = {
+        language: lang,
+        client_name: `${finalFirstName} ${finalLastName}`.trim(),
+        client_email: finalEmail,
+        client_phone: finalPhone,
+        event_date: finalDateEvent,
+        address: finalAddress, // IMPORTANT: envoyer address (requis par API)
+        zone_code: finalZone as "BE" | "FR_NORD",
+        pack_code: finalPackCode as "DISCOVERY" | "ESSENTIAL" | "PREMIUM",
+        options: optionsPayload,
+        lead_id: leadId || draft?.leadId || eventId || undefined
+      };
+
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[ReservationFlow] Checkout payload:", {
+          ...checkoutPayload,
+          client_phone: finalPhone.substring(0, 5) + "...",
+          address_length: finalAddress.length
+        });
+      }
+
       const res = await fetch("/api/public/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language: lang,
-          client_name: `${finalFirstName} ${finalLastName}`.trim(),
-          client_email: finalEmail,
-          client_phone: finalPhone,
-          event_date: finalDateEvent,
-          zone_code: zone,
-          pack_code: finalPackCode,
-          options: optionsPayload,
-          event_id: eventId ?? undefined
-        })
+        body: JSON.stringify(checkoutPayload)
       });
 
       const data = await res.json();
       if (!res.ok || !data?.checkout_url) {
+        const errorMsg = data?.error || `HTTP ${res.status}`;
         setCheckoutError(t("checkoutError"));
         setIsSubmitting(false);
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[ReservationFlow] Checkout failed:", errorMsg, data);
+        }
         // Garder le draft en cas d'erreur pour retry
         return;
       }
@@ -829,9 +861,12 @@ const packs = useMemo(
       clearDraft();
 
       window.location.href = data.checkout_url;
-    } catch {
+    } catch (error) {
       setCheckoutError(t("checkoutError"));
       setIsSubmitting(false);
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[ReservationFlow] Checkout error:", error);
+      }
       // Garder le draft en cas d'erreur pour retry
     }
   };

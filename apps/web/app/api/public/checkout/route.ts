@@ -7,11 +7,14 @@ const CheckoutBodySchema = z.object({
   client_email: z.string().email(),
   client_phone: z.string().min(6),
   event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  address: z.string().min(2),
+  address: z.string().min(2).optional(), // Optionnel dans Zod pour fallback défensif
+  venue: z.string().optional(), // Fallback possible
+  lieuEvent: z.string().optional(), // Fallback possible
   lead_id: z.string().optional(),
   zone_code: z.enum(["BE", "FR_NORD"]),
   pack_code: z.enum(["DISCOVERY", "ESSENTIAL", "PREMIUM"]),
   options: z.array(z.string()).default([]),
+  event_id: z.string().optional() // Pour compatibilité
 });
 
 const DEPOSIT_CENTS = 18000;
@@ -27,15 +30,86 @@ function centsToEuros(cents: number): string {
 }
 
 export async function POST(req: Request) {
+  const requestId = crypto.randomUUID();
+  
+  let raw: unknown = null;
   try {
-    const raw = await req.json().catch(() => null);
-    const parsed = CheckoutBodySchema.safeParse(raw);
+    raw = await req.json();
+  } catch {
+    return Response.json({
+      ok: false,
+      requestId,
+      error: {
+        type: "INVALID_JSON",
+        message: "Request body is not valid JSON",
+        status: 400
+      }
+    }, { status: 400 });
+  }
 
-    if (!parsed.success) {
-      return Response.json({ error: "invalid_body", issues: parsed.error.format() }, { status: 400 });
-    }
+  const parsed = CheckoutBodySchema.safeParse(raw);
 
-    const b = parsed.data;
+  if (!parsed.success) {
+    const issues = parsed.error.format();
+    const missingFields = Object.keys(issues).filter((key) => key !== "_errors");
+    
+    return Response.json({
+      ok: false,
+      requestId,
+      error: {
+        type: "VALIDATION_ERROR",
+        message: "Request body validation failed",
+        status: 400,
+        issues,
+        missingFields
+      }
+    }, { status: 400 });
+  }
+
+  let b = parsed.data;
+
+  // Fix défensif: normaliser address depuis plusieurs sources
+  // address = lieu event est accepté comme business rule
+  const normalizedAddress = b.address || 
+                            b.venue || 
+                            b.lieuEvent || 
+                            "";
+
+  // Vérifier que address est présent après normalisation
+  if (!normalizedAddress || normalizedAddress.trim().length < 2) {
+    return Response.json({
+      ok: false,
+      requestId,
+      error: {
+        type: "MISSING_ADDRESS",
+        message: "address, venue, or lieuEvent is required (minimum 2 characters)",
+        status: 400,
+        missingFields: ["address"],
+        received: {
+          address: b.address || undefined,
+          venue: b.venue || undefined,
+          lieuEvent: b.lieuEvent || undefined
+        }
+      }
+    }, { status: 400 });
+  }
+
+  // Mettre à jour b avec address normalisé
+  b = {
+    ...b,
+    address: normalizedAddress
+  };
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[checkout] Debug (${requestId}):`, {
+      leadId: b.lead_id,
+      email: b.client_email,
+      address_received: raw && typeof raw === "object" && "address" in raw ? raw.address : undefined,
+      venue_received: raw && typeof raw === "object" && "venue" in raw ? raw.venue : undefined,
+      lieuEvent_received: raw && typeof raw === "object" && "lieuEvent" in raw ? raw.lieuEvent : undefined,
+      address_final: normalizedAddress
+    });
+  }
 
     // 1) Pricing (MVP hardcoded)
     const transport_fee_cents = b.zone_code === "BE" ? 9000 : 11000;
@@ -120,6 +194,8 @@ export async function POST(req: Request) {
     // Note: On ne peut pas facilement delete via GAS, on marquera comme cancelled dans le webhook si besoin
 
     return Response.json({
+      ok: true,
+      requestId,
       event_id: eventId,
       mollie_payment_id: mollie.id,
       checkout_url: mollie._links.checkout.href,
@@ -127,7 +203,26 @@ export async function POST(req: Request) {
       total_cents,
     });
   } catch (e) {
-    console.error("[checkout] Error:", e);
-    return Response.json({ error: "server_error" }, { status: 500 });
+    const error = e as Error & { type?: string; status?: number; message?: string };
+    const errorType = error.type || "SERVER_ERROR";
+    const errorStatus = error.status || 500;
+    const errorMessage = error.message || String(e);
+
+    console.error(`[checkout] Error (${requestId}):`, {
+      type: errorType,
+      status: errorStatus,
+      message: errorMessage,
+      error: e
+    });
+
+    return Response.json({
+      ok: false,
+      requestId,
+      error: {
+        type: errorType,
+        message: errorMessage,
+        status: errorStatus
+      }
+    }, { status: errorStatus >= 400 && errorStatus < 600 ? errorStatus : 500 });
   }
 }
