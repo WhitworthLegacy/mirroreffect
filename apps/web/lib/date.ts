@@ -12,19 +12,31 @@ function formatFromDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function normalizeDateToISO(value: unknown): string {
+export function normalizeDateToISO(value: unknown): string | null {
   if (!value) {
-    throw new Error("Date value is empty");
-  }
-  const input = typeof value === "string" ? value.trim() : "";
-  if (!input) {
-    throw new Error("Date value is empty");
+    return null;
   }
 
+  // Gérer les objets Date (Google Sheets peut renvoyer des Date objects)
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      return null;
+    }
+    return formatFromDate(value);
+  }
+
+  // Convertir en string
+  const input = typeof value === "string" ? value.trim() : String(value).trim();
+  if (!input) {
+    return null;
+  }
+
+  // Si déjà au format ISO (YYYY-MM-DD)
   if (ISO_REGEX.test(input)) {
     return input;
   }
 
+  // Si format ISO avec heure (YYYY-MM-DDTHH:mm:ss)
   if (input.includes("T")) {
     const date = new Date(input);
     if (!Number.isNaN(date.getTime())) {
@@ -32,6 +44,7 @@ export function normalizeDateToISO(value: unknown): string {
     }
   }
 
+  // Format DD/MM/YYYY
   const matches = input.match(DDMMYYYY_REGEX);
   if (matches) {
     const day = pad(matches[1]);
@@ -40,7 +53,18 @@ export function normalizeDateToISO(value: unknown): string {
     return `${year}-${month}-${day}`;
   }
 
-  throw new Error(`Invalid date format: ${input}`);
+  // Tentative avec Date constructor (fallback pour formats variés)
+  const dateFromString = new Date(input);
+  if (!Number.isNaN(dateFromString.getTime())) {
+    // Vérifier que ce n'est pas une date invalide qui a été interprétée
+    // (Date peut parser des choses bizarres, donc on vérifie)
+    const parsed = dateFromString.toISOString().split("T")[0];
+    if (ISO_REGEX.test(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
 }
 
 export function formatISOToDDMMYYYY(iso: string): string | null {

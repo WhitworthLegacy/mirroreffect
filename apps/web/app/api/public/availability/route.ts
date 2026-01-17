@@ -19,16 +19,15 @@ export async function GET(req: Request) {
   }
 
   const queryDateRaw = parsed.data.date;
-  let queryDateISO: string;
-  try {
-    queryDateISO = normalizeDateToISO(queryDateRaw);
-  } catch (error) {
-    console.error("[availability] Invalid query date:", queryDateRaw, error);
+  const normalizedQueryDate = normalizeDateToISO(queryDateRaw);
+  if (!normalizedQueryDate) {
+    console.error("[availability] Invalid query date:", queryDateRaw);
     return Response.json(
       { error: "invalid_date", message: "Date must be YYYY-MM-DD or DD/MM/YYYY" },
       { status: 400 }
     );
   }
+  const queryDateISO = normalizedQueryDate;
 
   if (process.env.NODE_ENV !== "production") {
     console.log(`[availability] query date raw=${queryDateRaw} normalized=${queryDateISO}`);
@@ -41,7 +40,17 @@ export async function GET(req: Request) {
       data: { sheetName: "Clients" }
     });
 
-    const rows = result.values as GstRow[] | undefined;
+    // GAS peut retourner { values: [...] } ou { data: { values: [...] } }
+    // Gérer les deux formats pour compatibilité
+    let rows: GstRow[] | undefined;
+    if (result && typeof result === "object") {
+      if ("values" in result && Array.isArray(result.values)) {
+        rows = result.values as GstRow[];
+      } else if ("data" in result && result.data && typeof result.data === "object" && "values" in result.data && Array.isArray(result.data.values)) {
+        rows = (result.data as { values: unknown[][] }).values as GstRow[];
+      }
+    }
+
     if (!rows || rows.length < 2) {
       const output = PublicAvailabilityResponseSchema.parse({
         date: queryDateISO,
@@ -65,29 +74,23 @@ export async function GET(req: Request) {
     let reserved = 0;
     const matchedEventIds: string[] = [];
 
-    // Quick local check (commented): assume Clients has 4 rows for 24/01/2026 → reserved_mirrors should be 4 for both formats.
-    const samples = rows.slice(1, 11).map((row, sampleIndex) => {
-      let normalized: string | null = null;
-      try {
-        normalized = normalizeDateToISO(row[dateIdx]);
-      } catch {
-        normalized = null;
-      }
+    // Échantillon des dates pour debug (10 premières lignes)
+    const sampleDates = rows.slice(1, 11).map((row, sampleIndex) => {
+      const raw = row[dateIdx];
+      const normalized = normalizeDateToISO(raw);
       return {
         row: sampleIndex + 1,
-        raw: row[dateIdx],
-        normalized
+        raw: raw !== undefined && raw !== null ? String(raw) : null,
+        iso: normalized
       };
     });
 
+    // Compter les réservations pour la date demandée
     for (const row of rows.slice(1)) {
-      let eventDateISO: string;
-      try {
-        eventDateISO = normalizeDateToISO(row[dateIdx]);
-      } catch {
+      const eventDateISO = normalizeDateToISO(row[dateIdx]);
+      if (!eventDateISO || eventDateISO !== queryDateISO) {
         continue;
       }
-      if (eventDateISO !== queryDateISO) continue;
 
       reserved += 1;
       if (eventIdIdx >= 0) {
@@ -113,11 +116,12 @@ export async function GET(req: Request) {
         debug: {
           query_date_raw: queryDateRaw,
           query_date_iso: queryDateISO,
-          date_column_index: dateIdx,
-          rows_total: rows.length - 1,
+          normalized_query_date: normalizedQueryDate,
+          dateEventIdx: dateIdx,
+          rowCount: rows.length - 1,
+          sampleDates: sampleDates,
           matched_rows: reserved,
-          sample_event_ids: matchedEventIds.slice(0, 5),
-          sample_dates: samples
+          sample_event_ids: matchedEventIds.slice(0, 5)
         }
       });
     }
