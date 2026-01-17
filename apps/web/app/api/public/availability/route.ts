@@ -56,10 +56,13 @@ export async function GET(req: Request) {
     });
 
     // GAS returns { values: [...] } for readSheet action
+    console.log("[availability] GAS response keys:", Object.keys(result));
+    console.log("[availability] GAS response:", JSON.stringify(result).substring(0, 500));
+
     const values = result.values as unknown[][] | undefined;
     if (!values) {
       console.error("[availability] No values in GAS response:", result);
-      return Response.json({ error: "sheets_error" }, { status: 500 });
+      return Response.json({ error: "sheets_error", debug: result }, { status: 500 });
     }
 
     const rows = values;
@@ -80,14 +83,20 @@ export async function GET(req: Request) {
 
     console.log("[availability] Headers:", headers);
     console.log("[availability] Date Event column index:", dateIdx);
+    console.log("[availability] Total rows (including header):", rows.length);
 
     if (dateIdx === -1) {
       console.error("[availability] Header 'Date Event' not found in headers:", headers);
       return Response.json({ error: "sheet_format_error" }, { status: 500 });
     }
 
+    // Log les 5 premieres lignes pour debug
+    console.log("[availability] First 5 data rows Date Event values:");
+    rows.slice(1, 6).forEach((row, i) => {
+      console.log(`  Row ${i}: raw="${row[dateIdx]}" normalized="${normalizeDate(row[dateIdx])}"`);
+    });
+
     // Compter TOUS les events sur cette date (comme dans admin)
-    // Pas de filtre sur "Date Acompte Paye" - on compte simplement les lignes avec cette date
     const reserved = rows.slice(1).filter(row => {
       const eventDateRaw = row[dateIdx];
       const eventDate = normalizeDate(eventDateRaw);
