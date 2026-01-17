@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useRef } from "react";
 import { useSheetsStore } from "@/lib/sheetsStore";
 
 // SVG Icons as components
@@ -48,12 +49,22 @@ const NAV_ITEMS = [
   { href: "/students", label: "Students", icon: StudentsIcon },
 ];
 
+// Minimum interval between manual refreshes (prevents accidental double-clicks)
+const REFRESH_DEBOUNCE_MS = 2000;
+
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPublicRoute = pathname === "/health" || pathname === "/login";
   const { refresh, isLoading, hasAnyDirty, lastSyncAt } = useSheetsStore();
+  const lastRefreshRef = useRef<number>(0);
 
   const handleRefresh = async () => {
+    const now = Date.now();
+    if (now - lastRefreshRef.current < REFRESH_DEBOUNCE_MS) {
+      console.log("[AdminShell] Refresh debounced - too soon since last refresh");
+      return;
+    }
+    lastRefreshRef.current = now;
     await refresh();
   };
 

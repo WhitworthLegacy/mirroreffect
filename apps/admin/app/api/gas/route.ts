@@ -5,6 +5,44 @@ import { gasPostAdmin, type GasError } from "@/lib/gas";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// Simple in-memory rate limiter (per-deployment, resets on cold start)
+// For production, consider using Vercel KV, Upstash Redis, or similar
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 30; // 30 requests per minute per IP
+
+function getRateLimitKey(request: Request): string {
+  // Use X-Forwarded-For in production (Vercel), fallback to generic key
+  const forwarded = request.headers.get("x-forwarded-for");
+  const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
+  return `gas:${ip}`;
+}
+
+function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+
+  // Clean up expired entries periodically
+  if (rateLimitMap.size > 1000) {
+    for (const [k, v] of rateLimitMap.entries()) {
+      if (v.resetAt < now) rateLimitMap.delete(k);
+    }
+  }
+
+  if (!entry || entry.resetAt < now) {
+    // New window
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - 1, resetIn: RATE_LIMIT_WINDOW_MS };
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return { allowed: false, remaining: 0, resetIn: entry.resetAt - now };
+  }
+
+  entry.count++;
+  return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - entry.count, resetIn: entry.resetAt - now };
+}
+
 /**
  * Gateway unique pour tous les appels Google Apps Script
  * 
@@ -23,6 +61,34 @@ export const revalidate = 0;
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
+
+  // Rate limiting check
+  const rateLimitKey = getRateLimitKey(request);
+  const rateLimit = checkRateLimit(rateLimitKey);
+
+  if (!rateLimit.allowed) {
+    console.warn(`[GAS API] Rate limit exceeded for ${rateLimitKey}, requestId=${requestId}`);
+    return NextResponse.json(
+      {
+        ok: false,
+        requestId,
+        error: {
+          type: "RATE_LIMIT_EXCEEDED",
+          message: `Too many requests. Try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.`,
+          status: 429,
+          contentType: "application/json",
+        },
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil(rateLimit.resetIn / 1000)),
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(Math.ceil(rateLimit.resetIn / 1000)),
+        },
+      }
+    );
+  }
 
   try {
     const body = await request.json();

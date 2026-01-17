@@ -194,10 +194,20 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
   dirtyByEventId: {},
 
   loadAll: async (options = {}) => {
+    // ATOMIC GUARD: Prevent race conditions from concurrent calls
     const state = get();
     if (!options.force && (state.loaded || state.isLoading)) return;
 
+    // Set loading IMMEDIATELY to block concurrent calls
     set({ isLoading: true, error: null });
+
+    // Double-check after setting (belt-and-suspenders for concurrent calls)
+    // This catches the rare case where two calls pass the first guard simultaneously
+    await Promise.resolve(); // Yield to allow other calls to see isLoading=true
+    if (!options.force && get().loaded) {
+      set({ isLoading: false });
+      return;
+    }
 
     try {
       // Fetch Clients, Stats and Students in parallel
