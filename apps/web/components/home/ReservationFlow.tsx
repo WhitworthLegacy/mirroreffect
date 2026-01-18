@@ -180,7 +180,7 @@ const copy = {
     optionStanchionsDesc: "Mise en scene premium.",
     optionAlbumDesc: "Galerie apres l'event.",
     vibeChic: "Chic & elegant",
-    vibeGold: "Glamour dore",
+    vibeGold: "Glamour doré",
     vibeRomance: "Romance classique",
     vibeParty: "Soiree festive",
     packDiscoveryDesc: "Parfait pour une réception intime.",

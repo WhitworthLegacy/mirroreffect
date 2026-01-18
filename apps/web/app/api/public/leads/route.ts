@@ -269,7 +269,8 @@ export async function POST(req: Request) {
           "Updated At": toDDMMYYYYHHmm(new Date()) || new Date().toISOString()
         };
 
-        await gasPost({
+        // Try to update first
+        const updateResult = await gasPost({
           action: "updateRowByLeadId",
           key: process.env.GAS_KEY,
           data: {
@@ -278,6 +279,35 @@ export async function POST(req: Request) {
             values: updateValues
           }
         });
+
+        // If the lead was not found (rowIndex === -1 or updated === false), create it instead
+        const wasUpdated = updateResult && (updateResult as { updated?: boolean; rowIndex?: number }).updated !== false && (updateResult as { rowIndex?: number }).rowIndex !== -1;
+
+        if (!wasUpdated) {
+          console.log(`[leads][${requestId}] Lead not found in sheet, creating new row`, { leadId });
+
+          const createValues = buildLeadValues({
+            ...baseValues,
+            "Lead ID": leadId,
+            "Created At": toDDMMYYYYHHmm(new Date()) || new Date().toISOString(),
+            Step: step || "",
+            Status: sanitize(data.status || "step_5_completed")
+          });
+
+          await gasPost({
+            action: "appendRow",
+            key: process.env.GAS_KEY,
+            data: {
+              sheetName: "Leads",
+              values: createValues
+            }
+          });
+
+          logContext.gasStatus = "success (created after update miss)";
+          console.log(`[leads][${requestId}] lead_progress create success (after update miss)`, { ...logContext, leadId });
+
+          return Response.json({ ok: true, requestId, lead_id: leadId, created: true }, { status: 200 });
+        }
 
         logContext.gasStatus = "success";
         console.log(`[leads][${requestId}] lead_progress update success`, logContext);
