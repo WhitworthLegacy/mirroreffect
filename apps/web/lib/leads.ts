@@ -49,6 +49,8 @@ export async function persistLeadToLeads({ step, status, draft, requestId }: Per
   const storedLeadId = draft.leadId || getLeadId();
   let leadId = storedLeadId;
 
+  // Only generate a new leadId if we don't have one stored
+  // We'll send it to the server which will create the row
   if (!leadId) {
     leadId = generateLeadId();
     setLeadId(leadId);
@@ -68,18 +70,20 @@ export async function persistLeadToLeads({ step, status, draft, requestId }: Per
   const utm = draft.utm || getUTMParams();
   const reqId = requestId || crypto.randomUUID();
 
-  const hasLeadRow = Boolean(storedLeadId);
-  const canCreate = !hasLeadRow && Boolean(clientEmail);
-  const canUpdate = Boolean(hasLeadRow);
-
-  if (!canCreate && !canUpdate) {
-    console.warn(`[leads][${reqId}] Skipping persistence (missing leadId/email)`);
+  // We need either an email (for new leads) or we can always try to persist
+  // The server will handle creating vs updating
+  if (!clientEmail && !storedLeadId) {
+    console.warn(`[leads][${reqId}] Skipping persistence (missing email for new lead)`);
     return { leadId, created: false };
   }
+
+  // Flag to tell server this is a new lead (no row exists yet)
+  const isNewLead = !storedLeadId;
 
   const payload: Record<string, unknown> = {
     event: "lead_progress" as const,
     lead_id: leadId,
+    is_new_lead: isNewLead,
     step: step.toString(),
     status: status || `step_${step}_completed`,
     language,
@@ -111,8 +115,7 @@ export async function persistLeadToLeads({ step, status, draft, requestId }: Per
       leadId = returnedLeadId;
     }
 
-    const created =
-      Boolean(data && (data as Record<string, unknown>).created) || (!hasLeadRow && Boolean(clientEmail));
+    const created = Boolean(data && (data as Record<string, unknown>).created);
 
     return { leadId, created };
   } catch (error) {

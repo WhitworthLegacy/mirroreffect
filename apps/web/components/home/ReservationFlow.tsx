@@ -992,8 +992,10 @@ const packs = useMemo(
         email: leadEmail,
         locale: lang,
         payload: {
+          email: leadEmail || "",
           first_name: firstName || "",
           last_name: lastName || "",
+          phone: contactPhone || "",
           date: eventDate || "",
           location: location || "",
           guests: guests || "",

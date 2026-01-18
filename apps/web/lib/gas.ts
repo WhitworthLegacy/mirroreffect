@@ -64,13 +64,44 @@ export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
   };
   const body = JSON.stringify(bodyPayload);
 
-  // POST uniquement avec body JSON, pas de paramètres GET
-  const response = await fetch(url, {
+  // POST avec redirect: "manual" pour gérer les redirects manuellement
+  // GAS redirige vers googleusercontent.com et le body est perdu avec redirect auto
+  let response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body,
     cache: "no-store",
+    redirect: "manual",
   });
+
+  // Si redirect 302, suivre manuellement en renvoyant le POST avec le body
+  if (response.status === 302 || response.status === 301 || response.status === 307 || response.status === 308) {
+    const redirectUrl = response.headers.get("location");
+    if (redirectUrl) {
+      console.log(`[GAS] Following redirect to: ${redirectUrl}`);
+      response = await fetch(redirectUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        cache: "no-store",
+        redirect: "manual",
+      });
+
+      // Deuxième redirect possible
+      if (response.status === 302 || response.status === 301 || response.status === 307 || response.status === 308) {
+        const secondRedirectUrl = response.headers.get("location");
+        if (secondRedirectUrl) {
+          console.log(`[GAS] Following second redirect to: ${secondRedirectUrl}`);
+          response = await fetch(secondRedirectUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+            cache: "no-store",
+          });
+        }
+      }
+    }
+  }
 
   // Lire le texte d'abord pour detecter HTML
   const text = await response.text();

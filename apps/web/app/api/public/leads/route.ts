@@ -33,7 +33,8 @@ import { toDDMMYYYY, toDDMMYYYYHHmm } from "@/lib/date";
   cta_id: z.string().optional(),
   cta_label: z.string().optional(),
   cta_value: z.string().optional(),
-    updated_at: z.string().optional()
+  updated_at: z.string().optional(),
+  is_new_lead: z.boolean().optional()
   }).passthrough();
 
 function sanitize(value?: string): string {
@@ -235,6 +236,8 @@ export async function POST(req: Request) {
 
   if (event === "lead_progress") {
     const clientEmail = sanitize(data.client_email || "");
+    const isNewLead = data.is_new_lead === true;
+
     if (!leadId && !clientEmail) {
       console.log(`[leads][${requestId}] lead_progress skipped (missing leadId/email):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "missing_lead_id_or_email" }, { status: 200 });
@@ -261,6 +264,34 @@ export async function POST(req: Request) {
     } as Record<string, string>;
 
     try {
+      // If client tells us this is a new lead, create directly without trying to update
+      if (isNewLead && leadId) {
+        console.log(`[leads][${requestId}] Creating new lead (is_new_lead=true)`, { leadId });
+
+        const createValues = buildLeadValues({
+          ...baseValues,
+          "Lead ID": leadId,
+          "Created At": toDDMMYYYYHHmm(new Date()) || new Date().toISOString(),
+          Step: step || "",
+          Status: sanitize(data.status || "step_5_completed")
+        });
+
+        await gasPost({
+          action: "appendRow",
+          key: process.env.GAS_KEY,
+          data: {
+            sheetName: "Leads",
+            values: createValues
+          }
+        });
+
+        logContext.gasStatus = "success (new lead)";
+        console.log(`[leads][${requestId}] lead_progress create success (new lead)`, { ...logContext, leadId });
+
+        return Response.json({ ok: true, requestId, lead_id: leadId, created: true }, { status: 200 });
+      }
+
+      // Existing lead - try to update
       if (leadId) {
         const updateValues = {
           ...baseValues,
@@ -315,6 +346,7 @@ export async function POST(req: Request) {
         return Response.json({ ok: true, requestId, lead_id: leadId }, { status: 200 });
       }
 
+      // No leadId at all - generate one and create
       const newLeadId = generateLeadId();
       const createValues = buildLeadValues({
         ...baseValues,
