@@ -64,48 +64,55 @@ export async function gasPost(payload: GasPostOptions): Promise<GasResponse> {
   };
   const body = JSON.stringify(bodyPayload);
 
-  // POST avec redirect: "manual" pour gérer les redirects manuellement
-  // GAS redirige vers googleusercontent.com et le body est perdu avec redirect auto
+  // Essayer d'abord avec redirect: "follow" (fonctionne pour la plupart des cas)
   let response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body,
     cache: "no-store",
-    redirect: "manual",
+    redirect: "follow",
   });
 
-  // Si redirect 302, suivre manuellement en renvoyant le POST avec le body
-  if (response.status === 302 || response.status === 301 || response.status === 307 || response.status === 308) {
-    const redirectUrl = response.headers.get("location");
-    if (redirectUrl) {
-      console.log(`[GAS] Following redirect to: ${redirectUrl}`);
-      response = await fetch(redirectUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-        cache: "no-store",
-        redirect: "manual",
-      });
+  // Lire la réponse
+  let text = await response.text();
+  let contentType = response.headers.get("content-type") || "";
 
-      // Deuxième redirect possible
-      if (response.status === 302 || response.status === 301 || response.status === 307 || response.status === 308) {
-        const secondRedirectUrl = response.headers.get("location");
-        if (secondRedirectUrl) {
-          console.log(`[GAS] Following second redirect to: ${secondRedirectUrl}`);
-          response = await fetch(secondRedirectUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body,
-            cache: "no-store",
-          });
-        }
+  // Si on reçoit du HTML (redirect a converti POST en GET), réessayer avec gestion manuelle
+  if (text.trim().startsWith("<") || contentType.includes("text/html")) {
+    console.log(`[GAS] HTML detected, retrying with manual redirect handling`);
+
+    // Réessayer avec redirect manuel
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      cache: "no-store",
+      redirect: "manual",
+    });
+
+    // Suivre le redirect manuellement
+    if (response.status === 302 || response.status === 301 || response.status === 307 || response.status === 308) {
+      const redirectUrl = response.headers.get("location");
+      if (redirectUrl) {
+        // Construire l'URL absolue si nécessaire
+        const absoluteUrl = redirectUrl.startsWith("http")
+          ? redirectUrl
+          : new URL(redirectUrl, url).toString();
+
+        console.log(`[GAS] Following redirect to: ${absoluteUrl}`);
+        response = await fetch(absoluteUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+          cache: "no-store",
+          redirect: "follow",
+        });
       }
     }
-  }
 
-  // Lire le texte d'abord pour detecter HTML
-  const text = await response.text();
-  const contentType = response.headers.get("content-type") || "";
+    text = await response.text();
+    contentType = response.headers.get("content-type") || "";
+  }
 
   // Vérifier le status HTTP d'abord (avant parsing)
   if (response.status >= 400) {
