@@ -3,6 +3,35 @@ import { fetchMolliePaymentStatus } from "@/lib/payments/mollie";
 
 const DEPOSIT_CENTS = 18000;
 
+// =============================================================================
+// In-memory idempotency lock (60s TTL)
+// Prevents concurrent processing of the same paymentId
+// =============================================================================
+const processingLocks = new Map<string, number>();
+const LOCK_TTL_MS = 60_000; // 60 seconds
+
+function acquireLock(paymentId: string): boolean {
+  const now = Date.now();
+  // Cleanup expired locks
+  for (const [key, timestamp] of processingLocks.entries()) {
+    if (now - timestamp > LOCK_TTL_MS) {
+      processingLocks.delete(key);
+    }
+  }
+  // Check if lock exists and is still valid
+  const existingLock = processingLocks.get(paymentId);
+  if (existingLock && now - existingLock < LOCK_TTL_MS) {
+    return false; // Lock already held
+  }
+  // Acquire lock
+  processingLocks.set(paymentId, now);
+  return true;
+}
+
+function releaseLock(paymentId: string): void {
+  processingLocks.delete(paymentId);
+}
+
 // Convertir cents en euros formaté
 function centsToEuros(cents: number): string {
   return (cents / 100).toFixed(2).replace(".", ",");
@@ -216,8 +245,25 @@ export async function POST(req: Request) {
 
   console.log(`[mollie-webhook] Processing payment:`, logContext);
 
+  // =============================================================================
+  // Idempotency Layer 1: In-memory lock (60s TTL)
+  // Prevents concurrent/duplicate webhook calls for the same paymentId
+  // =============================================================================
+  if (!acquireLock(molliePaymentId)) {
+    console.log(`[mollie-webhook] Lock already held, skipping:`, logContext);
+    return Response.json({
+      ok: true,
+      requestId,
+      received: true,
+      skipped: true,
+      reason: "lock_held"
+    });
+  }
+
   try {
-    // Idempotence: vérifier si payment déjà traité dans Payments sheet
+    // =============================================================================
+    // Idempotency Layer 2: Check Payments sheet for existing "paid" status
+    // =============================================================================
     const paymentsResult = await gasPost({
       action: "readSheet",
       key: process.env.GAS_KEY,
@@ -239,7 +285,8 @@ export async function POST(req: Request) {
         if (existingPayment && String(existingPayment[statusIdx]).trim().toLowerCase() === "paid") {
           // Déjà traité
           console.log(`[mollie-webhook] Payment already processed:`, logContext);
-          return Response.json({ ok: true, requestId, received: true, skipped: true });
+          releaseLock(molliePaymentId);
+          return Response.json({ ok: true, requestId, received: true, skipped: true, reason: "already_paid" });
         }
       }
     }
@@ -251,6 +298,7 @@ export async function POST(req: Request) {
         ...logContext,
         mollieApiStatus: "not_found"
       });
+      releaseLock(molliePaymentId);
       return Response.json(
         {
           ok: false,
@@ -327,6 +375,7 @@ export async function POST(req: Request) {
         });
       }
 
+      releaseLock(molliePaymentId);
       return Response.json({ ok: true, requestId, received: true, status: payment.status });
     }
 
@@ -337,6 +386,7 @@ export async function POST(req: Request) {
         expected: DEPOSIT_CENTS,
         received: payment.amount_cents
       });
+      releaseLock(molliePaymentId);
       return Response.json(
         {
           ok: false,
@@ -354,6 +404,7 @@ export async function POST(req: Request) {
     const meta = payment.metadata || {};
     if (!meta.event_id) {
       console.warn(`[mollie-webhook] Missing event_id in metadata:`, logContext);
+      releaseLock(molliePaymentId);
       return Response.json(
         {
           ok: false,
@@ -385,6 +436,7 @@ export async function POST(req: Request) {
         metadataKeys: meta ? Object.keys(meta) : []
       });
       // Return received:true mais NE PAS append Clients
+      releaseLock(molliePaymentId);
       return Response.json({
         ok: true,
         requestId,
@@ -622,6 +674,9 @@ export async function POST(req: Request) {
       duration: `${duration}ms`
     });
 
+    // Release lock on success (allow future retries if needed)
+    releaseLock(molliePaymentId);
+
     return Response.json({
       ok: true,
       requestId,
@@ -641,6 +696,9 @@ export async function POST(req: Request) {
       stack: error instanceof Error ? error.stack : undefined,
       duration: `${duration}ms`
     });
+
+    // Release lock on error to allow retry
+    releaseLock(molliePaymentId);
 
     return Response.json(
       {

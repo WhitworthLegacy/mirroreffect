@@ -82,23 +82,102 @@ function readSheetForAdmin_(sh, head, vals, sheetName) {
 
 /**
  * Ajoute une ligne à la fin
+ * Supporte values comme objet {header: value} ou comme array
  */
 function appendRowForAdmin_(sh, head, sheetName, values) {
   const ss = SpreadsheetApp.openById(SS_ID);
-  
+
+  // Déterminer la feuille cible
+  let targetSheet;
   if (sheetName === 'Clients') {
-    sh.appendRow(values);
-    return { success: true };
+    targetSheet = sh;
+  } else {
+    targetSheet = ss.getSheetByName(sheetName);
+    if (!targetSheet) {
+      return { error: 'Sheet "' + sheetName + '" not found' };
+    }
   }
-  
-  // Pour les autres feuilles
-  const targetSheet = ss.getSheetByName(sheetName);
-  if (!targetSheet) {
-    return { error: 'Sheet "' + sheetName + '" not found' };
+
+  // Lire les headers de la feuille cible
+  const targetHeaders = targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+
+  // Idempotency checks pour Payments, Clients, Notifications
+  if (sheetName === 'Payments' || sheetName === 'Clients' || sheetName === 'Notifications') {
+    const existingData = targetSheet.getDataRange().getValues();
+    const existingHeaders = existingData[0].map(h => String(h).trim());
+    const existingRows = existingData.slice(1);
+
+    if (sheetName === 'Payments') {
+      // Check if Payment ID already exists
+      const paymentIdIdx = existingHeaders.indexOf('Payment ID');
+      if (paymentIdIdx >= 0) {
+        const incomingPaymentId = typeof values === 'object' && !Array.isArray(values)
+          ? values['Payment ID']
+          : (Array.isArray(values) ? values[paymentIdIdx] : null);
+        if (incomingPaymentId) {
+          const exists = existingRows.some(row => String(row[paymentIdIdx]).trim() === String(incomingPaymentId).trim());
+          if (exists) {
+            return { success: true, action: 'skipped', reason: 'Payment ID already exists: ' + incomingPaymentId };
+          }
+        }
+      }
+    }
+
+    if (sheetName === 'Clients') {
+      // Check if Event ID already exists
+      const eventIdIdx = existingHeaders.indexOf('Event ID');
+      if (eventIdIdx >= 0) {
+        const incomingEventId = typeof values === 'object' && !Array.isArray(values)
+          ? values['Event ID']
+          : (Array.isArray(values) ? values[eventIdIdx] : null);
+        if (incomingEventId) {
+          const exists = existingRows.some(row => String(row[eventIdIdx]).trim() === String(incomingEventId).trim());
+          if (exists) {
+            return { success: true, action: 'skipped', reason: 'Event ID already exists: ' + incomingEventId };
+          }
+        }
+      }
+    }
+
+    if (sheetName === 'Notifications') {
+      // Check if (Event ID, Template) pair already exists
+      const eventIdIdx = existingHeaders.indexOf('Event ID');
+      const templateIdx = existingHeaders.indexOf('Template');
+      if (eventIdIdx >= 0 && templateIdx >= 0) {
+        const incomingEventId = typeof values === 'object' && !Array.isArray(values)
+          ? values['Event ID']
+          : (Array.isArray(values) ? values[eventIdIdx] : null);
+        const incomingTemplate = typeof values === 'object' && !Array.isArray(values)
+          ? values['Template']
+          : (Array.isArray(values) ? values[templateIdx] : null);
+        if (incomingEventId && incomingTemplate) {
+          const exists = existingRows.some(row =>
+            String(row[eventIdIdx]).trim() === String(incomingEventId).trim() &&
+            String(row[templateIdx]).trim() === String(incomingTemplate).trim()
+          );
+          if (exists) {
+            return { success: true, action: 'skipped', reason: 'Notification already exists: ' + incomingEventId + ' / ' + incomingTemplate };
+          }
+        }
+      }
+    }
   }
-  
-  targetSheet.appendRow(values);
-  return { success: true };
+
+  // Si values est un objet (keyed by headers), le convertir en array
+  let rowArray;
+  if (typeof values === 'object' && !Array.isArray(values)) {
+    // Map object keys to column positions based on target sheet headers
+    rowArray = targetHeaders.map(header => {
+      return values[header] !== undefined ? values[header] : '';
+    });
+  } else if (Array.isArray(values)) {
+    rowArray = values;
+  } else {
+    return { error: 'Invalid values format: expected object or array' };
+  }
+
+  targetSheet.appendRow(rowArray);
+  return { success: true, action: 'appended' };
 }
 
 /**

@@ -1,6 +1,6 @@
 # BLUEPRINT MIRROREFFECT
-**Version:** 2.0
-**Date:** 2026-01-17
+**Version:** 2.1
+**Date:** 2026-01-18
 **Auteur:** Principal Engineer + Solution Architect
 
 ---
@@ -243,9 +243,9 @@ SUPABASE_SERVICE_ROLE_KEY=eyJxxxxxxxxxxxxxxx
 |-------|---------|------|--------------|---------------|--------------|
 | `/api/public/checkout` | POST | None | `CheckoutBodySchema` | `{ ok, checkout_url, event_id, mollie_payment_id }` | Mollie payment créé, Payments sheet append |
 | `/api/public/availability` | GET | None | `PublicAvailabilityQuerySchema` | `PublicAvailabilityResponseSchema` | None |
-| `/api/public/leads` | POST | None | `LeadPayloadSchema` | `{ ok, lead_id, created? }` | Leads sheet append/update |
+| `/api/public/leads` | POST | None | `LeadPayloadSchema` | `{ ok, lead_id, created? }` | Leads sheet append/update (avec `is_new_lead` flag pour upsert) |
 | `/api/public/booking-status` | GET | None | `{ event_id: string }` | `{ ok, event_id, deposit_paid, payment_status }` | None |
-| `/api/public/promo-intent` | POST | None | `PromoIntentSchema` | `{ queued: true }` | Notifications sheet append |
+| `/api/public/promo-intent` | POST | None | `PromoIntentSchema` | `{ queued: true, lead_id? }` | Notifications sheet append + Leads sheet append (non-blocking) |
 
 ### Webhook API (`/api/webhooks/*`)
 
@@ -281,6 +281,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJxxxxxxxxxxxxxxx
   step?: string,
   leadId?: string,
   lead_id?: string,
+  is_new_lead?: boolean,        // Flag pour créer directement sans essayer update
   language?: string,
   client_name?: string,
   client_email?: string,        // email
@@ -301,9 +302,21 @@ SUPABASE_SERVICE_ROLE_KEY=eyJxxxxxxxxxxxxxxx
 {
   email: string,              // email
   locale: "fr" | "nl",
-  payload?: Record<string, string>
+  payload?: {
+    email?: string,
+    first_name?: string,
+    last_name?: string,
+    phone?: string,
+    date?: string,
+    location?: string,
+    guests?: string,
+    theme?: string,
+    priority?: string
+  }
 }
 ```
+
+**Note:** `promo-intent` écrit également dans la sheet Leads (non-blocking) en plus de Notifications.
 
 ---
 
@@ -551,16 +564,60 @@ Template | Email | Event ID | Locale | Payload | Send After | Status | Created A
 }
 ```
 
-### Gestion des Redirects
+### Gestion des Redirects (CRITIQUE)
 
-GAS retourne 302/303 après POST. Le client (`lib/gas.ts`) gère:
+GAS retourne 302 après POST vers `googleusercontent.com`. Le problème: `fetch` avec `redirect: "follow"` convertit le POST en GET, perdant le body JSON.
+
+**Solution implémentée dans `lib/gas.ts`:**
 
 ```typescript
-// 1. POST avec redirect: "manual"
-// 2. Si 302/303 → Follow as GET
-// 3. Parse JSON response
-// 4. Detect HTML errors (405 page not found)
+// 1. Essayer d'abord avec redirect: "follow" (fonctionne pour readSheet)
+let response = await fetch(url, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body,
+  redirect: "follow",
+});
+
+let text = await response.text();
+
+// 2. Si HTML détecté (redirect a converti POST → GET), réessayer avec gestion manuelle
+if (text.trim().startsWith("<") || contentType.includes("text/html")) {
+  console.log(`[GAS] HTML detected, retrying with manual redirect handling`);
+
+  // Réessayer avec redirect manuel
+  response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    redirect: "manual",
+  });
+
+  // Suivre le redirect manuellement en préservant le POST + body
+  if (response.status === 302) {
+    const redirectUrl = response.headers.get("location");
+    if (redirectUrl) {
+      const absoluteUrl = redirectUrl.startsWith("http")
+        ? redirectUrl
+        : new URL(redirectUrl, url).toString();
+
+      response = await fetch(absoluteUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        redirect: "follow",
+      });
+    }
+  }
+
+  text = await response.text();
+}
 ```
+
+**Pourquoi cette approche:**
+- `readSheet` fonctionne avec `redirect: "follow"` (le body n'est pas nécessaire après redirect)
+- `appendRow`/`updateRow` nécessitent le body, donc gestion manuelle du redirect
+- On essaie d'abord la méthode simple, puis fallback si HTML détecté
 
 ### Idempotence GAS
 
@@ -716,24 +773,39 @@ curl -X POST "$GAS_WEBAPP_URL" ... | jq '[.values[] | .[0]] | group_by(.) | map(
 
 **Fix permanent:** Implémenter idempotence (check Event ID exists avant append).
 
-### Runbook 3: "GAS 302 redirect"
+### Runbook 3: "GAS 302 redirect / HTML au lieu de JSON"
 
-**Symptôme:** Erreur "GAS returned HTML instead of JSON".
+**Symptôme:** Erreur "GAS returned HTML instead of JSON" ou "Page introuvable".
 
-**Cause:** URL GAS mal formée ou deployment ID incorrect.
+**Causes possibles:**
+1. URL GAS mal formée ou deployment ID incorrect
+2. Redirect 302 perd le body POST (problème résolu dans gas.ts v2.1)
+3. Permissions GAS incorrectes ("Anyone" requis)
 
-**Fix:**
+**Diagnostic:**
 ```bash
-# 1. Vérifier URL
-echo $GAS_WEBAPP_URL
+# 1. Test GET (doGet) - doit retourner JSON
+curl -L "https://script.google.com/macros/s/YOUR_ID/exec"
+# Expected: {"status":"ok"}
 
-# 2. Tester directement
-curl -X POST "$GAS_WEBAPP_URL" \
+# 2. Test POST avec --post302 (curl suit redirect en gardant POST)
+curl -L --post302 -X POST "$GAS_WEBAPP_URL" \
   -H "Content-Type: application/json" \
   -d '{"action":"readSheet","key":"'$GAS_KEY'","data":{"sheetName":"Clients"}}'
 
-# 3. Si 302 → re-deploy GAS et mettre à jour URL
+# Si GET fonctionne mais POST retourne HTML → problème de redirect
 ```
+
+**Fix (si problème de redirect):**
+Le code `lib/gas.ts` gère maintenant automatiquement:
+1. Essaie avec `redirect: "follow"`
+2. Si HTML détecté, réessaie avec `redirect: "manual"` puis suit le redirect manuellement en préservant le POST body
+
+**Fix (si problème de permissions GAS):**
+1. GAS → Deploy → Manage deployments
+2. Edit → Who has access: **Anyone** (pas "Anyone with Google account")
+3. Version: **New version**
+4. Deploy → Copier nouvelle URL → Mettre à jour Vercel
 
 ### Runbook 4: "Domain/DNS/Vercel"
 
@@ -1082,6 +1154,12 @@ User                Web                  Mollie              GAS/Sheets
 
 ---
 
-**Fin du Blueprint v2.0**
+**Fin du Blueprint v2.1**
 
-*Document généré le 2026-01-17. Vérifier avec le code source pour les dernières modifications.*
+### Changelog v2.1 (2026-01-18)
+- **Fix GAS redirect**: Gestion robuste des redirects 302 qui perdaient le body POST
+- **Leads is_new_lead flag**: Nouveau flag pour créer directement sans essayer update (upsert pattern)
+- **Promo-intent Leads**: Écrit maintenant dans Leads sheet en plus de Notifications (non-blocking)
+- **Runbook amélioré**: Diagnostic détaillé pour les problèmes GAS/HTML
+
+*Document mis à jour le 2026-01-18. Vérifier avec le code source pour les dernières modifications.*
