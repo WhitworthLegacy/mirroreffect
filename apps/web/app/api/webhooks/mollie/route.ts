@@ -342,12 +342,17 @@ export async function POST(req: Request) {
 
             if (rowIndex >= 0) {
               // Construire values array dans l'ordre des colonnes
-              const valuesArray = headers.map((header) => {
-                if (header === "Payment ID") return molliePaymentId;
-                if (header === "Status") return payment.status;
-                if (header === "Updated At") return new Date().toISOString();
-                return ""; // Garder les autres colonnes vides (sera ignoré par updateRow)
-              });
+              // IMPORTANT: updateRowForAdmin_ fait [id, ...values], donc on EXCLUT Payment ID
+              const existingRow = rows[rowIndex + 1] as unknown[];
+              const valuesArray = headers
+                .filter((header) => header !== "Payment ID")
+                .map((header) => {
+                  const idx = headers.indexOf(header);
+                  if (header === "Status") return payment.status;
+                  if (header === "Updated At") return new Date().toISOString();
+                  // Garder les valeurs existantes pour les autres colonnes
+                  return existingRow[idx] || "";
+                });
 
               await gasPost({
                 action: "updateRow",
@@ -510,51 +515,10 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3) Update Leads si trouvé (AVANT append Clients)
-    if (leadIdFound && leadId) {
-      try {
-        await updateLeadRow(leadId, eventId);
-        console.log(`[mollie-webhook] Lead updated (Status=converted):`, {
-          ...logContext,
-          email: clientEmail,
-          leadId,
-          eventId,
-          leadIdFound: true
-        });
-      } catch (error) {
-        console.error(`[mollie-webhook] Failed to update lead:`, {
-          ...logContext,
-          email: clientEmail,
-          leadId,
-          error: error instanceof Error ? error.message : String(error),
-          leadIdFound: true
-        });
-        // Continue quand même (non-blocking) mais on log l'erreur
-      }
-    }
-
-    // 4) Append Clients (toujours, même si lead non trouvé)
-    try {
-      await appendClientRow(eventId, clientEmail, meta, paidAt);
-      console.log(`[mollie-webhook] Client row appended:`, {
-        ...logContext,
-        email: clientEmail,
-        eventId,
-        leadIdFound,
-        appendClientsSuccess: true
-      });
-    } catch (error) {
-      console.error(`[mollie-webhook] Failed to append client row:`, {
-        ...logContext,
-        email: clientEmail,
-        error: error instanceof Error ? error.message : String(error),
-        appendClientsSuccess: false
-      });
-      // Erreur critique - on throw pour que le webhook soit retenté
-      throw error;
-    }
-
-    // 5) Update payment status dans Payments sheet (CRITIQUE: doit être fait)
+    // =============================================================================
+    // 3) FIRST: Update Payments to "paid" BEFORE any appends
+    // This is CRITICAL for idempotency - the status check at the top relies on this
+    // =============================================================================
     try {
       // Lire Payments pour trouver la ligne et mapper les colonnes
       const paymentsResult = await gasPost({
@@ -575,16 +539,19 @@ export async function POST(req: Request) {
 
           if (rowIndex >= 0) {
             // Construire values array dans l'ordre des colonnes
+            // IMPORTANT: updateRowForAdmin_ fait [id, ...values], donc on EXCLUT Payment ID du array
             const existingRow = rows[rowIndex + 1] as unknown[];
-            const valuesArray = headers.map((header, idx) => {
-              if (header === "Payment ID") return molliePaymentId;
-              if (header === "Status") return "paid";
-              if (header === "Paid At") return paidAt;
-              if (header === "Updated At") return new Date().toISOString();
-              if (header === "Provider Payment ID") return molliePaymentId; // Stocker aussi le Payment ID de Mollie
-              // Garder les valeurs existantes pour les autres colonnes
-              return existingRow[idx] || "";
-            });
+            const valuesArray = headers
+              .filter((header) => header !== "Payment ID") // Exclure car GAS l'ajoute via `id`
+              .map((header) => {
+                const idx = headers.indexOf(header);
+                if (header === "Status") return "paid";
+                if (header === "Paid At") return paidAt;
+                if (header === "Updated At") return new Date().toISOString();
+                if (header === "Provider Payment ID") return molliePaymentId;
+                // Garder les valeurs existantes pour les autres colonnes
+                return existingRow[idx] || "";
+              });
 
             await gasPost({
               action: "updateRow",
@@ -596,7 +563,7 @@ export async function POST(req: Request) {
               }
             });
 
-            console.log(`[mollie-webhook] Payment updated in Payments sheet:`, {
+            console.log(`[mollie-webhook] Payment updated to PAID (idempotency marker set):`, {
               ...logContext,
               status: "paid",
               paidAt,
@@ -620,7 +587,51 @@ export async function POST(req: Request) {
       throw error;
     }
 
-    // 5) Ajouter notifications
+    // 4) Update Leads si trouvé
+    if (leadIdFound && leadId) {
+      try {
+        await updateLeadRow(leadId, eventId);
+        console.log(`[mollie-webhook] Lead updated (Status=converted):`, {
+          ...logContext,
+          email: clientEmail,
+          leadId,
+          eventId,
+          leadIdFound: true
+        });
+      } catch (error) {
+        console.error(`[mollie-webhook] Failed to update lead:`, {
+          ...logContext,
+          email: clientEmail,
+          leadId,
+          error: error instanceof Error ? error.message : String(error),
+          leadIdFound: true
+        });
+        // Continue quand même (non-blocking) mais on log l'erreur
+      }
+    }
+
+    // 5) Append Clients (toujours, même si lead non trouvé)
+    try {
+      await appendClientRow(eventId, clientEmail, meta, paidAt);
+      console.log(`[mollie-webhook] Client row appended:`, {
+        ...logContext,
+        email: clientEmail,
+        eventId,
+        leadIdFound,
+        appendClientsSuccess: true
+      });
+    } catch (error) {
+      console.error(`[mollie-webhook] Failed to append client row:`, {
+        ...logContext,
+        email: clientEmail,
+        error: error instanceof Error ? error.message : String(error),
+        appendClientsSuccess: false
+      });
+      // Erreur critique - on throw pour que le webhook soit retenté
+      throw error;
+    }
+
+    // 6) Ajouter notifications
     if (clientEmail) {
       await gasPost({
         action: "appendRow",
