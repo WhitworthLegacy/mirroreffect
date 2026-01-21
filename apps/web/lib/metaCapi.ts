@@ -173,6 +173,8 @@ export async function sendMetaEvent(event: MetaEventData): Promise<{ success: bo
         custom_data: Object.keys(customData).length > 0 ? customData : undefined,
       },
     ],
+    // Test event code for debugging - remove in production
+    test_event_code: "TEST11352",
   };
 
   const url = `https://graph.facebook.com/${API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;
