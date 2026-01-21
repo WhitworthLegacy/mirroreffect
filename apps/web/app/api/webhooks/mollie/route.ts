@@ -1,5 +1,6 @@
 import { gasPost } from "@/lib/gas";
 import { fetchMolliePaymentStatus } from "@/lib/payments/mollie";
+import { trackPurchase } from "@/lib/metaCapi";
 
 const DEPOSIT_CENTS = 18000;
 
@@ -663,6 +664,34 @@ export async function POST(req: Request) {
             "Created At": new Date().toISOString()
           }
         }
+      });
+    }
+
+    // 7) Meta Conversions API - Track Purchase event
+    try {
+      const totalCents = meta.total_cents ? Number(meta.total_cents) : DEPOSIT_CENTS;
+      const totalEuros = totalCents / 100;
+
+      await trackPurchase({
+        email: clientEmail,
+        phone: meta.client_phone as string | undefined,
+        firstName: meta.client_name as string | undefined,
+        value: totalEuros,
+        currency: "EUR",
+        orderId: eventId,
+        contentName: (meta.pack_code as string) || "MirrorEffect Booking",
+      });
+
+      console.log(`[mollie-webhook] Meta CAPI Purchase event sent:`, {
+        ...logContext,
+        eventId,
+        value: totalEuros,
+      });
+    } catch (error) {
+      // Non-blocking - log but don't fail the webhook
+      console.error(`[mollie-webhook] Meta CAPI error (non-blocking):`, {
+        ...logContext,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
 

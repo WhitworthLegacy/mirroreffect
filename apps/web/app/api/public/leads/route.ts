@@ -2,6 +2,7 @@ import { z } from "zod";
 import { gasPost } from "@/lib/gas";
 import { generateLeadId } from "@/lib/date-utils";
 import { toDDMMYYYY, toDDMMYYYYHHmm } from "@/lib/date";
+import { trackLead } from "@/lib/metaCapi";
 
   const LeadPayloadSchema = z.object({
     event: z.enum(["button_click", "lead_progress", "cta_update"]).optional().default("button_click"),
@@ -288,6 +289,17 @@ export async function POST(req: Request) {
         logContext.gasStatus = "success (new lead)";
         console.log(`[leads][${requestId}] lead_progress create success (new lead)`, { ...logContext, leadId });
 
+        // Meta CAPI - Track Lead event (non-blocking)
+        trackLead({
+          email: clientEmail || undefined,
+          phone: sanitize(data.client_phone || "") || undefined,
+          firstName: sanitize(data.client_name || "") || undefined,
+          leadId,
+          value: data.total_euros ? parseFloat(data.total_euros) : undefined,
+          clientIp: req.headers.get("x-forwarded-for")?.split(",")[0] || undefined,
+          userAgent: req.headers.get("user-agent") || undefined,
+        }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI error:`, err));
+
         return Response.json({ ok: true, requestId, lead_id: leadId, created: true }, { status: 200 });
       }
 
@@ -337,6 +349,17 @@ export async function POST(req: Request) {
           logContext.gasStatus = "success (created after update miss)";
           console.log(`[leads][${requestId}] lead_progress create success (after update miss)`, { ...logContext, leadId });
 
+          // Meta CAPI - Track Lead event (non-blocking)
+          trackLead({
+            email: clientEmail || undefined,
+            phone: sanitize(data.client_phone || "") || undefined,
+            firstName: sanitize(data.client_name || "") || undefined,
+            leadId,
+            value: data.total_euros ? parseFloat(data.total_euros) : undefined,
+            clientIp: req.headers.get("x-forwarded-for")?.split(",")[0] || undefined,
+            userAgent: req.headers.get("user-agent") || undefined,
+          }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI error:`, err));
+
           return Response.json({ ok: true, requestId, lead_id: leadId, created: true }, { status: 200 });
         }
 
@@ -370,6 +393,17 @@ export async function POST(req: Request) {
 
       logContext.gasStatus = "success";
       console.log(`[leads][${requestId}] lead_progress create success`, { ...logContext, leadId: newLeadId });
+
+      // Meta CAPI - Track Lead event (non-blocking)
+      trackLead({
+        email: clientEmail || undefined,
+        phone: sanitize(data.client_phone || "") || undefined,
+        firstName: sanitize(data.client_name || "") || undefined,
+        leadId: newLeadId,
+        value: data.total_euros ? parseFloat(data.total_euros) : undefined,
+        clientIp: req.headers.get("x-forwarded-for")?.split(",")[0] || undefined,
+        userAgent: req.headers.get("user-agent") || undefined,
+      }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI error:`, err));
 
       return Response.json({ ok: true, requestId, lead_id: newLeadId, created: true }, { status: 200 });
     } catch (error) {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { gasPost } from "@/lib/gas";
+import { trackInitiateCheckout } from "@/lib/metaCapi";
 
 const CheckoutBodySchema = z.object({
   language: z.enum(["fr", "nl"]).default("fr"),
@@ -186,6 +187,18 @@ export async function POST(req: Request) {
 
     // 5) Supprimer promo notifications en attente
     // Note: On ne peut pas facilement delete via GAS, on marquera comme cancelled dans le webhook si besoin
+
+    // 6) Meta CAPI - Track InitiateCheckout event (non-blocking)
+    trackInitiateCheckout({
+      email: b.client_email,
+      phone: b.client_phone,
+      firstName: b.client_name,
+      eventId,
+      value: total_cents / 100,
+      contentName: b.pack_code,
+      clientIp: req.headers.get("x-forwarded-for")?.split(",")[0] || undefined,
+      userAgent: req.headers.get("user-agent") || undefined,
+    }).catch((err) => console.error(`[checkout] Meta CAPI error:`, err));
 
     return Response.json({
       ok: true,
