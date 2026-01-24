@@ -21,7 +21,7 @@ const copy = {
   fr: {
     badge: "Réservation directe en ligne",
     title: "Votre photobooth miroir, réservé en quelques minutes.",
-    subtitle: "Un parcours émotionnel et clair, avec acompte de 180€ puis solde le jour J.",
+    subtitle: "Un parcours émotionnel et clair, avec acompte de 200€ puis solde le jour J.",
     stories: [
       {
         title: "Le miroir qui fait parler tout le mariage.",
@@ -141,15 +141,15 @@ const copy = {
     step5Phone: "Téléphone",
     step6Title: "6. Choisissez votre pack.",
     step6Desc: "Prix promo valables pour une réservation directe aujourd'hui.",
-    depositLine: "Acompte de 180€ aujourd'hui. Solde le jour J.",
-    transportPackNote: "+ 90€ de frais de transport",
+    depositLine: "Acompte de 200€ aujourd'hui. Solde le jour J.",
+    transportPackNote: "+ 100€ de frais de transport",
     frameTitle: "Idées de cadres photo",
     frameDesc: "Voici des idées, ne vous inquiétez pas : on personnalise tout pour vous !",
     step4More: "Besoin de plus d'impressions ?",
     step4MoreDesc: "Cliquez pour une proposition sur-mesure.",
     step4MoreCta: "Cliquez ici pour demander",
     step7Title: "7. Finalisez votre réservation.",
-    step7Desc: "Acompte de 180€ aujourd'hui. Solde le jour J.",
+    step7Desc: "Acompte de 200€ aujourd'hui. Solde le jour J.",
     nameLabel: "Prénom et nom",
     emailLabel: "Email",
     phoneLabel: "Telephone",
@@ -157,13 +157,13 @@ const copy = {
     recapPack: "Pack",
     recapOptions: "Options",
     recapTransport: "Transport",
-    transportNote: "Frais de transport fixes: 90€",
+    transportNote: "Frais de transport fixes: 100€",
     recapBalance: "Solde restant",
-    recapDeposit: "Acompte aujourd'hui: 180€",
+    recapDeposit: "Acompte aujourd'hui: 200€",
     checkoutError: "Une erreur est survenue. Merci de réessayer.",
     back: "Retour",
     next: "Continuer",
-    payDeposit: "Payer l'acompte de 180€",
+    payDeposit: "Payer l'acompte de 200€",
     step6Note: "Vos coordonnées saisies au début seront utilisées pour confirmer la réservation.",
     proofQuote: "\"Le miroir a immediatement réuni nos invites.\"",
     proofAuthor: "Cools Florence — Mariage 21/09/2024",
@@ -210,7 +210,7 @@ const copy = {
   nl: {
     badge: "Direct online reserveren",
     title: "Uw spiegel photobooth, in enkele minuten gereserveerd.",
-    subtitle: "Emotioneel en duidelijk parcours, met voorschot van €180 en saldo op de dag zelf.",
+    subtitle: "Emotioneel en duidelijk parcours, met voorschot van €200 en saldo op de dag zelf.",
     stories: [
       {
         title: "De spiegel die uw huwelijk doet schitteren.",
@@ -329,15 +329,15 @@ const copy = {
     step5Phone: "Telefoon",
     step6Title: "6. Kies uw pakket.",
     step6Desc: "Promo-prijzen voor directe reservatie vandaag.",
-    depositLine: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
-    transportPackNote: "+ €90 transportkosten",
+    depositLine: "Voorschot van €200 vandaag. Saldo op de dag zelf.",
+    transportPackNote: "+ €100 transportkosten",
     frameTitle: "Voorbeelden van fotokaders",
     frameDesc: "Enkele ideeën, geen zorgen: wij personaliseren alles voor u.",
     step4More: "Meer afdrukken nodig?",
     step4MoreDesc: "Klik voor een voorstel op maat.",
     step4MoreCta: "Klik hier om aan te vragen",
     step7Title: "7. Rond uw reservatie af.",
-    step7Desc: "Voorschot van €180 vandaag. Saldo op de dag zelf.",
+    step7Desc: "Voorschot van €200 vandaag. Saldo op de dag zelf.",
     nameLabel: "Voornaam en naam",
     emailLabel: "E-mail",
     phoneLabel: "Telefoon",
@@ -345,14 +345,14 @@ const copy = {
     recapPack: "Pakket",
     recapOptions: "Opties",
     recapTransport: "Transport",
-    transportNote: "Transportkosten vast: €90",
+    transportNote: "Transportkosten vast: €100",
     recapTotal: "Totaal",
     recapBalance: "Resterend saldo",
-    recapDeposit: "Voorschot vandaag: €180",
+    recapDeposit: "Voorschot vandaag: €200",
     checkoutError: "Er ging iets mis. Probeer opnieuw.",
     back: "Terug",
     next: "Verder",
-    payDeposit: "Voorschot €180 betalen",
+    payDeposit: "Voorschot €200 betalen",
     step6Note: "Uw gegevens van het begin worden gebruikt om de reservatie te bevestigen.",
     proofQuote: "\"De spiegel bracht onze gasten meteen samen.\"",
     proofAuthor: "Cools Florence — Huwelijk 21/09/2024",
@@ -409,24 +409,21 @@ const packs = useMemo(
       {
         code: "DISCOVERY" as PackCode,
         name: t("packDiscoveryName"),
-        promo: 390,
-        original: 450,
+        price: 450,
         description: t("packDiscoveryDesc"),
         included: [t("impressions200"), t("includeRedCarpet"), t("includeStanchions"), t("includeFrame")]
       },
       {
         code: "ESSENTIAL" as PackCode,
         name: t("packEssentialName"),
-        promo: 440,
-        original: 500,
+        price: 500,
         description: t("packEssentialDesc"),
         included: [t("impressions400"), t("includeRedCarpet"), t("includeStanchions"), t("includeFrame")]
       },
       {
         code: "PREMIUM" as PackCode,
         name: t("packPremiumName"),
-        promo: 490,
-        original: 550,
+        price: 550,
         description: t("packPremiumDesc"),
         included: [t("impressions800"), t("includeRedCarpet"), t("includeStanchions"), t("includeFrame")]
       }
@@ -639,10 +636,10 @@ const packs = useMemo(
     stanchionsColor
   ]);
 
-  const transportFee = 90;
+  const transportFee = 100;
   const selectedPack = packs.find((pack) => pack.code === packCode) ?? null;
-  const totalPrice = selectedPack ? selectedPack.promo + transportFee : null;
-  const depositAmount = 180;
+  const totalPrice = selectedPack ? selectedPack.price + transportFee : null;
+  const depositAmount = 200;
   const balancePrice = totalPrice !== null ? Math.max(0, totalPrice - depositAmount) : null;
 
   // Helper pour persister le draft à chaque changement important
@@ -1350,7 +1347,7 @@ const packs = useMemo(
                       setPackCode(pack.code);
                       void trackCTA(`pack_${pack.code}`, pack.name, 6, {
                         pack_code: pack.code,
-                        price: pack.promo,
+                        price: pack.price,
                         action: "selected"
                       });
                     }}
@@ -1368,9 +1365,8 @@ const packs = useMemo(
                         </div>
                       ))}
                     </div>
-                    <div className="mt-3 flex items-baseline gap-2">
-                      <span className="text-2xl font-black text-[#12130F]">{pack.promo}€</span>
-                      <span className="text-xs text-[#9a9a9a] line-through">{pack.original}€</span>
+                    <div className="mt-3">
+                      <span className="text-2xl font-black text-[#12130F]">{pack.price}€</span>
                     </div>
                   </button>
                 ))}
