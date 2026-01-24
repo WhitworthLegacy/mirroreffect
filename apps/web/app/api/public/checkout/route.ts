@@ -18,7 +18,7 @@ const CheckoutBodySchema = z.object({
   event_id: z.string().optional() // Pour compatibilité
 });
 
-const DEPOSIT_CENTS = 18000;
+const DEPOSIT_CENTS = 20000;
 
 // Générer un ID unique pour l'event
 function generateEventId(): string {
@@ -95,11 +95,11 @@ export async function POST(req: Request) {
 
   try {
     // 1) Pricing (MVP hardcoded)
-    const transport_fee_cents = b.zone_code === "BE" ? 9000 : 11000;
+    const transport_fee_cents = b.zone_code === "BE" ? 10000 : 15000;
     const pack_total_cents =
-      b.pack_code === "DISCOVERY" ? 39000 :
-      b.pack_code === "ESSENTIAL" ? 44000 :
-      49000;
+      b.pack_code === "DISCOVERY" ? 45000 :
+      b.pack_code === "ESSENTIAL" ? 50000 :
+      55000;
     const total_cents = transport_fee_cents + pack_total_cents;
     const balance_due_cents = total_cents - DEPOSIT_CENTS;
 

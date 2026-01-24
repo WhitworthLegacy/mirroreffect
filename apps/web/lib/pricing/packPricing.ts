@@ -1,9 +1,9 @@
 export type PackCode = "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
 
 const PACK_PRICES: Record<PackCode, number> = {
-  DISCOVERY: 480,
-  ESSENTIAL: 530,
-  PREMIUM: 580
+  DISCOVERY: 550,
+  ESSENTIAL: 600,
+  PREMIUM: 650
 };
 
 export function getFinalPriceByPack(packCode?: PackCode): number {
