@@ -300,7 +300,7 @@ export default function SeoPage({ params }: PageProps) {
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-3">
                 {prevArticle && (
-                  <a className="btn btn-ghost" href={`/${normalizeSlug(prevArticle.slug)}`}>
+                  <a className="btn btn-dark" href={`/${normalizeSlug(prevArticle.slug)}`}>
                     {navLabelPrev}
                   </a>
                 )}
