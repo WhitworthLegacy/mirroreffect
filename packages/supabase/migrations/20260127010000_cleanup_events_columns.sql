@@ -2,6 +2,11 @@
 -- Date: 2026-01-27
 -- Les calculs (marge, KM, coûts) sont désormais gérés dans Google Sheets
 
+-- 0) Supprimer les views qui dépendent des colonnes à supprimer
+DROP VIEW IF EXISTS v_monthly_stats CASCADE;
+DROP VIEW IF EXISTS v_student_monthly_stats CASCADE;
+DROP VIEW IF EXISTS v_commercial_monthly_stats CASCADE;
+
 -- 1) Supprimer les colonnes de calcul (gardées dans Google Sheets)
 ALTER TABLE public.events DROP COLUMN IF EXISTS zone_id;
 ALTER TABLE public.events DROP COLUMN IF EXISTS on_site_contact;
@@ -31,10 +36,7 @@ DROP TABLE IF EXISTS public.accounting_transactions CASCADE;
 -- 5) Supprimer la table monthly_marketing_stats (stats dans Google Sheets)
 DROP TABLE IF EXISTS public.monthly_marketing_stats CASCADE;
 
--- 6) Supprimer les views de stats (calculs dans Google Sheets)
-DROP VIEW IF EXISTS v_monthly_stats CASCADE;
-DROP VIEW IF EXISTS v_student_monthly_stats CASCADE;
-DROP VIEW IF EXISTS v_commercial_monthly_stats CASCADE;
+-- 6) Les views ont déjà été supprimées en début de migration
 
 -- 7) Simplifier la table packs
 ALTER TABLE public.packs DROP COLUMN IF EXISTS price_original_cents;
