@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="UTF-8">
+</head>
+
+<body style="font-family: Arial, sans-serif; font-size:15px; color:#333; line-height:1.8; margin:0; padding:0;">
+  <div style="max-width:600px; margin:0; padding:0 10px;">
+
+    <p style="margin:0 0 10px;">Bonjour <strong><?= clientName ?></strong>,</p>
+
+    <p style="margin:0 0 10px;">
+      Juste un petit rappel amical. Votre opinion est très importante pour nous.
+    </p>
+    
+    <p style="margin:0 0 14px;">
+      Si vous n'avez pas eu le temps, voici le lien direct pour nous laisser un avis Google :
+    </p>
+
+    <p style="margin:22px 0; text-align:left;">
+       <a href="<?= reviewLink ?>" target="_blank"
+           style="background:#C1950E; color:#FFFFFF; padding:12px 20px; text-decoration:none; border-radius:6px; font-weight:bold; font-size: 16px;">
+        <?= buttonLabel ?>
+      </a>
+    </p>
+    
+    <p style="margin:0 0 16px;">
+      Un tout grand merci pour votre aide !
+    </p>
+
+    <div style="margin-top:28px; font-family:Arial, sans-serif; color:#333; line-height:1.6; font-size:15px;">
+      <p style="margin:0; font-size:16px; font-weight:700;">Jonathan Whitworth</p>
+      <p style="margin:0;">MirrorEffect – photobooth miroir</p>
+      <p style="margin:0;">Tél : <a href="tel:+32460242430" style="color:#333; text-decoration:none;">+32 460 24 24 30</a></p>
+      <p style="margin:0;">Site : <a href="https://mirroreffect.co" style="color:#C1950E; text-decoration:none;">mirroreffect.co</a></p>
+      <p style="margin:0;">Instagram : <a href="https://instagram.com/mirroreffect.co" style="color:#C1950E; text-decoration:none;">@mirroreffect.co</a></p>
+    </div>
+
+  </div>
+</body>
+</html>

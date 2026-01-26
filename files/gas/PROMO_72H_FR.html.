@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; font-size:15px; color:#333; line-height:1.8; margin:0; padding:0;">
+  <div style="max-width:600px; margin:0 auto; padding:0 0px;">
+
+    <p>Bonjour <strong><?= clientName ?></strong>,</p>
+
+    <p style="margin:0 0 12px 0;">
+      Tout d’abord, <strong>merci pour votre intérêt</strong> pour <strong>MirrorEffect</strong> ✨  
+      Il semble que la réservation n’ait pas été finalisée.
+    </p>
+
+    <p style="margin:0 0 12px 0;">
+      Par curiosité (et pour nous aider à améliorer l’expérience), pouvez-vous nous dire ce qui vous a freiné ?
+      <br>
+      <span style="color:#666; font-size:14px;">
+        (ex : date/infos à confirmer, budget, question logistique, autre…)
+      </span>
+    </p>
+
+    <div style="margin:16px 0; padding:14px; background:#fdfbf4; border:1px solid #ecdca6; border-radius:10px;">
+      <p style="margin:0;">
+        <strong>Petit cadeau pour vous aider à décider :</strong><br>
+        Nous appliquons <strong>–50 €</strong> <strong>manuellement</strong> sur votre <strong>solde restant</strong>
+        si vous finalisez dans les <strong>72 heures</strong> suivant l’envoi de ce mail.
+      </p>
+      <p style="margin:10px 0 0; font-size:13px; color:#666;">
+        (Aucun code promo à saisir — on s’en occupe.)
+      </p>
+    </div>
+
+    <? if (eventDate || eventPlace || packName) { ?>
+      <div style="margin:16px 0; padding:14px; background:#ffffff; border:1px solid #eee; border-radius:10px;">
+        <? if (eventDate) { ?>
+          <p style="margin:0;"><strong>Date :</strong> <?= eventDate ?></p>
+        <? } ?>
+        <? if (eventPlace) { ?>
+          <p style="margin:0;"><strong>Lieu :</strong> <?= eventPlace ?></p>
+        <? } ?>
+        <? if (packName) { ?>
+          <p style="margin:0;"><strong>Pack :</strong> <?= packName ?></p>
+        <? } ?>
+        <? if (totalAmount) { ?>
+          <p style="margin:0;"><strong>Total :</strong> <?= totalAmount ?></p>
+        <? } ?>
+        <? if (depositAmount) { ?>
+          <p style="margin:0;"><strong>Acompte :</strong> <?= depositAmount ?></p>
+        <? } ?>
+      </div>
+    <? } ?>
+
+    <div style="margin:16px 0; padding:14px; background:#ffffff; border:1px solid #eee; border-radius:10px;">
+      <p style="margin:0;">
+        Pour finaliser, vous pouvez :
+      </p>
+      <ul style="margin:10px 0 0 18px; padding:0;">
+        <li>Répondre directement à cet email (on s’occupe du reste)</li>
+        <li>Ou retourner sur : 
+          <a href="https://mirroreffect.co" style="color:#C1950E; text-decoration:none; font-weight:700;">mirroreffect.co</a>
+        </li>
+      </ul>
+    </div>
+
+    <p style="margin:0 0 10px 0;">
+      À très vite ✨<br>
+      <span style="color:#666; font-size:14px;">Jonathan – MirrorEffect</span>
+    </p>
+
+    <div style="margin-top:20px; font-size:14px; color:#333;">
+      <p style="margin:0; font-weight:700;">Jonathan Whitworth</p>
+      <p style="margin:0;">MirrorEffect – photobooth spiegel</p>
+      <p style="margin:0;">
+        <a href="tel:+32460242430" style="color:#333; text-decoration:none;">+32 460 24 24 30</a>
+      </p>
+      <p style="margin:0;">
+        <a href="https://mirroreffect.co" style="color:#C1950E; text-decoration:none;">mirroreffect.co</a>
+      </p>
+      <p style="margin:0;">
+        <a href="https://instagram.com/mirroreffect.co" style="color:#C1950E; text-decoration:none;">@mirroreffect.co</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

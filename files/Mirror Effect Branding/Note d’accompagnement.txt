@@ -1,0 +1,63 @@
+Vous trouverez dans ce fichier ZIP l’ensemble des documents et éléments graphiques pour Mirror Effect. Le dossier comprend notamment :
+
+Le logo dans ses différentes variantes et formats
+Le moodboard, la palette de couleurs et la typographie
+Les éléments graphiques et icônes
+Les applications visuelles
+
+
+-------------------------------------------------
+
+IDENTITÉ GRAPHIQUE (PDF)
+
+-------------------------------------------------
+1. Logo (JPG, PNG, PDF, SVG, AI)
+-------------------------------------------------
+
+Logo Principal 
+- Blanc
+- Noir
+- Or
+
+Logo Monochrome
+- Blanc
+- Noir
+
+Logo Icône
+- Blanc
+- Noir
+- Or
+
+Logo Réseaux (JPG)
+- Blanc
+- Noir
+- Or
+
+-------------------------------------------------
+2. Moodboard (PDF, JPG)
+-------------------------------------------------
+
+- PDF
+- JPG
+
+-------------------------------------------------
+3. Couleurs (PDF)
+-------------------------------------------------
+4. Typograhie
+-------------------------------------------------
+
+- Poppins lien Google Fonts
+- Poppins Typo (ZIP)
+- Aleo lien Google Fonts
+- Aleo Typo (ZIP)
+
+-------------------------------------------------
+5. Applications visuelles
+-------------------------------------------------
+
+- Carte de visite (lien Canva)
+- Polo (Logo Noir, Logo Or - JPG, PNG, PDF, SVG, AI)
+
+
+
+

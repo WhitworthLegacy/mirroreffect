@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; font-size:15px; color:#333; line-height:1.8; margin:0; padding:0;">
+  <div style="max-width:600px; margin:0 auto; padding:0 0px;">
+
+    <p>Bonjour <strong><?= clientName ?></strong>,</p>
+
+    <p>
+      Merci pour votre confiance ✨  
+      Votre réservation <strong>MirrorEffect</strong> est bien confirmée.
+    </p>
+
+    <div style="margin:16px 0; padding:14px; background:#fdfbf4; border:1px solid #ecdca6; border-radius:10px;">
+      <? if (eventDate) { ?>
+        <p style="margin:0;"><strong>Date :</strong> <?= eventDate ?></p>
+      <? } ?>
+      <? if (eventPlace) { ?>
+        <p style="margin:0;"><strong>Lieu :</strong> <?= eventPlace ?></p>
+      <? } ?>
+      <? if (packName) { ?>
+        <p style="margin:0;"><strong>Pack :</strong> <?= packName ?></p>
+      <? } ?>
+    </div>
+
+    <? if (packPrice || transportPrice || depositAmount || totalAmount || balanceAmount) { ?>
+      <div style="margin:16px 0; padding:14px; background:#ffffff; border:1px solid #eee; border-radius:10px;">
+        <p style="margin:0 0 8px; font-weight:700;">Récapitulatif</p>
+
+        <? if (packPrice) { ?>
+          <p style="margin:0;"><strong>Pack (€) :</strong> <?= packPrice ?></p>
+        <? } ?>
+        <? if (transportPrice) { ?>
+          <p style="margin:0;"><strong>Transport (€) :</strong> <?= transportPrice ?></p>
+        <? } ?>
+        <? if (depositAmount) { ?>
+          <p style="margin:0;"><strong>Acompte :</strong> <?= depositAmount ?></p>
+        <? } ?>
+
+        <? if (totalAmount) { ?>
+          <p style="margin:8px 0 0;"><strong>Total :</strong> <?= totalAmount ?></p>
+        <? } ?>
+        <? if (balanceAmount) { ?>
+          <p style="margin:0;"><strong>Solde restant :</strong> <?= balanceAmount ?></p>
+        <? } ?>
+      </div>
+    <? } ?>
+
+    <p>
+      <strong>Nous reviendrons 5 à 10 jours avant le Jour J</strong> vers vous avec les prochaines étapes
+      (logistique, horaires, galerie, etc.).
+    </p>
+
+    <p>À très bientôt ✨<br></p>
+
+    <div style="margin-top:20px; font-size:14px; color:#333;">
+      <p style="margin:0; font-weight:700;">Jonathan Whitworth</p>
+      <p style="margin:0;">MirrorEffect – photobooth miroir</p>
+      <p style="margin:0;">
+        <a href="tel:+32460242430" style="color:#333; text-decoration:none;">+32 460 24 24 30</a>
+      </p>
+      <p style="margin:0;">
+        <a href="https://mirroreffect.co" style="color:#C1950E; text-decoration:none;">mirroreffect.co</a>
+      </p>
+      <p style="margin:0;">
+        <a href="https://instagram.com/mirroreffect.co" style="color:#C1950E; text-decoration:none;">@mirroreffect.co</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>
