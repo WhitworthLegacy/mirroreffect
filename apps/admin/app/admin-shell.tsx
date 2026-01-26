@@ -43,10 +43,8 @@ const StudentsIcon = () => (
 );
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: DashboardIcon },
   { href: "/events", label: "Events", icon: EventsIcon },
   { href: "/availability", label: "Availability", icon: AvailabilityIcon },
-  { href: "/students", label: "Students", icon: StudentsIcon },
 ];
 
 // Minimum interval between manual refreshes (prevents accidental double-clicks)

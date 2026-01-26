@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { fetchMolliePaymentStatus } from "@/lib/payments/mollie";
 import { trackPurchase } from "@/lib/metaCapi";
+import { syncEventToSheets } from "@/lib/syncToSheets";
 
 const DEPOSIT_CENTS = 18000;
 
@@ -280,6 +281,31 @@ export async function POST(req: Request) {
       console.log(`[mollie-webhook] Event déjà existant, ignoré:`, { ...logContext, eventId });
     } else {
       console.log(`[mollie-webhook] Event créé:`, { ...logContext, eventId });
+
+      // =============================================================================
+      // 3b) Sync to Google Sheets (non-blocking)
+      // =============================================================================
+      syncEventToSheets({
+        event_id: eventId,
+        client_name: (meta.client_name as string) || "",
+        client_email: clientEmail,
+        client_phone: (meta.client_phone as string) || "",
+        language: (meta.language as string) || "fr",
+        event_date: (meta.event_date as string) || null,
+        address: (meta.address as string) || "",
+        event_type: "b2c",
+        guest_count: meta.guests ? Number(meta.guests) : null,
+        pack_code: (meta.pack_code as string) || "",
+        total_cents: meta.total_cents ? Number(meta.total_cents) : null,
+        transport_fee_cents: meta.transport_fee_cents ? Number(meta.transport_fee_cents) : null,
+        deposit_cents: DEPOSIT_CENTS,
+        closing_date: paidAt,
+      }).catch((err) => {
+        console.error(`[mollie-webhook] Google Sheets sync error (non-blocking):`, {
+          ...logContext,
+          error: err instanceof Error ? err.message : String(err)
+        });
+      });
     }
 
     // =============================================================================

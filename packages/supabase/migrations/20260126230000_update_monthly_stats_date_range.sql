@@ -168,5 +168,5 @@ CROSS JOIN kpi
 LEFT JOIN closings c ON c.month_start = m.month_start
 LEFT JOIN events_done e ON e.month_start = m.month_start
 LEFT JOIN commercial_comm cc ON cc.month_start = m.month_start
-LEFT JOIN monthly_marketing_stats ms ON ms.month::text = TO_CHAR(m.month_start, 'YYYY-MM')::text
+LEFT JOIN monthly_marketing_stats ms ON TO_CHAR(ms.month::date, 'YYYY-MM') = TO_CHAR(m.month_start, 'YYYY-MM')
 ORDER BY m.month_start DESC;

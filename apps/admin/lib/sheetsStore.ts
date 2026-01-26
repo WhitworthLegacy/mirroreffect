@@ -7,22 +7,15 @@ import { createSupabaseBrowserClient } from "./supabaseBrowser";
 /**
  * Store unifié pour Events (Supabase)
  * Source unique de vérité pour les données admin
- * Stats sont maintenant calculées via les Views Supabase
+ * Stats gérées dans Google Sheets
  */
 
-// Mapping Supabase event row -> EventRow format
-// Note: La table Supabase stocke les montants en cents (INTEGER)
+// Mapping Supabase event row -> EventRow format (simplified)
 function mapSupabaseEventToEventRow(row: Record<string, unknown>): EventRow {
   const toInt = (value: unknown): number | null => {
     if (value === null || value === undefined) return null;
     const num = Number(value);
     return Number.isNaN(num) ? null : Math.round(num);
-  };
-
-  const toNum = (value: unknown): number | null => {
-    if (value === null || value === undefined) return null;
-    const num = Number(value);
-    return Number.isNaN(num) ? null : num;
   };
 
   return {
@@ -33,7 +26,6 @@ function mapSupabaseEventToEventRow(row: Record<string, unknown>): EventRow {
     client_name: row.client_name ? String(row.client_name) : null,
     client_email: row.client_email ? String(row.client_email) : null,
     client_phone: row.client_phone ? String(row.client_phone) : null,
-    zone_id: row.zone_id ? String(row.zone_id) : null,
     status: row.status ? String(row.status) : "active",
     total_cents: toInt(row.total_cents),
     transport_fee_cents: toInt(row.transport_fee_cents),
@@ -42,23 +34,11 @@ function mapSupabaseEventToEventRow(row: Record<string, unknown>): EventRow {
     balance_status: row.balance_status ? String(row.balance_status) : null,
     pack_id: row.pack_id ? String(row.pack_id) : null,
     address: row.address ? String(row.address) : null,
-    on_site_contact: row.on_site_contact ? String(row.on_site_contact) : null,
     guest_count: toInt(row.guest_count),
     created_at: row.created_at ? String(row.created_at) : null,
     updated_at: row.updated_at ? String(row.updated_at) : null,
     student_name: row.student_name ? String(row.student_name) : null,
-    student_hours: toNum(row.student_hours),
-    student_rate_cents: toInt(row.student_rate_cents),
-    km_one_way: toNum(row.km_one_way),
-    km_total: toNum(row.km_total),
-    fuel_cost_cents: toInt(row.fuel_cost_cents),
     commercial_name: row.commercial_name ? String(row.commercial_name) : null,
-    commercial_commission_cents: toInt(row.commercial_commission_cents),
-    gross_margin_cents: null, // Calculé dans les views, pas stocké
-    deposit_invoice_ref: row.deposit_invoice_ref ? String(row.deposit_invoice_ref) : null,
-    balance_invoice_ref: row.balance_invoice_ref ? String(row.balance_invoice_ref) : null,
-    invoice_deposit_paid: row.invoice_deposit_paid === true,
-    invoice_balance_paid: row.invoice_balance_paid === true,
     closing_date: row.closing_date ? String(row.closing_date) : null,
   };
 }
@@ -198,14 +178,11 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
         throw new Error("Supabase non configuré");
       }
 
-      // Convertir EventRow fields -> colonnes Supabase
-      // Note: Les noms de colonnes EventRow correspondent aux colonnes Supabase
-      // Les montants sont déjà en cents, pas de conversion nécessaire
+      // Simplified fields for Supabase update
       const eventRowToSupabase = (patch: Record<string, unknown>): Record<string, unknown> => {
         const result: Record<string, unknown> = {};
 
-        // Champs texte/nombre directs (même nom dans EventRow et Supabase)
-        const directFields = [
+        const allowedFields = [
           "client_name",
           "client_email",
           "client_phone",
@@ -216,34 +193,18 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
           "pack_id",
           "guest_count",
           "student_name",
-          "student_hours",
           "commercial_name",
-          "km_one_way",
-          "km_total",
-          "deposit_invoice_ref",
-          "balance_invoice_ref",
-          "invoice_deposit_paid",
-          "invoice_balance_paid",
           "status",
           "balance_status",
-          "zone_id",
-          "on_site_contact",
           "closing_date",
-        ];
-
-        // Champs en cents (même nom, pas de conversion)
-        const centsFields = [
           "total_cents",
           "transport_fee_cents",
           "deposit_cents",
           "balance_due_cents",
-          "student_rate_cents",
-          "fuel_cost_cents",
-          "commercial_commission_cents",
         ];
 
         for (const [key, value] of Object.entries(patch)) {
-          if (directFields.includes(key) || centsFields.includes(key)) {
+          if (allowedFields.includes(key)) {
             result[key] = value;
           }
         }
