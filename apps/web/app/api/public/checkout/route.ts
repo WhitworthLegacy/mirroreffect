@@ -8,12 +8,14 @@ const CheckoutBodySchema = z.object({
   client_email: z.string().email(),
   client_phone: z.string().min(6),
   event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  event_type: z.string().optional(), // Mariage, Anniversaire, Bapteme, etc.
   address: z.string().min(2).optional(),
   venue: z.string().optional(),
   lieuEvent: z.string().optional(),
   lead_id: z.string().optional(),
   zone_code: z.enum(["BE", "FR_NORD"]),
   pack_code: z.enum(["DISCOVERY", "ESSENTIAL", "PREMIUM"]),
+  guest_count: z.number().optional(), // Nombre d'invités
   options: z.array(z.string()).default([]),
   event_id: z.string().optional()
 });
@@ -111,6 +113,7 @@ export async function POST(req: Request) {
           event_id: eventId,
           lead_id: b.lead_id || undefined,
           event_date: b.event_date,
+          event_type: b.event_type || "b2c",
           kind: "deposit",
           env: process.env.APP_ENV ?? "dev",
           app: "mirroreffect-web",
@@ -121,6 +124,7 @@ export async function POST(req: Request) {
           language: b.language,
           pack_code: b.pack_code,
           zone_code: b.zone_code,
+          guest_count: b.guest_count || null,
           options: b.options.join(","),
           transport_fee_cents,
           total_cents,

@@ -894,9 +894,11 @@ const packs = useMemo(
       client_email: finalEmail,
       client_phone: finalPhone,
       event_date: finalDateEvent,
+      event_type: draft.event.eventType || undefined,
       address: finalAddress || undefined,
       zone_code: finalZone as "BE" | "FR_NORD",
       pack_code: finalPackCode as PackCode,
+      guest_count: draft.event.invites ? parseInt(draft.event.invites, 10) : undefined,
       options: optionsPayload,
       lead_id: leadId
     };

@@ -253,8 +253,25 @@ export async function POST(req: Request) {
     }
 
     // =============================================================================
-    // 3) Créer l'événement dans la table events
+    // 3) Lookup pack_id from pack_code
     // =============================================================================
+    let packId: string | null = null;
+    const packCode = meta.pack_code as string | undefined;
+    if (packCode) {
+      const { data: packData } = await supabase
+        .from("packs")
+        .select("id")
+        .eq("code", packCode)
+        .single();
+      packId = packData?.id || null;
+    }
+
+    // =============================================================================
+    // 4) Créer l'événement dans la table events
+    // =============================================================================
+    const eventType = (meta.event_type as string) || "b2c";
+    const guestCount = meta.guest_count ? Number(meta.guest_count) : null;
+
     const { error: eventInsertError } = await supabase.from("events").insert({
       event_id: eventId,
       payment_id: molliePaymentId,
@@ -264,12 +281,13 @@ export async function POST(req: Request) {
       language: ((meta.language as string) || "fr").toUpperCase(),
       event_date: (meta.event_date as string) || null,
       address: (meta.address as string) || "",
-      event_type: "b2c",
+      event_type: eventType,
+      pack_id: packId,
       transport_fee_cents: meta.transport_fee_cents ? Number(meta.transport_fee_cents) : null,
       total_cents: meta.total_cents ? Number(meta.total_cents) : null,
       deposit_cents: DEPOSIT_CENTS,
       balance_due_cents: meta.balance_due_cents ? Number(meta.balance_due_cents) : null,
-      guest_count: meta.guests ? Number(meta.guests) : null
+      guest_count: guestCount
     });
 
     if (eventInsertError) {
@@ -293,8 +311,8 @@ export async function POST(req: Request) {
         language: (meta.language as string) || "fr",
         event_date: (meta.event_date as string) || null,
         address: (meta.address as string) || "",
-        event_type: "b2c",
-        guest_count: meta.guests ? Number(meta.guests) : null,
+        event_type: eventType,
+        guest_count: guestCount,
         pack_code: (meta.pack_code as string) || "",
         total_cents: meta.total_cents ? Number(meta.total_cents) : null,
         transport_fee_cents: meta.transport_fee_cents ? Number(meta.transport_fee_cents) : null,

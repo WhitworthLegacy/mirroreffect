@@ -60,6 +60,7 @@ export async function persistLeadToLeads({ step, status, draft, requestId }: Per
   const clientName = buildFullName(draft.customer.firstName, draft.customer.lastName);
   const clientEmail = draft.customer.email?.trim() || "";
   const clientPhone = draft.customer.phone?.trim() || "";
+  const eventType = draft.event.eventType || "";
   const eventDate = toDDMMYYYY(draft.event.dateEvent || draft.event.lieuEvent || "") || "";
   const address = draft.event.address || draft.event.lieuEvent || "";
   const packCode = draft.event.pack || "";
@@ -90,6 +91,7 @@ export async function persistLeadToLeads({ step, status, draft, requestId }: Per
     client_name: clientName,
     client_email: clientEmail,
     client_phone: clientPhone,
+    event_type: eventType,
     event_date: eventDate,
     address,
     pack_code: packCode,
