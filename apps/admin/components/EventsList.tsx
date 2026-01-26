@@ -228,6 +228,21 @@ export default function EventsList({ events, packs }: Props) {
                   Commercial
                 </th>
                 <th
+                  onClick={() => handleSort("closing_date")}
+                  style={{
+                    textAlign: "left",
+                    padding: "16px 24px",
+                    fontSize: "0.875rem",
+                    color: "var(--night)",
+                    cursor: "pointer",
+                    transition: "background 0.2s"
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = "var(--gray-light)"}
+                  onMouseOut={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  Date Closing
+                </th>
+                <th
                   onClick={() => handleSort("gross_margin_cents")}
                   style={{
                     textAlign: "left",
@@ -291,6 +306,9 @@ export default function EventsList({ events, packs }: Props) {
                       {event.commercial_name || "—"}
                     </td>
                     <td style={{ padding: "16px 24px", fontSize: "0.875rem", color: "var(--night)" }}>
+                      {event.closing_date ? new Date(event.closing_date).toLocaleDateString("fr-FR") : "—"}
+                    </td>
+                    <td style={{ padding: "16px 24px", fontSize: "0.875rem", color: "var(--night)" }}>
                       {event.gross_margin_cents ? formatCurrency(event.gross_margin_cents) : "—"}
                     </td>
                     <td style={{ padding: "16px 24px" }}>
@@ -335,7 +353,7 @@ export default function EventsList({ events, packs }: Props) {
               })}
               {filteredAndSortedRows.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: 48, color: "var(--gray-muted)" }}>
+                  <td colSpan={9} style={{ textAlign: "center", padding: 48, color: "var(--gray-muted)" }}>
                     No events found matching your search.
                   </td>
                 </tr>
