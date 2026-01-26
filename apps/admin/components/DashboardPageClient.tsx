@@ -5,6 +5,7 @@ import { useSheetsStore } from "@/lib/sheetsStore";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 import { formatCurrency } from "@/lib/format";
 import DashboardCharts from "@/components/DashboardCharts";
+import MarketingStatsModal from "@/components/MarketingStatsModal";
 
 type Props = {
   selectedYear: number;
@@ -14,27 +15,36 @@ type Props = {
 type MonthlyStatRow = {
   month: string;
   month_start: string;
+  // Marketing stats (manual)
+  leads_meta: number;
+  spent_meta_cents: number;
+  leads_total: number;
+  // Closings
   closing_total: number;
   closing_decouverte: number;
   closing_essentiel: number;
   closing_premium: number;
   deposits_signed_cents: number;
+  // Events
   events_count: number;
   events_decouverte: number;
   events_essentiel: number;
   events_premium: number;
+  // Revenue
   total_event_cents_ht: number;
   deposits_event_cents_ht: number;
   remaining_event_cents_ht: number;
   ca_acomptes_restants_cents_ht: number;
   ca_total_cents_ht: number;
   transport_cents_ht: number;
+  // Costs
   pack_cost_cents: number;
   student_hours: number;
   student_cost_cents: number;
   fuel_cost_cents: number;
   commercial_commission_cents: number;
   fixed_charges_cents: number;
+  // Margins
   gross_margin_cents: number;
   cashflow_gross_cents: number;
   cashflow_net_cents: number;
@@ -48,34 +58,38 @@ export default function DashboardPageClient({ selectedYear }: Props) {
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
 
+  // Marketing stats modal
+  const [isMarketingModalOpen, setIsMarketingModalOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+
   // Load monthly stats from Supabase view
-  useEffect(() => {
-    async function loadMonthlyStats() {
-      setStatsLoading(true);
-      setStatsError(null);
+  const loadMonthlyStats = async () => {
+    setStatsLoading(true);
+    setStatsError(null);
 
-      try {
-        const supabase = createSupabaseBrowserClient();
-        if (!supabase) {
-          throw new Error("Supabase non configuré");
-        }
-
-        const { data, error } = await supabase
-          .from("v_monthly_stats")
-          .select("*")
-          .order("month", { ascending: false });
-
-        if (error) throw error;
-
-        setMonthlyStats(data as MonthlyStatRow[] || []);
-      } catch (err) {
-        console.error("[Dashboard] Error loading monthly stats:", err);
-        setStatsError(err instanceof Error ? err.message : "Erreur de chargement des stats");
-      } finally {
-        setStatsLoading(false);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      if (!supabase) {
+        throw new Error("Supabase non configuré");
       }
-    }
 
+      const { data, error } = await supabase
+        .from("v_monthly_stats")
+        .select("*")
+        .order("month", { ascending: false });
+
+      if (error) throw error;
+
+      setMonthlyStats(data as MonthlyStatRow[] || []);
+    } catch (err) {
+      console.error("[Dashboard] Error loading monthly stats:", err);
+      setStatsError(err instanceof Error ? err.message : "Erreur de chargement des stats");
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadMonthlyStats();
   }, []);
 
@@ -199,6 +213,35 @@ export default function DashboardPageClient({ selectedYear }: Props) {
     return allYears;
   }, [events, monthlyStats, selectedYear]);
 
+  // Calculate marketing KPIs
+  const marketingKpis = useMemo(() => {
+    let leadsMeta = 0;
+    let spentMeta = 0;
+    let leadsTotal = 0;
+    let closings = 0;
+
+    for (const stat of statsForYear) {
+      leadsMeta += stat.leads_meta || 0;
+      spentMeta += stat.spent_meta_cents || 0;
+      leadsTotal += stat.leads_total || 0;
+      closings += stat.closing_total || 0;
+    }
+
+    const cplMeta = leadsMeta > 0 ? Math.round(spentMeta / leadsMeta) : 0;
+    const conversionRate = leadsMeta > 0 ? (closings / leadsMeta) * 100 : 0;
+    const cpa = closings > 0 ? Math.round(spentMeta / closings) : 0;
+
+    return {
+      leadsMeta,
+      spentMeta,
+      leadsTotal,
+      closings,
+      cplMeta,
+      conversionRate,
+      cpa,
+    };
+  }, [statsForYear]);
+
   // Convert Supabase stats to format for DashboardCharts
   const monthlyStatsForCharts = useMemo(() => {
     return statsForYear.map((stat) => ({
@@ -224,8 +267,8 @@ export default function DashboardPageClient({ selectedYear }: Props) {
       pack_cost_cents: stat.pack_cost_cents,
       gross_margin_cents: stat.gross_margin_cents,
       cashflow_gross_cents: stat.cashflow_gross_cents,
-      leads_meta: null,
-      spent_meta_cents: null,
+      leads_meta: stat.leads_meta,
+      spent_meta_cents: stat.spent_meta_cents,
     }));
   }, [statsForYear]);
 
@@ -239,8 +282,8 @@ export default function DashboardPageClient({ selectedYear }: Props) {
 
   return (
     <>
-      {/* Year selector */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+      {/* Year selector + Marketing Stats button */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", alignItems: "center" }}>
         {years.slice(0, 5).map(y => (
           <a
             key={y}
@@ -250,6 +293,22 @@ export default function DashboardPageClient({ selectedYear }: Props) {
             {y}
           </a>
         ))}
+        <div style={{ flex: 1 }} />
+        <button
+          onClick={() => {
+            setSelectedMonth(null);
+            setIsMarketingModalOpen(true);
+          }}
+          className="admin-chip secondary"
+          style={{ display: "flex", alignItems: "center", gap: 6 }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+          Stats Marketing
+        </button>
       </div>
 
       {/* Main KPIs - 3 columns as per design spec */}
@@ -346,11 +405,60 @@ export default function DashboardPageClient({ selectedYear }: Props) {
         </div>
       )}
 
+      {/* Marketing KPIs */}
+      {marketingKpis.leadsMeta > 0 && (
+        <section style={{ marginTop: 24 }}>
+          <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: 16, color: "var(--text-primary)" }}>
+            Performance Marketing META
+          </h2>
+          <div className="admin-kpi" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+            <div className="admin-kpi-card">
+              <h3># Leads META</h3>
+              <p>{marketingKpis.leadsMeta}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <h3>Spent META</h3>
+              <p>{formatCurrency(marketingKpis.spentMeta)}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <h3>CPL META</h3>
+              <p>{formatCurrency(marketingKpis.cplMeta)}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <h3># Closings</h3>
+              <p>{marketingKpis.closings}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <h3>Conversion %</h3>
+              <p>{marketingKpis.conversionRate.toFixed(1)}%</p>
+            </div>
+            <div className="admin-kpi-card">
+              <h3>CPA</h3>
+              <p>{formatCurrency(marketingKpis.cpa)}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Interactive Charts Section */}
       <DashboardCharts
         monthlyStats={monthlyStatsForCharts}
         events={events}
         selectedYear={selectedYear}
+      />
+
+      {/* Marketing Stats Modal */}
+      <MarketingStatsModal
+        isOpen={isMarketingModalOpen}
+        onClose={() => setIsMarketingModalOpen(false)}
+        onSaved={loadMonthlyStats}
+        selectedMonth={selectedMonth || undefined}
+        existingData={selectedMonth ? {
+          month: selectedMonth,
+          leads_meta: statsForYear.find(s => s.month === selectedMonth)?.leads_meta || 0,
+          spent_meta_cents: statsForYear.find(s => s.month === selectedMonth)?.spent_meta_cents || 0,
+          leads_total: statsForYear.find(s => s.month === selectedMonth)?.leads_total || 0,
+        } : null}
       />
     </>
   );
