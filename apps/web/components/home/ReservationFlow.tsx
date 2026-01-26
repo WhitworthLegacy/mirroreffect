@@ -139,6 +139,7 @@ const copy = {
     step5LastName: "Nom",
     step5Email: "E-mail",
     step5Phone: "Téléphone",
+    step5Rgpd: "En renseignant votre email, vous acceptez de recevoir nos communications liées à votre réservation. Vous pourrez vous désinscrire à tout moment.",
     step6Title: "6. Choisissez votre pack.",
     step6Desc: "Prix promo valables pour une réservation directe aujourd'hui.",
     depositLine: "Acompte de 200€ aujourd'hui. Solde le jour J.",
@@ -327,6 +328,7 @@ const copy = {
     step5LastName: "Naam",
     step5Email: "E-mail",
     step5Phone: "Telefoon",
+    step5Rgpd: "Door uw e-mail in te vullen, gaat u akkoord met onze communicatie over uw reservatie. U kunt zich op elk moment uitschrijven.",
     step6Title: "6. Kies uw pakket.",
     step6Desc: "Promo-prijzen voor directe reservatie vandaag.",
     depositLine: "Voorschot van €200 vandaag. Saldo op de dag zelf.",
@@ -1311,6 +1313,7 @@ const packs = useMemo(
                     value={leadEmail}
                     onChange={(event) => setLeadEmail(event.target.value)}
                   />
+                  <p className="mt-2 text-xs text-[#717182]">{t("step5Rgpd")}</p>
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-sm font-semibold" htmlFor="leadPhone">
