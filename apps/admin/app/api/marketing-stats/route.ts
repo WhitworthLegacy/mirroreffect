@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 // GET - Récupérer toutes les stats marketing
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createSupabaseServerClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+    }
 
     const { data, error } = await supabase
       .from("monthly_marketing_stats")
@@ -31,8 +32,10 @@ export async function GET() {
 // POST - Créer ou mettre à jour les stats d'un mois
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createSupabaseServerClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+    }
 
     const body = await request.json();
     const { month, leads_meta, spent_meta_cents, leads_total, notes } = body;
