@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useCallback, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useSheetsStore } from "@/lib/sheetsStore";
+import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 import { formatCurrency } from "@/lib/format";
 import DashboardCharts from "@/components/DashboardCharts";
 
@@ -9,77 +10,87 @@ type Props = {
   selectedYear: number;
 };
 
-// Helper pour parser un nombre européen (1.234,56) en centimes
-function parseEuropeanNumberToCents(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  let num: number;
-  if (typeof value === "string") {
-    const cleaned = value.trim().replace(/\s/g, "");
-    if (cleaned.includes(",")) {
-      const normalized = cleaned.replace(/\./g, "").replace(",", ".");
-      num = parseFloat(normalized);
-    } else {
-      num = parseFloat(cleaned);
-    }
-  } else {
-    num = Number(value);
-  }
-  return Number.isNaN(num) ? null : Math.round(num * 100);
-}
-
-// Helper pour parser un nombre européen simple
-function parseEuropeanNumber(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  let num: number;
-  if (typeof value === "string") {
-    const cleaned = value.trim().replace(/\s/g, "");
-    if (cleaned.includes(",")) {
-      const normalized = cleaned.replace(/\./g, "").replace(",", ".");
-      num = parseFloat(normalized);
-    } else {
-      num = parseFloat(cleaned);
-    }
-  } else {
-    num = Number(value);
-  }
-  return Number.isNaN(num) ? null : num;
-}
+// Type for monthly stats from Supabase view
+type MonthlyStatRow = {
+  month: string;
+  month_start: string;
+  closing_total: number;
+  closing_decouverte: number;
+  closing_essentiel: number;
+  closing_premium: number;
+  deposits_signed_cents: number;
+  events_count: number;
+  events_decouverte: number;
+  events_essentiel: number;
+  events_premium: number;
+  total_event_cents_ht: number;
+  deposits_event_cents_ht: number;
+  remaining_event_cents_ht: number;
+  ca_acomptes_restants_cents_ht: number;
+  ca_total_cents_ht: number;
+  transport_cents_ht: number;
+  pack_cost_cents: number;
+  student_hours: number;
+  student_cost_cents: number;
+  fuel_cost_cents: number;
+  commercial_commission_cents: number;
+  fixed_charges_cents: number;
+  gross_margin_cents: number;
+  cashflow_gross_cents: number;
+  cashflow_net_cents: number;
+};
 
 export default function DashboardPageClient({ selectedYear }: Props) {
-  const { events, statsRows, statsHeaders, isLoading, error, getCell, findRowByDate } = useSheetsStore();
+  const { events, isLoading: eventsLoading, error: eventsError } = useSheetsStore();
 
-  // Helper pour obtenir une valeur depuis Stats par header exact
-  const getStatsValue = useCallback((row: unknown[], headerName: string, asCents = false): number | null => {
-    const headerIndex = statsHeaders.findIndex((h) => String(h).trim() === headerName);
-    if (headerIndex < 0) {
-      console.warn(`[Dashboard] Header "${headerName}" not found in Stats`);
-      return null;
+  // Local state for monthly stats from Supabase view
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStatRow[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
+
+  // Load monthly stats from Supabase view
+  useEffect(() => {
+    async function loadMonthlyStats() {
+      setStatsLoading(true);
+      setStatsError(null);
+
+      try {
+        const supabase = createSupabaseBrowserClient();
+        if (!supabase) {
+          throw new Error("Supabase non configuré");
+        }
+
+        const { data, error } = await supabase
+          .from("v_monthly_stats")
+          .select("*")
+          .order("month", { ascending: false });
+
+        if (error) throw error;
+
+        setMonthlyStats(data as MonthlyStatRow[] || []);
+      } catch (err) {
+        console.error("[Dashboard] Error loading monthly stats:", err);
+        setStatsError(err instanceof Error ? err.message : "Erreur de chargement des stats");
+      } finally {
+        setStatsLoading(false);
+      }
     }
-    const value = row[headerIndex];
-    return asCents ? parseEuropeanNumberToCents(value) : parseEuropeanNumber(value);
-  }, [statsHeaders]);
 
-  // Filtrer les lignes Stats pour l'année sélectionnée
+    loadMonthlyStats();
+  }, []);
+
+  const isLoading = eventsLoading || statsLoading;
+  const error = eventsError || statsError;
+
+  // Filter stats for selected year
   const statsForYear = useMemo(() => {
-    if (!statsRows.length || !statsHeaders.length) return [];
-    
-    const dateIndex = statsHeaders.findIndex((h) => String(h).trim() === "Date");
-    if (dateIndex < 0) return [];
-
-    return statsRows.filter((row) => {
-      const dateValue = String(row[dateIndex] || "").trim();
-      if (!dateValue) return false;
-      
-      // Parser la date (format peut être YYYY-MM ou YYYY-MM-DD)
-      const dateMatch = dateValue.match(/^(\d{4})-(\d{2})/);
-      if (!dateMatch) return false;
-      
-      const rowYear = parseInt(dateMatch[1], 10);
-      return rowYear === selectedYear;
+    return monthlyStats.filter((stat) => {
+      const year = parseInt(stat.month.substring(0, 4), 10);
+      return year === selectedYear;
     });
-  }, [statsRows, statsHeaders, selectedYear]);
+  }, [monthlyStats, selectedYear]);
 
-  // Calculer les KPI depuis Stats avec headers exacts
+  // Calculate KPIs from Supabase view data
   const kpis = useMemo(() => {
     let caTotal = 0;
     let caGenere = 0;
@@ -89,37 +100,30 @@ export default function DashboardPageClient({ selectedYear }: Props) {
     let cashflowNet = 0;
     let eventsCount = 0;
 
-    for (const row of statsForYear) {
-      // CA (Acomptes + Restants)
-      const ca = getStatsValue(row, "CA (Acomptes + Restants)", true);
-      if (ca !== null) {
-        console.log(`[Dashboard Debug] CA trouvé: ${ca / 100}€ pour ligne`, row);
-        caTotal += ca;
-      }
+    for (const stat of statsForYear) {
+      // CA (Acomptes + Restants) - already in cents HT
+      caTotal += stat.ca_acomptes_restants_cents_ht || 0;
 
       // CA généré (Event + Transport)
-      const caGen = getStatsValue(row, "CA généré (Event + Transport)", true);
-      if (caGen !== null) caGenere += caGen;
+      caGenere += stat.ca_total_cents_ht || 0;
 
       // Marge brute opé. (Events)
-      const margeBrute = getStatsValue(row, "Marge brute opé. (Events)", true);
-      if (margeBrute !== null) margeBruteOpe += margeBrute;
+      margeBruteOpe += stat.gross_margin_cents || 0;
 
-      // Marge nette opé. (Events)
-      const margeNette = getStatsValue(row, "Marge nette opé. (Events)", true);
-      if (margeNette !== null) margeNetteOpe += margeNette;
+      // Marge nette = Marge brute - staff - fuel - commission
+      margeNetteOpe += (stat.gross_margin_cents || 0) -
+        (stat.student_cost_cents || 0) -
+        (stat.fuel_cost_cents || 0) -
+        (stat.commercial_commission_cents || 0);
 
       // Cashflow Brut (mensuel)
-      const cfBrut = getStatsValue(row, "Cashflow Brut (mensuel)", true);
-      if (cfBrut !== null) cashflowBrut += cfBrut;
+      cashflowBrut += stat.cashflow_gross_cents || 0;
 
       // Cashflow Net (mensuel)
-      const cfNet = getStatsValue(row, "Cashflow Net (mensuel)", true);
-      if (cfNet !== null) cashflowNet += cfNet;
+      cashflowNet += stat.cashflow_net_cents || 0;
 
       // # Events
-      const evCount = getStatsValue(row, "# Events", false);
-      if (evCount !== null) eventsCount += evCount;
+      eventsCount += stat.events_count || 0;
     }
 
     return {
@@ -131,21 +135,7 @@ export default function DashboardPageClient({ selectedYear }: Props) {
       cashflowNet,
       eventsCount,
     };
-  }, [statsForYear, getStatsValue]);
-
-  // Debug: Log des valeurs calculées
-  useEffect(() => {
-    if (statsForYear.length > 0) {
-      console.log(`[Dashboard Debug] Stats for year ${selectedYear}:`, {
-        rowsCount: statsForYear.length,
-        caTotal: kpis.caTotal / 100,
-        caGenere: kpis.caGenere / 100,
-        margeBruteOpe: kpis.margeBruteOpe / 100,
-        cashflowBrut: kpis.cashflowBrut / 100,
-        cashflowNet: kpis.cashflowNet / 100,
-      });
-    }
-  }, [statsForYear, kpis, selectedYear]);
+  }, [statsForYear]);
 
   // Filter events by year for fallback calculations
   const eventsForYear = useMemo(() => {
@@ -154,10 +144,6 @@ export default function DashboardPageClient({ selectedYear }: Props) {
       return new Date(event.event_date).getFullYear() === selectedYear;
     });
   }, [events, selectedYear]);
-
-  const totalRevenue = useMemo(() => {
-    return eventsForYear.reduce((sum, event) => sum + (event.total_cents ?? 0), 0);
-  }, [eventsForYear]);
 
   // Upcoming events (future only)
   const upcomingEvents = useMemo(() => {
@@ -180,66 +166,45 @@ export default function DashboardPageClient({ selectedYear }: Props) {
     const yearsFromEvents = events
       .map(e => e.event_date ? new Date(e.event_date).getFullYear() : null)
       .filter((y): y is number => y !== null);
-    
-    const yearsFromStats: number[] = [];
-    if (statsHeaders.length > 0) {
-      const dateIndex = statsHeaders.findIndex((h) => String(h).trim() === "Date");
-      if (dateIndex >= 0) {
-        for (const row of statsRows) {
-          const dateValue = String(row[dateIndex] || "").trim();
-          const dateMatch = dateValue.match(/^(\d{4})/);
-          if (dateMatch) {
-            const year = parseInt(dateMatch[1], 10);
-            if (!isNaN(year)) yearsFromStats.push(year);
-          }
-        }
-      }
-    }
-    
+
+    const yearsFromStats = monthlyStats
+      .map(stat => parseInt(stat.month.substring(0, 4), 10))
+      .filter((y): y is number => !isNaN(y));
+
     const allYears = [...new Set([...yearsFromEvents, ...yearsFromStats])].sort((a, b) => b - a);
     if (!allYears.includes(selectedYear)) allYears.unshift(selectedYear);
     return allYears;
-  }, [events, statsRows, statsHeaders, selectedYear]);
+  }, [events, monthlyStats, selectedYear]);
 
-  // Convertir statsRows en format MonthlyStats pour DashboardCharts (compatibilité)
+  // Convert Supabase stats to format for DashboardCharts
   const monthlyStatsForCharts = useMemo(() => {
-    return statsForYear
-      .map((row) => {
-        const dateIndex = statsHeaders.findIndex((h) => String(h).trim() === "Date");
-        const month = dateIndex >= 0 ? String(row[dateIndex] || "").trim() : "";
-        
-        // Filtrer les lignes sans mois valide
-        if (!month) return null;
-        
-        return {
-          month: month,
-        closing_total: getStatsValue(row, "# closing Total", false),
-        closing_decouverte: getStatsValue(row, "# C.Découverte", false),
-        closing_essentiel: getStatsValue(row, "# C.Essentiel", false),
-        closing_premium: getStatsValue(row, "# C.Premium", false),
-        deposits_signed_cents: getStatsValue(row, "Acomptes (payés)", true),
-        events_count: getStatsValue(row, "# Events", false),
-        events_decouverte: getStatsValue(row, "# E.Découverte", false),
-        events_essentiel: getStatsValue(row, "# E.Essentiel", false),
-        events_premium: getStatsValue(row, "# E.Premium", false),
-        total_event_cents: getStatsValue(row, "Total (event)", true),
-        deposits_event_cents: getStatsValue(row, "Acomptes (event)", true),
-        remaining_event_cents: getStatsValue(row, "Restants (event)", true),
-        transport_cents: getStatsValue(row, "€ transport (Ev. Réalisés)", true),
-        ca_total_cents: getStatsValue(row, "CA (Acomptes + Restants)", true),
-        student_hours: getStatsValue(row, "Heures étudiants", false),
-        student_cost_cents: getStatsValue(row, "Coût staff étudiants", true),
-        fuel_cost_cents: getStatsValue(row, "Essence", true),
-        commercial_commission_cents: getStatsValue(row, "Comm Commerciaux", true),
-        pack_cost_cents: getStatsValue(row, "Coût packs (Ev. Réalisés)", true),
-        gross_margin_cents: getStatsValue(row, "Marge brute opé. (Events)", true),
-        cashflow_gross_cents: getStatsValue(row, "Cashflow Brut (mensuel)", true),
-        leads_meta: getStatsValue(row, "# Leads META", false),
-        spent_meta_cents: getStatsValue(row, "Spent META", true),
-        };
-      })
-      .filter((stat): stat is NonNullable<typeof stat> => stat !== null);
-  }, [statsForYear, getStatsValue]);
+    return statsForYear.map((stat) => ({
+      month: stat.month,
+      closing_total: stat.closing_total,
+      closing_decouverte: stat.closing_decouverte,
+      closing_essentiel: stat.closing_essentiel,
+      closing_premium: stat.closing_premium,
+      deposits_signed_cents: stat.deposits_signed_cents,
+      events_count: stat.events_count,
+      events_decouverte: stat.events_decouverte,
+      events_essentiel: stat.events_essentiel,
+      events_premium: stat.events_premium,
+      total_event_cents: stat.total_event_cents_ht,
+      deposits_event_cents: stat.deposits_event_cents_ht,
+      remaining_event_cents: stat.remaining_event_cents_ht,
+      transport_cents: stat.transport_cents_ht,
+      ca_total_cents: stat.ca_acomptes_restants_cents_ht,
+      student_hours: stat.student_hours,
+      student_cost_cents: stat.student_cost_cents,
+      fuel_cost_cents: stat.fuel_cost_cents,
+      commercial_commission_cents: stat.commercial_commission_cents,
+      pack_cost_cents: stat.pack_cost_cents,
+      gross_margin_cents: stat.gross_margin_cents,
+      cashflow_gross_cents: stat.cashflow_gross_cents,
+      leads_meta: null,
+      spent_meta_cents: null,
+    }));
+  }, [statsForYear]);
 
   if (isLoading && !events.length) {
     return (
