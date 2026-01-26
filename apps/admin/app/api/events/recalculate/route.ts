@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readEventsFromSheets, writeEventToSheets } from "@/lib/googleSheets";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 const ORIGIN_ADDRESS = "Boulevard Edmond Machtens 119, 1080 Bruxelles, Belgique";
 
@@ -17,11 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "event_id missing" }, { status: 400 });
     }
 
-    // Read event from Google Sheets
-    const events = await readEventsFromSheets();
-    const event = events.find(e => e.id === eventId);
+    // Read event from Supabase
+    const supabase = createSupabaseServerClient();
+    const { data: event, error: fetchError } = await supabase
+      .from("events")
+      .select("*")
+      .eq("event_id", eventId)
+      .single();
 
-    if (!event) {
+    if (fetchError || !event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
@@ -64,18 +68,24 @@ export async function POST(request: Request) {
     const studentRateCents = 1400; // 14€/h
     const fuelCostCents = Math.round(kmTotal * 0.15 * 100); // 0.15€/km
 
-    // Update event in Google Sheets
-    const updatedEvent = {
-      ...event,
-      address: addressOverride || event.address,
-      student_hours: studentHours,
-      student_rate_cents: studentRateCents,
-      km_one_way: kmOneWay,
-      km_total: kmTotal,
-      fuel_cost_cents: fuelCostCents,
-    };
+    // Update event in Supabase
+    const { error: updateError } = await supabase
+      .from("events")
+      .update({
+        address: addressOverride || event.address,
+        student_hours: studentHours,
+        student_rate_cents: studentRateCents,
+        km_one_way: kmOneWay,
+        km_total: kmTotal,
+        fuel_cost_cents: fuelCostCents,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("event_id", eventId);
 
-    await writeEventToSheets(updatedEvent);
+    if (updateError) {
+      console.error("[recalculate] Erreur Supabase:", updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       ok: true,

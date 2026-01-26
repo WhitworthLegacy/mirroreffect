@@ -238,17 +238,18 @@ export default function SeoPage({ params }: PageProps) {
       </header>
 
       <div className="section pt-4">
-        <div className="space-y-10">
-          {(page.sections ?? []).map((section) => (
-            <section key={section.heading || section.html} className="glow-card rounded-3xl p-7">
+        <div className="max-w-3xl mx-auto px-2">
+          {(page.sections ?? []).map((section, index) => (
+            <div key={section.heading || section.html}>
+              {index > 0 && <div className="seo-divider" />}
               {section.heading && section.heading !== "Hero" && (
-                <h2 className="text-2xl font-black">{section.heading}</h2>
+                <h2 className="text-xl md:text-2xl font-black mb-5">{section.heading}</h2>
               )}
               <div
-                className="seo-content mt-3 max-w-none text-sm text-[#4a4a4a]"
+                className="seo-content-clean"
                 dangerouslySetInnerHTML={{ __html: section.html }}
               />
-            </section>
+            </div>
           ))}
         </div>
       </div>

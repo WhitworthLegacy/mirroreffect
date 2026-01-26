@@ -1,30 +1,30 @@
-import { gasPost } from "@/lib/gas";
+import { createSupabaseServerClient } from "@/lib/supabase";
 import { fetchMolliePaymentStatus } from "@/lib/payments/mollie";
 import { trackPurchase } from "@/lib/metaCapi";
 
 const DEPOSIT_CENTS = 18000;
 
 // =============================================================================
-// In-memory idempotency lock (60s TTL)
-// Prevents concurrent processing of the same paymentId
+// Verrou d'idempotence en mémoire (TTL 60s)
+// Empêche le traitement concurrent du même paymentId
 // =============================================================================
 const processingLocks = new Map<string, number>();
-const LOCK_TTL_MS = 60_000; // 60 seconds
+const LOCK_TTL_MS = 60_000; // 60 secondes
 
 function acquireLock(paymentId: string): boolean {
   const now = Date.now();
-  // Cleanup expired locks
+  // Nettoyer les verrous expirés
   for (const [key, timestamp] of processingLocks.entries()) {
     if (now - timestamp > LOCK_TTL_MS) {
       processingLocks.delete(key);
     }
   }
-  // Check if lock exists and is still valid
+  // Vérifier si le verrou existe et est encore valide
   const existingLock = processingLocks.get(paymentId);
   if (existingLock && now - existingLock < LOCK_TTL_MS) {
-    return false; // Lock already held
+    return false; // Verrou déjà détenu
   }
-  // Acquire lock
+  // Acquérir le verrou
   processingLocks.set(paymentId, now);
   return true;
 }
@@ -33,138 +33,25 @@ function releaseLock(paymentId: string): void {
   processingLocks.delete(paymentId);
 }
 
-// Convertir cents en euros formaté
-function centsToEuros(cents: number): string {
-  return (cents / 100).toFixed(2).replace(".", ",");
-}
-
 /**
- * Cherche une ligne dans Leads par email (case-insensitive)
- * Retourne la ligne la PLUS RÉCENTE si plusieurs matches (basé sur "Created At" ou index)
- * Retourne { leadId: string, rowIndex: number, createdAt: string } ou null
+ * Cherche un lead par email (case-insensitive)
+ * Retourne le lead le plus récent si plusieurs matches
  */
-async function findRowByEmail(email: string): Promise<{ leadId: string; rowIndex: number; createdAt: string } | null> {
-  try {
-    const result = await gasPost({
-      action: "readSheet",
-      key: process.env.GAS_KEY,
-      data: { sheetName: "Leads" }
-    });
+async function findLeadByEmail(supabase: ReturnType<typeof createSupabaseServerClient>, email: string) {
+  const { data, error } = await supabase
+    .from("leads")
+    .select("lead_id, created_at")
+    .eq("email", email.toLowerCase())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
 
-    if (!result.values || !Array.isArray(result.values) || result.values.length < 2) {
-      return null;
-    }
-
-    const rows = result.values as unknown[][];
-    const headers = (rows[0] as string[]).map((h) => String(h).trim());
-    const emailIdx = headers.findIndex((h) => h === "Email");
-    const leadIdIdx = headers.findIndex((h) => h === "Lead ID");
-    const createdAtIdx = headers.findIndex((h) => h === "Created At");
-
-    if (emailIdx < 0 || leadIdIdx < 0) {
-      return null;
-    }
-
-    const emailLower = email.trim().toLowerCase();
-    const matches: Array<{ leadId: string; rowIndex: number; createdAt: string }> = [];
-
-    // Chercher toutes les lignes correspondantes (skip header)
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i] as unknown[];
-      const rowEmail = String(row[emailIdx] || "").trim().toLowerCase();
-
-      if (rowEmail === emailLower) {
-        const leadId = leadIdIdx >= 0 ? String(row[leadIdIdx] || "").trim() : null;
-        const createdAt = createdAtIdx >= 0 ? String(row[createdAtIdx] || "").trim() : "";
-
-        if (leadId) {
-          matches.push({ leadId, rowIndex: i, createdAt });
-        }
-      }
-    }
-
-    if (matches.length === 0) {
-      return null;
-    }
-
-    // Si plusieurs matches, prendre la plus récente (par "Created At" ou par index si Created At vide)
-    if (matches.length === 1) {
-      return matches[0];
-    }
-
-    // Trier par Created At (desc) puis par index (desc) comme fallback
-    matches.sort((a, b) => {
-      // Si Created At existe, comparer par date
-      if (a.createdAt && b.createdAt) {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        if (!isNaN(dateA) && !isNaN(dateB)) {
-          return dateB - dateA; // Plus récent en premier
-        }
-      }
-      // Fallback: plus grand index = plus récent
-      return b.rowIndex - a.rowIndex;
-    });
-
-    return matches[0]; // Retourner la plus récente
-  } catch (error) {
-    console.error("[mollie-webhook] findRowByEmail error:", error);
+  if (error && error.code !== "PGRST116") {
+    console.error("[mollie-webhook] Erreur recherche lead:", error);
     return null;
   }
-}
 
-/**
- * Update une ligne Leads par Lead ID
- */
-async function updateLeadRow(leadId: string, eventId: string): Promise<void> {
-  await gasPost({
-    action: "updateRowByLeadId",
-    key: process.env.GAS_KEY,
-    data: {
-      sheetName: "Leads",
-      leadId,
-      values: {
-        "Status": "converted",
-        "Converted At": new Date().toISOString(),
-        "Event ID": eventId
-      }
-    }
-  });
-}
-
-/**
- * Crée une ligne minimale dans Clients avec les données disponibles
- */
-async function appendClientRow(
-  eventId: string,
-  email: string,
-  meta: Record<string, unknown>,
-  paidAt: string
-): Promise<void> {
-  await gasPost({
-    action: "appendRow",
-    key: process.env.GAS_KEY,
-    data: {
-      sheetName: "Clients",
-      values: {
-        "Event ID": eventId,
-        "Type Event": "b2c",
-        "Email": email,
-        "Nom": (meta.client_name as string) || "",
-        "Phone": (meta.client_phone as string) || "",
-        "Language": (meta.language as string) || "fr",
-        "Date Event": (meta.event_date as string) || "",
-        "Lieu Event": (meta.address as string) || "",
-        "Pack": (meta.pack_code as string) || "",
-        "Transport (€)": centsToEuros(Number(meta.transport_fee_cents) || 0),
-        "Total": centsToEuros(Number(meta.total_cents) || 0),
-        "Acompte": centsToEuros(Number(meta.deposit_cents) || DEPOSIT_CENTS),
-        "Solde Restant": centsToEuros(Number(meta.balance_due_cents) || 0),
-        "Date Acompte Payé": paidAt,
-        "Created At": new Date().toISOString()
-      }
-    }
-  });
+  return data;
 }
 
 export async function POST(req: Request) {
@@ -174,45 +61,31 @@ export async function POST(req: Request) {
   // Logs structurés (sans secrets)
   const logHeaders: Record<string, string> = {};
   req.headers.forEach((value, key) => {
-    // Ne pas logger les secrets
     if (!key.toLowerCase().includes("secret") && !key.toLowerCase().includes("authorization")) {
       logHeaders[key] = value;
     } else {
-      logHeaders[key] = "[REDACTED]";
+      logHeaders[key] = "[MASQUÉ]";
     }
   });
 
-  console.log(`[mollie-webhook] Request received:`, {
+  console.log(`[mollie-webhook] Requête reçue:`, {
     requestId,
     method: req.method,
     headers: Object.keys(logHeaders),
     timestamp: new Date().toISOString()
   });
 
-  // Sécurité: On ne valide pas via token/secret car Mollie n'envoie pas de header custom.
-  // La sécurité est assurée par la validation du payment via l'API Mollie:
-  // - On reçoit juste un `id=tr_xxx`
-  // - On fetch le vrai statut depuis Mollie API (authentifié avec notre API key)
-  // - Un attaquant ne peut pas forger un payment "paid" sans accès à notre compte Mollie
-
   // Mollie envoie id=tr_... (form-urlencoded)
   let raw: string;
   try {
     raw = await req.text();
   } catch (error) {
-    console.error(`[mollie-webhook] Failed to read body:`, {
+    console.error(`[mollie-webhook] Échec lecture body:`, {
       requestId,
       error: error instanceof Error ? error.message : String(error)
     });
     return Response.json(
-      {
-        ok: false,
-        requestId,
-        error: {
-          type: "INVALID_BODY",
-          message: "Failed to read request body"
-        }
-      },
+      { ok: false, requestId, error: { type: "INVALID_BODY", message: "Échec lecture body" } },
       { status: 400 }
     );
   }
@@ -221,187 +94,80 @@ export async function POST(req: Request) {
   const molliePaymentId = params.get("id");
 
   if (!molliePaymentId) {
-    console.warn(`[mollie-webhook] Missing payment ID in body:`, {
-      requestId,
-      bodyPreview: raw.substring(0, 100)
-    });
+    console.warn(`[mollie-webhook] ID paiement manquant:`, { requestId, bodyPreview: raw.substring(0, 100) });
     return Response.json(
-      {
-        ok: false,
-        requestId,
-        error: {
-          type: "VALIDATION_ERROR",
-          message: "Missing payment ID"
-        }
-      },
+      { ok: false, requestId, error: { type: "VALIDATION_ERROR", message: "ID paiement manquant" } },
       { status: 400 }
     );
   }
 
-  const logContext = {
-    requestId,
-    paymentId: molliePaymentId,
-    timestamp: new Date().toISOString()
-  };
+  const logContext = { requestId, paymentId: molliePaymentId, timestamp: new Date().toISOString() };
+  console.log(`[mollie-webhook] Traitement paiement:`, logContext);
 
-  console.log(`[mollie-webhook] Processing payment:`, logContext);
-
-  // =============================================================================
-  // Idempotency Layer 1: In-memory lock (60s TTL)
-  // Prevents concurrent/duplicate webhook calls for the same paymentId
-  // =============================================================================
+  // Verrou d'idempotence
   if (!acquireLock(molliePaymentId)) {
-    console.log(`[mollie-webhook] Lock already held, skipping:`, logContext);
-    return Response.json({
-      ok: true,
-      requestId,
-      received: true,
-      skipped: true,
-      reason: "lock_held"
-    });
+    console.log(`[mollie-webhook] Verrou déjà détenu, ignoré:`, logContext);
+    return Response.json({ ok: true, requestId, received: true, skipped: true, reason: "lock_held" });
   }
+
+  const supabase = createSupabaseServerClient();
 
   try {
     // =============================================================================
-    // Idempotency Layer 2: Check Payments sheet for existing "paid" status
+    // Vérifier si déjà traité dans Supabase (idempotence)
     // =============================================================================
-    const paymentsResult = await gasPost({
-      action: "readSheet",
-      key: process.env.GAS_KEY,
-      data: { sheetName: "Payments" }
-    });
+    const { data: existingPayment } = await supabase
+      .from("payments")
+      .select("status")
+      .eq("payment_id", molliePaymentId)
+      .single();
 
-    // GAS returns { values: [...] } for readSheet action
-    if (paymentsResult.values) {
-      const rows = paymentsResult.values as unknown[][];
-      if (rows.length >= 2) {
-        const headers = (rows[0] as string[]).map((h) => String(h).trim());
-        const paymentIdIdx = headers.findIndex((h) => h === "Payment ID");
-        const statusIdx = headers.findIndex((h) => h === "Status");
-
-        const existingPayment = rows.slice(1).find(
-          (row) => String(row[paymentIdIdx]).trim() === molliePaymentId
-        );
-
-        if (existingPayment && String(existingPayment[statusIdx]).trim().toLowerCase() === "paid") {
-          // Déjà traité
-          console.log(`[mollie-webhook] Payment already processed:`, logContext);
-          releaseLock(molliePaymentId);
-          return Response.json({ ok: true, requestId, received: true, skipped: true, reason: "already_paid" });
-        }
-      }
+    if (existingPayment?.status === "paid") {
+      console.log(`[mollie-webhook] Paiement déjà traité:`, logContext);
+      releaseLock(molliePaymentId);
+      return Response.json({ ok: true, requestId, received: true, skipped: true, reason: "already_paid" });
     }
 
-    // Fetch status Mollie
+    // Fetch statut Mollie
     const payment = await fetchMolliePaymentStatus(molliePaymentId);
     if (!payment) {
-      console.warn(`[mollie-webhook] Payment not found in Mollie API:`, {
-        ...logContext,
-        mollieApiStatus: "not_found"
-      });
+      console.warn(`[mollie-webhook] Paiement non trouvé dans Mollie:`, logContext);
       releaseLock(molliePaymentId);
       return Response.json(
-        {
-          ok: false,
-          requestId,
-          error: {
-            type: "PAYMENT_NOT_FOUND",
-            message: "Payment not found in Mollie"
-          }
-        },
+        { ok: false, requestId, error: { type: "PAYMENT_NOT_FOUND", message: "Paiement non trouvé" } },
         { status: 404 }
       );
     }
 
-    console.log(`[mollie-webhook] Payment fetched from Mollie:`, {
+    console.log(`[mollie-webhook] Paiement récupéré de Mollie:`, {
       ...logContext,
       status: payment.status,
       amount_cents: payment.amount_cents,
       hasMetadata: !!payment.metadata
     });
 
-    // On ne traite que paid
+    // Si pas "paid", mettre à jour le statut et retourner
     if (payment.status !== "paid") {
-      // Update payment status dans Payments sheet
-      try {
-        // Lire Payments pour trouver la ligne
-        const paymentsResult = await gasPost({
-          action: "readSheet",
-          key: process.env.GAS_KEY,
-          data: { sheetName: "Payments" }
-        });
+      await supabase
+        .from("payments")
+        .update({ status: payment.status, updated_at: new Date().toISOString() })
+        .eq("payment_id", molliePaymentId);
 
-        if (paymentsResult.values) {
-          const rows = paymentsResult.values as unknown[][];
-          if (rows.length >= 2) {
-            const headers = (rows[0] as string[]).map((h) => String(h).trim());
-            const paymentIdIdx = headers.findIndex((h) => h === "Payment ID");
-
-            const rowIndex = rows.slice(1).findIndex(
-              (row) => String(row[paymentIdIdx]).trim() === molliePaymentId
-            );
-
-            if (rowIndex >= 0) {
-              // Construire values array dans l'ordre des colonnes
-              // IMPORTANT: updateRowForAdmin_ fait [id, ...values], donc on EXCLUT Payment ID
-              const existingRow = rows[rowIndex + 1] as unknown[];
-              const valuesArray = headers
-                .filter((header) => header !== "Payment ID")
-                .map((header) => {
-                  const idx = headers.indexOf(header);
-                  if (header === "Status") return payment.status;
-                  if (header === "Updated At") return new Date().toISOString();
-                  // Garder les valeurs existantes pour les autres colonnes
-                  return existingRow[idx] || "";
-                });
-
-              await gasPost({
-                action: "updateRow",
-                key: process.env.GAS_KEY,
-                data: {
-                  sheetName: "Payments",
-                  id: molliePaymentId,
-                  values: valuesArray
-                }
-              });
-
-              console.log(`[mollie-webhook] Payment status updated (not paid):`, {
-                ...logContext,
-                status: payment.status,
-                updatePaymentsSuccess: true
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error(`[mollie-webhook] Failed to update payment status:`, {
-          ...logContext,
-          status: payment.status,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
-
+      console.log(`[mollie-webhook] Statut mis à jour (non payé):`, { ...logContext, status: payment.status });
       releaseLock(molliePaymentId);
       return Response.json({ ok: true, requestId, received: true, status: payment.status });
     }
 
-    // Validate acompte
+    // Valider le montant de l'acompte
     if (payment.amount_cents !== DEPOSIT_CENTS) {
-      console.warn(`[mollie-webhook] Invalid deposit amount:`, {
+      console.warn(`[mollie-webhook] Montant acompte invalide:`, {
         ...logContext,
         expected: DEPOSIT_CENTS,
         received: payment.amount_cents
       });
       releaseLock(molliePaymentId);
       return Response.json(
-        {
-          ok: false,
-          requestId,
-          error: {
-            type: "INVALID_DEPOSIT_AMOUNT",
-            message: `Expected ${DEPOSIT_CENTS} cents, got ${payment.amount_cents}`
-          }
-        },
+        { ok: false, requestId, error: { type: "INVALID_DEPOSIT_AMOUNT", message: `Attendu ${DEPOSIT_CENTS}, reçu ${payment.amount_cents}` } },
         { status: 400 }
       );
     }
@@ -409,17 +175,10 @@ export async function POST(req: Request) {
     // Récupérer données depuis metadata
     const meta = payment.metadata || {};
     if (!meta.event_id) {
-      console.warn(`[mollie-webhook] Missing event_id in metadata:`, logContext);
+      console.warn(`[mollie-webhook] event_id manquant dans metadata:`, logContext);
       releaseLock(molliePaymentId);
       return Response.json(
-        {
-          ok: false,
-          requestId,
-          error: {
-            type: "MISSING_EVENT_ID",
-            message: "event_id is required in payment metadata"
-          }
-        },
+        { ok: false, requestId, error: { type: "MISSING_EVENT_ID", message: "event_id requis dans metadata" } },
         { status: 400 }
       );
     }
@@ -427,21 +186,18 @@ export async function POST(req: Request) {
     const eventId = meta.event_id as string;
     const paidAt = payment.paid_at || new Date().toISOString();
 
-    // 1) Récupérer email du client depuis metadata (OBLIGATOIRE)
-    // CRITIQUE: On ne dépend JAMAIS de billingAddress.email
+    // Récupérer email client depuis metadata (OBLIGATOIRE)
     const clientEmail =
       meta.client_email && typeof meta.client_email === "string"
         ? meta.client_email.trim().toLowerCase()
         : null;
 
     if (!clientEmail) {
-      console.error(`[mollie-webhook] MISSING client_email in metadata:`, {
+      console.error(`[mollie-webhook] client_email MANQUANT dans metadata:`, {
         ...logContext,
         eventId,
-        hasMetadata: !!meta,
         metadataKeys: meta ? Object.keys(meta) : []
       });
-      // Return received:true mais NE PAS append Clients
       releaseLock(molliePaymentId);
       return Response.json({
         ok: true,
@@ -453,221 +209,106 @@ export async function POST(req: Request) {
       });
     }
 
-    // 2) Chercher lead dans Leads par email (case-insensitive)
-    // Prendre la ligne la plus récente si plusieurs matches
+    // =============================================================================
+    // 1) Mettre à jour le paiement à "paid" (marqueur d'idempotence)
+    // =============================================================================
+    const { error: paymentUpdateError } = await supabase
+      .from("payments")
+      .update({
+        status: "paid",
+        paid_at: paidAt,
+        provider_payment_id: molliePaymentId
+      })
+      .eq("payment_id", molliePaymentId);
+
+    if (paymentUpdateError) {
+      console.error(`[mollie-webhook] Échec mise à jour payment:`, { ...logContext, error: paymentUpdateError });
+      throw new Error(paymentUpdateError.message);
+    }
+
+    console.log(`[mollie-webhook] Payment mis à jour à PAID:`, { ...logContext, paidAt });
+
+    // =============================================================================
+    // 2) Chercher et mettre à jour le lead
+    // =============================================================================
     let leadId: string | null = null;
-    let leadIdFound = false;
+    let leadFound = false;
 
-    // Si meta.lead_id existe, l'utiliser directement (mais on vérifie quand même dans Leads)
-    if (meta.lead_id && typeof meta.lead_id === "string") {
-      const providedLeadId = meta.lead_id.trim();
-      // Vérifier que ce lead_id existe bien dans Leads avec cet email
-      const found = await findRowByEmail(clientEmail);
-      if (found && found.leadId === providedLeadId) {
-        leadId = providedLeadId;
-        leadIdFound = true;
-        console.log(`[mollie-webhook] Using lead_id from metadata (verified):`, {
-          ...logContext,
-          email: clientEmail,
-          leadId,
-          leadIdFound: true
-        });
-      } else {
-        // lead_id dans metadata ne correspond pas à l'email, chercher par email uniquement
-        if (found) {
-          leadId = found.leadId;
-          leadIdFound = true;
-          console.warn(`[mollie-webhook] lead_id in metadata doesn't match email, using found lead:`, {
-            ...logContext,
-            email: clientEmail,
-            metadataLeadId: providedLeadId,
-            foundLeadId: found.leadId,
-            leadIdFound: true
-          });
-        } else {
-          console.warn(`[mollie-webhook] lead_id in metadata but no matching lead found by email:`, {
-            ...logContext,
-            email: clientEmail,
-            metadataLeadId: providedLeadId,
-            leadIdFound: false
-          });
-        }
+    const foundLead = await findLeadByEmail(supabase, clientEmail);
+    if (foundLead) {
+      leadId = foundLead.lead_id;
+      leadFound = true;
+
+      await supabase
+        .from("leads")
+        .update({
+          status: "converted",
+          converted_event_id: eventId,
+          updated_at: new Date().toISOString()
+        })
+        .eq("lead_id", leadId);
+
+      console.log(`[mollie-webhook] Lead mis à jour (converted):`, { ...logContext, leadId, eventId });
+    }
+
+    // =============================================================================
+    // 3) Créer l'événement dans la table events
+    // =============================================================================
+    const { error: eventInsertError } = await supabase.from("events").insert({
+      event_id: eventId,
+      payment_id: molliePaymentId,
+      client_name: (meta.client_name as string) || "",
+      client_email: clientEmail,
+      client_phone: (meta.client_phone as string) || "",
+      language: ((meta.language as string) || "fr").toUpperCase(),
+      event_date: (meta.event_date as string) || null,
+      address: (meta.address as string) || "",
+      event_type: "b2c",
+      transport_fee_cents: meta.transport_fee_cents ? Number(meta.transport_fee_cents) : null,
+      total_cents: meta.total_cents ? Number(meta.total_cents) : null,
+      deposit_cents: DEPOSIT_CENTS,
+      balance_due_cents: meta.balance_due_cents ? Number(meta.balance_due_cents) : null,
+      guest_count: meta.guests ? Number(meta.guests) : null
+    });
+
+    if (eventInsertError) {
+      // Ignorer si l'event existe déjà (unique constraint)
+      if (!eventInsertError.message.includes("duplicate")) {
+        console.error(`[mollie-webhook] Échec création event:`, { ...logContext, error: eventInsertError });
+        throw new Error(eventInsertError.message);
       }
+      console.log(`[mollie-webhook] Event déjà existant, ignoré:`, { ...logContext, eventId });
     } else {
-      // Pas de lead_id dans metadata, chercher uniquement par email
-      const found = await findRowByEmail(clientEmail);
-      if (found) {
-        leadId = found.leadId;
-        leadIdFound = true;
-        console.log(`[mollie-webhook] Lead found by email:`, {
-          ...logContext,
-          email: clientEmail,
-          leadId,
-          rowIndex: found.rowIndex,
-          createdAt: found.createdAt,
-          leadIdFound: true
-        });
-      } else {
-        console.warn(`[mollie-webhook] No lead found by email:`, {
-          ...logContext,
-          email: clientEmail,
-          leadIdFound: false
-        });
-      }
+      console.log(`[mollie-webhook] Event créé:`, { ...logContext, eventId });
     }
 
     // =============================================================================
-    // 3) FIRST: Update Payments to "paid" BEFORE any appends
-    // This is CRITICAL for idempotency - the status check at the top relies on this
+    // 4) Créer les notifications dans notifications_log
     // =============================================================================
-    try {
-      // Lire Payments pour trouver la ligne et mapper les colonnes
-      const paymentsResult = await gasPost({
-        action: "readSheet",
-        key: process.env.GAS_KEY,
-        data: { sheetName: "Payments" }
-      });
+    const locale = (meta.language as string) || "fr";
 
-      if (paymentsResult.values) {
-        const rows = paymentsResult.values as unknown[][];
-        if (rows.length >= 2) {
-          const headers = (rows[0] as string[]).map((h) => String(h).trim());
-          const paymentIdIdx = headers.findIndex((h) => h === "Payment ID");
-
-          const rowIndex = rows.slice(1).findIndex(
-            (row) => String(row[paymentIdIdx]).trim() === molliePaymentId
-          );
-
-          if (rowIndex >= 0) {
-            // Construire values array dans l'ordre des colonnes
-            // IMPORTANT: updateRowForAdmin_ fait [id, ...values], donc on EXCLUT Payment ID du array
-            const existingRow = rows[rowIndex + 1] as unknown[];
-            const valuesArray = headers
-              .filter((header) => header !== "Payment ID") // Exclure car GAS l'ajoute via `id`
-              .map((header) => {
-                const idx = headers.indexOf(header);
-                if (header === "Status") return "paid";
-                if (header === "Paid At") return paidAt;
-                if (header === "Updated At") return new Date().toISOString();
-                if (header === "Provider Payment ID") return molliePaymentId;
-                // Garder les valeurs existantes pour les autres colonnes
-                return existingRow[idx] || "";
-              });
-
-            await gasPost({
-              action: "updateRow",
-              key: process.env.GAS_KEY,
-              data: {
-                sheetName: "Payments",
-                id: molliePaymentId,
-                values: valuesArray
-              }
-            });
-
-            console.log(`[mollie-webhook] Payment updated to PAID (idempotency marker set):`, {
-              ...logContext,
-              status: "paid",
-              paidAt,
-              updatePaymentsSuccess: true
-            });
-          } else {
-            console.warn(`[mollie-webhook] Payment ID not found in Payments sheet:`, {
-              ...logContext,
-              updatePaymentsSuccess: false
-            });
-          }
-        }
+    await supabase.from("notifications_log").insert([
+      {
+        event_id: eventId,
+        template_key: "B2C_BOOKING_CONFIRMED",
+        to_email: clientEmail,
+        locale,
+        status: "queued"
+      },
+      {
+        event_id: eventId,
+        template_key: "B2C_EVENT_RECAP",
+        to_email: clientEmail,
+        locale,
+        status: "queued"
       }
-    } catch (error) {
-      console.error(`[mollie-webhook] Failed to update Payments sheet:`, {
-        ...logContext,
-        error: error instanceof Error ? error.message : String(error),
-        updatePaymentsSuccess: false
-      });
-      // Erreur critique - on throw pour que le webhook soit retenté
-      throw error;
-    }
+    ]);
 
-    // 4) Update Leads si trouvé
-    if (leadIdFound && leadId) {
-      try {
-        await updateLeadRow(leadId, eventId);
-        console.log(`[mollie-webhook] Lead updated (Status=converted):`, {
-          ...logContext,
-          email: clientEmail,
-          leadId,
-          eventId,
-          leadIdFound: true
-        });
-      } catch (error) {
-        console.error(`[mollie-webhook] Failed to update lead:`, {
-          ...logContext,
-          email: clientEmail,
-          leadId,
-          error: error instanceof Error ? error.message : String(error),
-          leadIdFound: true
-        });
-        // Continue quand même (non-blocking) mais on log l'erreur
-      }
-    }
+    console.log(`[mollie-webhook] Notifications créées:`, { ...logContext, eventId });
 
-    // 5) Append Clients (toujours, même si lead non trouvé)
-    try {
-      await appendClientRow(eventId, clientEmail, meta, paidAt);
-      console.log(`[mollie-webhook] Client row appended:`, {
-        ...logContext,
-        email: clientEmail,
-        eventId,
-        leadIdFound,
-        appendClientsSuccess: true
-      });
-    } catch (error) {
-      console.error(`[mollie-webhook] Failed to append client row:`, {
-        ...logContext,
-        email: clientEmail,
-        error: error instanceof Error ? error.message : String(error),
-        appendClientsSuccess: false
-      });
-      // Erreur critique - on throw pour que le webhook soit retenté
-      throw error;
-    }
-
-    // 6) Ajouter notifications
-    if (clientEmail) {
-      await gasPost({
-        action: "appendRow",
-        key: process.env.GAS_KEY,
-        data: {
-          sheetName: "Notifications",
-          values: {
-            "Template": "B2C_BOOKING_CONFIRMED",
-            "Email": clientEmail,
-            "Event ID": eventId,
-            "Locale": (meta.language as string) || "fr",
-            "Status": "queued",
-            "Created At": new Date().toISOString()
-          }
-        }
-      });
-
-      await gasPost({
-        action: "appendRow",
-        key: process.env.GAS_KEY,
-        data: {
-          sheetName: "Notifications",
-          values: {
-            "Template": "B2C_EVENT_RECAP",
-            "Email": clientEmail,
-            "Event ID": eventId,
-            "Locale": (meta.language as string) || "fr",
-            "Status": "queued",
-            "Created At": new Date().toISOString()
-          }
-        }
-      });
-    }
-
-    // 7) Meta Conversions API - Track Purchase event
+    // =============================================================================
+    // 5) Meta Conversions API - Track Purchase event
+    // =============================================================================
     try {
       const totalCents = meta.total_cents ? Number(meta.total_cents) : DEPOSIT_CENTS;
       const totalEuros = totalCents / 100;
@@ -679,42 +320,28 @@ export async function POST(req: Request) {
         value: totalEuros,
         currency: "EUR",
         orderId: eventId,
-        contentName: (meta.pack_code as string) || "MirrorEffect Booking",
+        contentName: (meta.pack_code as string) || "MirrorEffect Booking"
       });
 
-      console.log(`[mollie-webhook] Meta CAPI Purchase event sent:`, {
-        ...logContext,
-        eventId,
-        value: totalEuros,
-      });
+      console.log(`[mollie-webhook] Meta CAPI Purchase envoyé:`, { ...logContext, eventId, value: totalEuros });
     } catch (error) {
-      // Non-blocking - log but don't fail the webhook
-      console.error(`[mollie-webhook] Meta CAPI error (non-blocking):`, {
+      console.error(`[mollie-webhook] Meta CAPI erreur (non-bloquant):`, {
         ...logContext,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       });
     }
 
     const duration = Date.now() - startTime;
-    const gasResults = {
-      updateLeads: leadIdFound ? "success" : "skipped",
-      appendClients: "success",
-      updatePayments: "success",
-      appendNotifications: clientEmail ? "success" : "skipped"
-    };
 
-    console.log(`[mollie-webhook] Success:`, {
+    console.log(`[mollie-webhook] Succès:`, {
       ...logContext,
-      mollieStatus: payment.status,
       email: clientEmail,
       eventId,
       leadId: leadId || null,
-      leadIdFound,
-      gasResults,
+      leadFound,
       duration: `${duration}ms`
     });
 
-    // Release lock on success (allow future retries if needed)
     releaseLock(molliePaymentId);
 
     return Response.json({
@@ -724,30 +351,25 @@ export async function POST(req: Request) {
       eventId,
       email: clientEmail,
       leadId: leadId || null,
-      leadIdFound,
-      gasResults,
+      leadFound,
       duration: `${duration}ms`
     });
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error(`[mollie-webhook] Error:`, {
+    console.error(`[mollie-webhook] Erreur:`, {
       ...logContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       duration: `${duration}ms`
     });
 
-    // Release lock on error to allow retry
     releaseLock(molliePaymentId);
 
     return Response.json(
       {
         ok: false,
         requestId,
-        error: {
-          type: "INTERNAL_ERROR",
-          message: error instanceof Error ? error.message : String(error)
-        },
+        error: { type: "INTERNAL_ERROR", message: error instanceof Error ? error.message : String(error) },
         duration: `${duration}ms`
       },
       { status: 500 }

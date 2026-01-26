@@ -13,8 +13,8 @@ export async function GET() {
     const { count, error } = await supabase
       .from("events")
       .select("*", { count: "exact", head: true })
-      .eq("date_event", today)
-      .not("acompte", "is", null);
+      .eq("event_date", today)
+      .not("deposit_cents", "is", null);
 
     if (error) {
       console.error("[health] Erreur Supabase:", error);

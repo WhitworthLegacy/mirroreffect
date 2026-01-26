@@ -1,48 +1,42 @@
 import { NextResponse } from "next/server";
-import { writeStudentStatsToSheets, readStudentStatsFromSheets } from "@/lib/googleSheets";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
-export async function GET() {
+/**
+ * Stats étudiants - Lecture depuis la View Supabase v_student_monthly_stats
+ * La View calcule automatiquement les agrégats depuis la table events
+ * Plus besoin de Google Sheets !
+ */
+export async function GET(request: Request) {
   try {
-    const stats = await readStudentStatsFromSheets();
-    return NextResponse.json({ items: stats });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
-  }
-}
+    const { searchParams } = new URL(request.url);
+    const month = searchParams.get("month"); // Format: YYYY-MM
+    const studentName = searchParams.get("student_name");
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { month, student_name, ...rest } = body;
+    const supabase = createSupabaseServerClient();
 
-    if (!month || !student_name) {
-      return NextResponse.json({ error: "month and student_name are required" }, { status: 400 });
+    let query = supabase
+      .from("v_student_monthly_stats")
+      .select("*")
+      .order("month", { ascending: false });
+
+    // Filtrer par mois si spécifié
+    if (month) {
+      query = query.eq("month", month);
     }
 
-    await writeStudentStatsToSheets({ month, student_name, ...rest });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(request: Request) {
-  try {
-    const body = await request.json();
-    const { month, student_name, ...rest } = body;
-
-    if (!month || !student_name) {
-      return NextResponse.json({ error: "month and student_name are required" }, { status: 400 });
+    // Filtrer par étudiant si spécifié
+    if (studentName) {
+      query = query.eq("student_name", studentName);
     }
 
-    await writeStudentStatsToSheets({ month, student_name, ...rest });
-    return NextResponse.json({ success: true });
+    const { data: stats, error } = await query;
+
+    if (error) {
+      console.error("[stats/students] Erreur Supabase:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ items: stats || [] });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
@@ -50,3 +44,5 @@ export async function PATCH(request: Request) {
     );
   }
 }
+
+// Note: POST et PATCH supprimés car les stats sont calculées automatiquement par la View

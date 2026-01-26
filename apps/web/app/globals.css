@@ -127,6 +127,84 @@
     transform: rotate(2deg);
   }
 
+  /* Clean SEO Content - Mobile First */
+  .seo-content-clean {
+    font-size: 1.0625rem;
+    line-height: 1.85;
+    color: #3a3a3a;
+  }
+
+  @media (min-width: 768px) {
+    .seo-content-clean {
+      font-size: 1.125rem;
+      line-height: 1.8;
+    }
+  }
+
+  .seo-content-clean p {
+    margin-bottom: 1.5rem;
+  }
+
+  .seo-content-clean p:last-child {
+    margin-bottom: 0;
+  }
+
+  .seo-content-clean h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--night);
+  }
+
+  @media (min-width: 768px) {
+    .seo-content-clean h3 {
+      font-size: 1.35rem;
+    }
+  }
+
+  .seo-content-clean ul {
+    margin: 1.25rem 0 1.5rem 0;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .seo-content-clean ul li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .seo-content-clean ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-soft) 100%);
+    border-radius: 50%;
+  }
+
+  .seo-content-clean strong {
+    color: var(--night);
+    font-weight: 700;
+  }
+
+  /* Section Divider */
+  .seo-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 2.5rem 0;
+  }
+
+  @media (min-width: 768px) {
+    .seo-divider {
+      margin: 3rem 0;
+    }
+  }
+
   .seo-content .sub {
     margin-top: 0.5rem;
     color: #6b6b6b;

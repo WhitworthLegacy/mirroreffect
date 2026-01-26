@@ -6,13 +6,14 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rows = await readSheet("Clients");
+    // Note: "Clients" est maintenant sur Supabase, on teste "Stats" qui reste sur GAS
+    const rows = await readSheet("Stats");
 
     return NextResponse.json({
       ok: true,
       message: "GAS connection working",
       test: "readSheet",
-      sheetName: "Clients",
+      sheetName: "Stats",
       rowCount: Math.max(0, rows.length - 1),
       sampleHeaders: (rows[0] as unknown[] | undefined)?.slice(0, 5) || [],
       env: {
@@ -30,7 +31,7 @@ export async function GET() {
         ok: false,
         error: error instanceof Error ? error.message : "Unknown error",
         test: "readSheet",
-        sheetName: "Clients",
+        sheetName: "Stats",
       },
       { status: 500 }
     );

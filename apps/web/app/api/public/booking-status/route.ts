@@ -89,19 +89,16 @@ export async function GET(req: Request) {
     }
 
     // Si l'event existe dans la table events, l'acompte a été payé (par définition)
-    if (event.acompte && event.acompte > 0) {
+    if (event.deposit_cents && event.deposit_cents > 0) {
       depositPaid = true;
     }
-
-    // Convertir le total en centimes
-    const totalCents = event.total ? Math.round(event.total * 100) : null;
 
     return Response.json({
       ok: true,
       event_id,
-      client_name: event.nom || null,
-      event_date: event.date_event || null,
-      total_cents: totalCents,
+      client_name: event.client_name || null,
+      event_date: event.event_date || null,
+      total_cents: event.total_cents || null,
       status: "active",
       deposit_paid: depositPaid,
       payment_status: paymentStatus,

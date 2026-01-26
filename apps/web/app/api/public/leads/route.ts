@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { gasPost } from "@/lib/gas";
+import { createSupabaseServerClient } from "@/lib/supabase";
 import { generateLeadId } from "@/lib/date-utils";
-import { toDDMMYYYY, toDDMMYYYYHHmm } from "@/lib/date";
 import { trackLead } from "@/lib/metaCapi";
 
-  const LeadPayloadSchema = z.object({
-    event: z.enum(["button_click", "lead_progress", "cta_update"]).optional().default("button_click"),
-    step: z.string().optional(),
-    buttonLabel: z.string().optional(),
+const LeadPayloadSchema = z.object({
+  event: z.enum(["button_click", "lead_progress", "cta_update"]).optional().default("button_click"),
+  step: z.string().optional(),
+  buttonLabel: z.string().optional(),
   leadId: z.string().optional(),
   utm: z.object({
     source: z.string().optional(),
@@ -36,12 +35,13 @@ import { trackLead } from "@/lib/metaCapi";
   cta_value: z.string().optional(),
   updated_at: z.string().optional(),
   is_new_lead: z.boolean().optional()
-  }).passthrough();
+}).passthrough();
 
 function sanitize(value?: string): string {
   return value ? value.trim() : "";
 }
 
+// Déduplication en mémoire (fenêtre de 3s)
 const recentEvents = new Map<string, number>();
 const DEDUP_WINDOW_MS = 3000;
 
@@ -56,6 +56,7 @@ function isDuplicate(key: string): boolean {
     return true;
   }
   recentEvents.set(key, now);
+  // Nettoyer les anciennes entrées
   for (const [k, v] of recentEvents.entries()) {
     if (now - v > 10000) {
       recentEvents.delete(k);
@@ -64,58 +65,22 @@ function isDuplicate(key: string): boolean {
   return false;
 }
 
-const LEADS_HEADERS = [
-  "Lead ID",
-  "Created At",
-  "Step",
-  "Status",
-  "Nom",
-  "Email",
-  "Phone",
-  "Language",
-  "Date Event",
-  "Lieu Event",
-  "Pack",
-  "Invités",
-  "Transport (€)",
-  "Total",
-  "Acompte",
-  "UTM Source",
-  "UTM Campaign",
-  "UTM Medium"
-];
-
-function buildLeadValues(record: Record<string, unknown>): Record<string, string> {
-  const values: Record<string, string> = {};
-  for (const header of LEADS_HEADERS) {
-    const value = record[header];
-    values[header] = value !== undefined && value !== null ? String(value) : "";
-  }
-  return values;
-}
-
 export async function POST(req: Request) {
   const requestId = crypto.randomUUID();
   const forwardedRequestId = req.headers.get("x-request-id") ?? undefined;
-  console.log(`[leads][${requestId}] Incoming request`, { forwardedRequestId });
-  const hasGAS_URL = !!process.env.GAS_WEBAPP_URL;
-  const hasGAS_KEY = !!process.env.GAS_KEY;
+  console.log(`[leads][${requestId}] Requête reçue`, { forwardedRequestId });
 
   let raw: unknown = null;
   try {
     raw = await req.json();
-    console.log(`[leads][${requestId}] Raw body`, raw);
+    console.log(`[leads][${requestId}] Body brut`, raw);
   } catch {
     return Response.json(
       {
         ok: false,
         requestId,
         skipped: true,
-        error: {
-          type: "INVALID_JSON",
-          message: "Request body is not valid JSON",
-          status: 400
-        }
+        error: { type: "INVALID_JSON", message: "Body non valide JSON", status: 400 }
       },
       { status: 200 }
     );
@@ -123,27 +88,21 @@ export async function POST(req: Request) {
 
   const parsed = LeadPayloadSchema.safeParse(raw);
   if (!parsed.success) {
-    console.warn(`[leads][${requestId}] Validation failed`, parsed.error.format());
+    console.warn(`[leads][${requestId}] Validation échouée`, parsed.error.format());
     return Response.json(
       {
         ok: false,
         requestId,
         skipped: true,
-        error: {
-          type: "VALIDATION_ERROR",
-          message: "Request body validation failed",
-          issues: parsed.error.format()
-        }
+        error: { type: "VALIDATION_ERROR", message: "Validation body échouée", issues: parsed.error.format() }
       },
       { status: 200 }
     );
   }
 
   const data = parsed.data;
-  console.log(`[leads][${requestId}] Parsed payload`, {
-    ...data,
-    forwardedRequestId
-  });
+  console.log(`[leads][${requestId}] Payload parsé`, { ...data, forwardedRequestId });
+
   const event = data.event || "button_click";
   const leadId = data.leadId || data.lead_id;
   const step = data.step || "";
@@ -159,137 +118,111 @@ export async function POST(req: Request) {
     hasLeadId: Boolean(leadId),
     hasUTM: Boolean(data.utm || data.utm_source || data.utm_campaign || data.utm_medium),
     isDuplicate: isDup,
-    isWriteAttempt: false,
-    gasStatus: "none"
+    isWriteAttempt: false
   };
 
+  // =============================================================================
+  // Événement: button_click (log only, pas d'écriture)
+  // =============================================================================
   if (event === "button_click") {
     if (isDup) {
-    console.log(`[leads][${requestId}] Event skipped (duplicate):`, logContext);
+      console.log(`[leads][${requestId}] Événement ignoré (duplicate):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "duplicate" }, { status: 200 });
     }
 
     if (!leadId) {
-      console.log(`[leads][${requestId}] button_click skipped (no leadId):`, logContext);
+      console.log(`[leads][${requestId}] button_click ignoré (pas de leadId):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "no_lead_id" }, { status: 200 });
     }
 
-    console.log(`[leads][${requestId}] button_click logged:`, {
-      ...logContext,
-      buttonLabel,
-      leadId
-    });
-
+    console.log(`[leads][${requestId}] button_click loggé:`, { ...logContext, buttonLabel, leadId });
     return Response.json({ ok: true, requestId, skipped: true, reason: "button_click_log_only" }, { status: 200 });
   }
 
+  const supabase = createSupabaseServerClient();
+
+  // =============================================================================
+  // Événement: cta_update (mise à jour CTA)
+  // =============================================================================
   if (event === "cta_update") {
     if (!leadId) {
-      console.log(`[leads] cta_update skipped (no leadId):`, logContext);
+      console.log(`[leads] cta_update ignoré (pas de leadId):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "no_lead_id" }, { status: 200 });
     }
 
-    const updatedLeadId = leadId;
     logContext.isWriteAttempt = true;
 
     try {
-      const updatePayload = {
-        action: "updateRowByLeadId",
-        key: process.env.GAS_KEY,
-        data: {
-          sheetName: "Leads",
-          leadId: updatedLeadId,
-          values: {
-            "Last CTA": sanitize(data.cta_id || ""),
-            "Last CTA Label": sanitize(data.cta_label || ""),
-            "Last CTA Value": sanitize(data.cta_value || ""),
-            "Last CTA At": sanitize(data.updated_at) || new Date().toISOString()
-          }
-        }
-      };
-      console.log(`[leads][${requestId}] GAS update payload`, updatePayload);
+      const { error } = await supabase
+        .from("leads")
+        .update({
+          updated_at: new Date().toISOString()
+        })
+        .eq("lead_id", leadId);
 
-      await gasPost(updatePayload);
+      if (error) throw error;
 
-      logContext.gasStatus = "success";
-      console.log(`[leads][${requestId}] cta_update success`, logContext);
-
-      return Response.json({ ok: true, requestId, lead_id: updatedLeadId }, { status: 200 });
+      console.log(`[leads][${requestId}] cta_update succès`, logContext);
+      return Response.json({ ok: true, requestId, lead_id: leadId }, { status: 200 });
     } catch (error) {
-      const gasError = error as Error & { type?: string; status?: number; preview?: string; message?: string };
-      logContext.gasStatus = `error:${gasError.type || "unknown"}`;
-      console.warn(`[leads][${requestId}] cta_update error`, { ...logContext, error: gasError.message });
-
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`[leads][${requestId}] cta_update erreur`, { ...logContext, error: errMsg });
       return Response.json(
-        {
-          ok: false,
-          requestId,
-          skipped: true,
-          error: {
-            type: gasError.type || "GAS_ERROR",
-            message: gasError.message || String(error)
-          }
-        },
+        { ok: false, requestId, skipped: true, error: { type: "DB_ERROR", message: errMsg } },
         { status: 200 }
       );
     }
   }
 
+  // =============================================================================
+  // Événement: lead_progress (création/mise à jour lead)
+  // =============================================================================
   if (event === "lead_progress") {
     const clientEmail = sanitize(data.client_email || "");
     const isNewLead = data.is_new_lead === true;
 
     if (!leadId && !clientEmail) {
-      console.log(`[leads][${requestId}] lead_progress skipped (missing leadId/email):`, logContext);
+      console.log(`[leads][${requestId}] lead_progress ignoré (manque leadId/email):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "missing_lead_id_or_email" }, { status: 200 });
     }
 
     logContext.isWriteAttempt = true;
 
-    const eventDate = data.event_date ? toDDMMYYYY(data.event_date) || data.event_date : "";
+    // Données de base du lead
     const baseValues = {
-      Language: sanitize(data.language || ""),
-      Nom: sanitize(data.client_name || ""),
-      Email: clientEmail,
-      Phone: sanitize(data.client_phone || ""),
-      "Date Event": eventDate,
-      "Lieu Event": sanitize(data.address || ""),
-      Pack: sanitize(data.pack_code || ""),
-      "Invités": sanitize(data.guests || ""),
-      "Transport (€)": sanitize(data.transport_euros || ""),
-      Total: sanitize(data.total_euros || ""),
-      Acompte: sanitize(data.deposit_euros || ""),
-      "UTM Source": sanitize(data.utm_source || data.utm?.source || ""),
-      "UTM Campaign": sanitize(data.utm_campaign || data.utm?.campaign || ""),
-      "UTM Medium": sanitize(data.utm_medium || data.utm?.medium || "")
-    } as Record<string, string>;
+      language: sanitize(data.language || "").toUpperCase() || "FR",
+      nom: sanitize(data.client_name || ""),
+      email: clientEmail.toLowerCase(),
+      phone: sanitize(data.client_phone || ""),
+      date_event: sanitize(data.event_date || "") || null,
+      lieu_event: sanitize(data.address || ""),
+      pack: sanitize(data.pack_code || ""),
+      invites: sanitize(data.guests || ""),
+      transport_euros: data.transport_euros ? parseFloat(data.transport_euros.replace(",", ".")) : null,
+      total: data.total_euros ? parseFloat(data.total_euros.replace(",", ".")) : null,
+      acompte: data.deposit_euros ? parseFloat(data.deposit_euros.replace(",", ".")) : null,
+      utm_source: sanitize(data.utm_source || data.utm?.source || ""),
+      utm_campaign: sanitize(data.utm_campaign || data.utm?.campaign || ""),
+      utm_medium: sanitize(data.utm_medium || data.utm?.medium || "")
+    };
 
     try {
-      // If client tells us this is a new lead, create directly without trying to update
+      // Si is_new_lead=true, créer directement sans chercher
       if (isNewLead && leadId) {
-        console.log(`[leads][${requestId}] Creating new lead (is_new_lead=true)`, { leadId });
+        console.log(`[leads][${requestId}] Création nouveau lead (is_new_lead=true)`, { leadId });
 
-        const createValues = buildLeadValues({
-          ...baseValues,
-          "Lead ID": leadId,
-          "Created At": toDDMMYYYYHHmm(new Date()) || new Date().toISOString(),
-          Step: step || "",
-          Status: sanitize(data.status || "step_5_completed")
+        const { error } = await supabase.from("leads").insert({
+          lead_id: leadId,
+          step: step ? parseInt(step, 10) : 5,
+          status: sanitize(data.status || "progress"),
+          ...baseValues
         });
 
-        await gasPost({
-          action: "appendRow",
-          key: process.env.GAS_KEY,
-          data: {
-            sheetName: "Leads",
-            values: createValues
-          }
-        });
+        if (error) throw error;
 
-        logContext.gasStatus = "success (new lead)";
-        console.log(`[leads][${requestId}] lead_progress create success (new lead)`, { ...logContext, leadId });
+        console.log(`[leads][${requestId}] lead_progress création succès (new lead)`, { ...logContext, leadId });
 
-        // Meta CAPI - Track Lead event (non-blocking)
+        // Meta CAPI - Track Lead event (non-bloquant)
         trackLead({
           email: clientEmail || undefined,
           phone: sanitize(data.client_phone || "") || undefined,
@@ -297,59 +230,53 @@ export async function POST(req: Request) {
           leadId,
           value: data.total_euros ? parseFloat(data.total_euros) : undefined,
           clientIp: req.headers.get("x-forwarded-for")?.split(",")[0] || undefined,
-          userAgent: req.headers.get("user-agent") || undefined,
-        }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI error:`, err));
+          userAgent: req.headers.get("user-agent") || undefined
+        }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI erreur:`, err));
 
         return Response.json({ ok: true, requestId, lead_id: leadId, created: true }, { status: 200 });
       }
 
-      // Existing lead - try to update
+      // Lead existant - essayer de mettre à jour
       if (leadId) {
-        const updateValues = {
-          ...baseValues,
-          Step: step,
-          Status: sanitize(data.status || ""),
-          "Updated At": toDDMMYYYYHHmm(new Date()) || new Date().toISOString()
-        };
+        // Vérifier si le lead existe
+        const { data: existingLead } = await supabase
+          .from("leads")
+          .select("lead_id")
+          .eq("lead_id", leadId)
+          .single();
 
-        // Try to update first
-        const updateResult = await gasPost({
-          action: "updateRowByLeadId",
-          key: process.env.GAS_KEY,
-          data: {
-            sheetName: "Leads",
-            leadId,
-            values: updateValues
-          }
-        });
+        if (existingLead) {
+          // Mettre à jour
+          const { error } = await supabase
+            .from("leads")
+            .update({
+              step: step ? parseInt(step, 10) : undefined,
+              status: sanitize(data.status || "") || undefined,
+              updated_at: new Date().toISOString(),
+              ...baseValues
+            })
+            .eq("lead_id", leadId);
 
-        // If the lead was not found (rowIndex === -1 or updated === false), create it instead
-        const wasUpdated = updateResult && (updateResult as { updated?: boolean; rowIndex?: number }).updated !== false && (updateResult as { rowIndex?: number }).rowIndex !== -1;
+          if (error) throw error;
 
-        if (!wasUpdated) {
-          console.log(`[leads][${requestId}] Lead not found in sheet, creating new row`, { leadId });
+          console.log(`[leads][${requestId}] lead_progress update succès`, logContext);
+          return Response.json({ ok: true, requestId, lead_id: leadId }, { status: 200 });
+        } else {
+          // Lead non trouvé, créer
+          console.log(`[leads][${requestId}] Lead non trouvé, création nouvelle ligne`, { leadId });
 
-          const createValues = buildLeadValues({
-            ...baseValues,
-            "Lead ID": leadId,
-            "Created At": toDDMMYYYYHHmm(new Date()) || new Date().toISOString(),
-            Step: step || "",
-            Status: sanitize(data.status || "step_5_completed")
+          const { error } = await supabase.from("leads").insert({
+            lead_id: leadId,
+            step: step ? parseInt(step, 10) : 5,
+            status: sanitize(data.status || "progress"),
+            ...baseValues
           });
 
-          await gasPost({
-            action: "appendRow",
-            key: process.env.GAS_KEY,
-            data: {
-              sheetName: "Leads",
-              values: createValues
-            }
-          });
+          if (error) throw error;
 
-          logContext.gasStatus = "success (created after update miss)";
-          console.log(`[leads][${requestId}] lead_progress create success (after update miss)`, { ...logContext, leadId });
+          console.log(`[leads][${requestId}] lead_progress création succès (après update miss)`, { ...logContext, leadId });
 
-          // Meta CAPI - Track Lead event (non-blocking)
+          // Meta CAPI
           trackLead({
             email: clientEmail || undefined,
             phone: sanitize(data.client_phone || "") || undefined,
@@ -357,44 +284,28 @@ export async function POST(req: Request) {
             leadId,
             value: data.total_euros ? parseFloat(data.total_euros) : undefined,
             clientIp: req.headers.get("x-forwarded-for")?.split(",")[0] || undefined,
-            userAgent: req.headers.get("user-agent") || undefined,
-          }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI error:`, err));
+            userAgent: req.headers.get("user-agent") || undefined
+          }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI erreur:`, err));
 
           return Response.json({ ok: true, requestId, lead_id: leadId, created: true }, { status: 200 });
         }
-
-        logContext.gasStatus = "success";
-        console.log(`[leads][${requestId}] lead_progress update success`, logContext);
-
-        return Response.json({ ok: true, requestId, lead_id: leadId }, { status: 200 });
       }
 
-      // No leadId at all - generate one and create
+      // Pas de leadId - générer et créer
       const newLeadId = generateLeadId();
-      const createValues = buildLeadValues({
-        ...baseValues,
-        "Lead ID": newLeadId,
-        "Created At": toDDMMYYYYHHmm(new Date()) || new Date().toISOString(),
-        Step: step || "",
-        Status: sanitize(data.status || "step_5_completed")
+
+      const { error } = await supabase.from("leads").insert({
+        lead_id: newLeadId,
+        step: step ? parseInt(step, 10) : 5,
+        status: sanitize(data.status || "progress"),
+        ...baseValues
       });
 
-      const createPayload = {
-        action: "appendRow",
-        key: process.env.GAS_KEY,
-        data: {
-          sheetName: "Leads",
-          values: createValues
-        }
-      };
-      console.log(`[leads][${requestId}] GAS append payload`, createPayload);
+      if (error) throw error;
 
-      await gasPost(createPayload);
+      console.log(`[leads][${requestId}] lead_progress création succès`, { ...logContext, leadId: newLeadId });
 
-      logContext.gasStatus = "success";
-      console.log(`[leads][${requestId}] lead_progress create success`, { ...logContext, leadId: newLeadId });
-
-      // Meta CAPI - Track Lead event (non-blocking)
+      // Meta CAPI
       trackLead({
         email: clientEmail || undefined,
         phone: sanitize(data.client_phone || "") || undefined,
@@ -402,30 +313,20 @@ export async function POST(req: Request) {
         leadId: newLeadId,
         value: data.total_euros ? parseFloat(data.total_euros) : undefined,
         clientIp: req.headers.get("x-forwarded-for")?.split(",")[0] || undefined,
-        userAgent: req.headers.get("user-agent") || undefined,
-      }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI error:`, err));
+        userAgent: req.headers.get("user-agent") || undefined
+      }).catch((err) => console.error(`[leads][${requestId}] Meta CAPI erreur:`, err));
 
       return Response.json({ ok: true, requestId, lead_id: newLeadId, created: true }, { status: 200 });
     } catch (error) {
-      const gasError = error as Error & { type?: string; status?: number; preview?: string; message?: string };
-      logContext.gasStatus = `error:${gasError.type || "unknown"}`;
-      console.warn(`[leads][${requestId}] lead_progress error`, { ...logContext, error: gasError.message });
-
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`[leads][${requestId}] lead_progress erreur`, { ...logContext, error: errMsg });
       return Response.json(
-        {
-          ok: false,
-          requestId,
-          skipped: true,
-          error: {
-            type: gasError.type || "GAS_ERROR",
-            message: gasError.message || String(error)
-          }
-        },
+        { ok: false, requestId, skipped: true, error: { type: "DB_ERROR", message: errMsg } },
         { status: 200 }
       );
     }
   }
 
-  console.log(`[leads][${requestId}] Unknown event type:`, logContext);
+  console.log(`[leads][${requestId}] Type événement inconnu:`, logContext);
   return Response.json({ ok: true, requestId, skipped: true, reason: "unknown_event_type" }, { status: 200 });
 }
