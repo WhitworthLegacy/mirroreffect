@@ -175,7 +175,6 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         balance_status: draft.balance_status,
         pack_id: draft.pack_id,
         address: draft.address,
-        on_site_contact: draft.on_site_contact,
         guest_count: draft.guest_count,
         closing_date: draft.closing_date || null,
         // Keep these for sync to Google Sheets
@@ -332,14 +331,6 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
                 type="text"
                 value={draft.address ?? ""}
                 onChange={(e) => updateField("address", e.target.value)}
-              />
-            </label>
-            <label className="admin-field">
-              <span>Contact sur place</span>
-              <input
-                type="text"
-                value={draft.on_site_contact ?? ""}
-                onChange={(e) => updateField("on_site_contact", e.target.value)}
               />
             </label>
             <label className="admin-field">

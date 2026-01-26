@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
-// All event fields including finance (now in same table)
+// Hard data fields only - calculations are done in Google Sheets
 const EVENT_FIELDS = [
   // Core event fields
   "event_date",
@@ -10,9 +10,7 @@ const EVENT_FIELDS = [
   "client_name",
   "client_email",
   "client_phone",
-  "zone_id",
   "address",
-  "on_site_contact",
   "pack_id",
   "guest_count",
   // Pricing fields
@@ -22,20 +20,9 @@ const EVENT_FIELDS = [
   "balance_due_cents",
   "balance_status",
   "status",
-  // Finance fields (formerly in event_finance)
+  // Assignations (reference only)
   "student_name",
-  "student_hours",
-  "student_rate_cents",
-  "km_one_way",
-  "km_total",
-  "fuel_cost_cents",
   "commercial_name",
-  "commercial_commission_cents",
-  // Invoice references for ZenFacture
-  "deposit_invoice_ref",
-  "balance_invoice_ref",
-  "invoice_deposit_paid",
-  "invoice_balance_paid",
   // Closing date
   "closing_date"
 ];
@@ -99,7 +86,7 @@ export async function POST(request: Request) {
     // Generate event_id if not provided
     const eventId = (payload.event_id as string) || generateEventId();
 
-    // Create event object for Supabase
+    // Create event object for Supabase - hard data only
     const event = {
       event_id: eventId,
       event_date: (eventPayload.event_date as string) || null,
@@ -116,21 +103,9 @@ export async function POST(request: Request) {
       balance_due_cents: (eventPayload.balance_due_cents as number) || null,
       balance_status: (eventPayload.balance_status as string) || null,
       status: (eventPayload.status as string) || "active",
-      zone_id: (eventPayload.zone_id as string) || null,
-      on_site_contact: (eventPayload.on_site_contact as string) || null,
       guest_count: (eventPayload.guest_count as number) || null,
       student_name: (eventPayload.student_name as string) || null,
-      student_hours: (eventPayload.student_hours as number) || null,
-      student_rate_cents: (eventPayload.student_rate_cents as number) || null,
-      km_one_way: (eventPayload.km_one_way as number) || null,
-      km_total: (eventPayload.km_total as number) || null,
-      fuel_cost_cents: (eventPayload.fuel_cost_cents as number) || null,
       commercial_name: (eventPayload.commercial_name as string) || null,
-      commercial_commission_cents: (eventPayload.commercial_commission_cents as number) || null,
-      deposit_invoice_ref: (eventPayload.deposit_invoice_ref as string) || null,
-      balance_invoice_ref: (eventPayload.balance_invoice_ref as string) || null,
-      invoice_deposit_paid: (eventPayload.invoice_deposit_paid as boolean) || false,
-      invoice_balance_paid: (eventPayload.invoice_balance_paid as boolean) || false,
       closing_date: (eventPayload.closing_date as string) || null,
     };
 
