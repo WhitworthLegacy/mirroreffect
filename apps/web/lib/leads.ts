@@ -63,8 +63,12 @@ export async function persistLeadToLeads({ step, status, draft, requestId }: Per
   const eventType = draft.event.eventType || "";
   const eventDate = toDDMMYYYY(draft.event.dateEvent || draft.event.lieuEvent || "") || "";
   const address = draft.event.address || draft.event.lieuEvent || "";
+  const zone = draft.event.zone || "";
   const packCode = draft.event.pack || "";
   const guests = draft.event.invites || "";
+  const vibe = draft.selections.vibe || "";
+  const theme = draft.selections.theme || "";
+  const priority = draft.selections.priority || "";
   const transport = formatEurosValue(draft.event.transport);
   const total = formatEurosValue(draft.event.total);
   const deposit = formatEurosValue(draft.event.acompte);
@@ -94,8 +98,12 @@ export async function persistLeadToLeads({ step, status, draft, requestId }: Per
     event_type: eventType,
     event_date: eventDate,
     address,
+    zone,
     pack_code: packCode,
     guests,
+    vibe,
+    theme,
+    priority,
     transport_euros: transport,
     total_euros: total,
     deposit_euros: deposit,
