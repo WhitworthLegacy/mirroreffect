@@ -120,54 +120,47 @@ function parseCSV(content: string): Record<string, string>[] {
 }
 
 // Mapper une ligne CSV vers un event Supabase
-function mapRowToEvent(row: Record<string, string>): Record<string, unknown> | null {
-  // Event ID est requis ou on en génère un
-  const eventId = row["Event ID"]?.trim() || generateEventId();
+function mapRowToEvent(row: Record<string, string>): { data: Record<string, unknown>; csvEventId: string | null } | null {
+  // Event ID du CSV (pour vérifier les doublons)
+  const csvEventId = row["Event ID"]?.trim() || null;
 
   // Ignorer les lignes sans date d'event
   const eventDate = parseDate(row["Date Event"]);
   if (!eventDate) {
-    console.log(`  ⚠️ Skipping row without event date: ${row["Nom"] || eventId}`);
+    console.log(`  ⚠️ Skipping row without event date: ${row["Nom"] || csvEventId || "unknown"}`);
     return null;
   }
 
-  // Mapper le pack_id
-  let packId = row["Pack"]?.trim() || null;
-  if (packId) {
-    const lower = packId.toLowerCase();
-    if (lower.includes("decouv") || lower === "discovery") packId = "discovery";
-    else if (lower.includes("essent") || lower === "essential") packId = "essential";
-    else if (lower.includes("premi")) packId = "premium";
-  }
-
   return {
-    event_id: eventId,
-    event_date: eventDate,
-    event_type: row["Type Event"]?.trim() || null,
-    language: row["Language"]?.trim().toLowerCase() || "fr",
-    client_name: row["Nom"]?.trim() || null,
-    client_email: row["Email"]?.trim() || null,
-    client_phone: row["Phone"]?.trim() || null,
-    address: row["Lieu Event"]?.trim() || null,
-    pack_id: packId,
-    guest_count: parseEuroNumber(row["Invités"]),
-    total_cents: parseEuroCents(row["Total"]) || parseEuroCents(row["Pack (€)"]),
-    transport_fee_cents: parseEuroCents(row["Transport (€)"]),
-    deposit_cents: parseEuroCents(row["Acompte"]),
-    balance_due_cents: parseEuroCents(row["Solde Restant"]),
-    student_name: row["Etudiant"]?.trim() || null,
-    student_hours: parseEuroNumber(row["Heures Etudiant"]),
-    student_rate_cents: parseEuroCents(row["Etudiant €/Event"]),
-    km_one_way: parseEuroNumber(row["KM (Aller)"]),
-    km_total: parseEuroNumber(row["KM (Total)"]),
-    fuel_cost_cents: parseEuroCents(row["Coût Essence"]),
-    commercial_name: row["Commercial"]?.trim() || null,
-    commercial_commission_cents: parseEuroCents(row["Comm Commercial"]),
-    deposit_invoice_ref: row["Acompte Facture"]?.trim() || null,
-    balance_invoice_ref: row["Solde Facture"]?.trim() || null,
-    closing_date: parseDate(row["Date acompte payé"]) || parseDate(row["Date Formulaire"]),
-    status: "active",
-    balance_status: (parseEuroCents(row["Solde Restant"]) ?? 0) > 0 ? "due" : "paid",
+    csvEventId,
+    data: {
+      event_date: eventDate,
+      event_type: row["Type Event"]?.trim() || null,
+      language: row["Language"]?.trim().toLowerCase() || "fr",
+      client_name: row["Nom"]?.trim() || null,
+      client_email: row["Email"]?.trim() || null,
+      client_phone: row["Phone"]?.trim() || null,
+      address: row["Lieu Event"]?.trim() || null,
+      // pack_id omis car nécessite UUID de la table packs
+      guest_count: parseEuroNumber(row["Invités"]),
+      total_cents: parseEuroCents(row["Total"]) || parseEuroCents(row["Pack (€)"]),
+      transport_fee_cents: parseEuroCents(row["Transport (€)"]),
+      deposit_cents: parseEuroCents(row["Acompte"]),
+      balance_due_cents: parseEuroCents(row["Solde Restant"]),
+      student_name: row["Etudiant"]?.trim() || null,
+      student_hours: parseEuroNumber(row["Heures Etudiant"]),
+      student_rate_cents: parseEuroCents(row["Etudiant €/Event"]),
+      km_one_way: parseEuroNumber(row["KM (Aller)"]),
+      km_total: parseEuroNumber(row["KM (Total)"]),
+      fuel_cost_cents: parseEuroCents(row["Coût Essence"]),
+      commercial_name: row["Commercial"]?.trim() || null,
+      commercial_commission_cents: parseEuroCents(row["Comm Commercial"]),
+      deposit_invoice_ref: row["Acompte Facture"]?.trim() || null,
+      balance_invoice_ref: row["Solde Facture"]?.trim() || null,
+      closing_date: parseDate(row["Date acompte payé"]) || parseDate(row["Date Formulaire"]),
+      status: "active",
+      balance_status: (parseEuroCents(row["Solde Restant"]) ?? 0) > 0 ? "due" : "paid",
+    }
   };
 }
 
@@ -190,32 +183,43 @@ async function main() {
   let errors = 0;
 
   for (const row of rows) {
-    const event = mapRowToEvent(row);
-    if (!event) {
+    const result = mapRowToEvent(row);
+    if (!result) {
       skipped++;
       continue;
     }
 
+    const { data: event, csvEventId } = result;
+    const clientName = event.client_name as string || "Unknown";
+    const clientEmail = event.client_email as string || "";
+
     try {
-      // Try to update first, if not exists, insert
-      const { data: existing } = await supabase
-        .from("events")
-        .select("event_id")
-        .eq("event_id", event.event_id)
-        .single();
+      // Check if event already exists by client_email + event_date
+      const eventDate = event.event_date as string;
+      let existing = null;
+
+      if (clientEmail) {
+        const { data } = await supabase
+          .from("events")
+          .select("id")
+          .eq("client_email", clientEmail)
+          .eq("event_date", eventDate)
+          .single();
+        existing = data;
+      }
 
       if (existing) {
         // Update
         const { error } = await supabase
           .from("events")
           .update({ ...event, updated_at: new Date().toISOString() })
-          .eq("event_id", event.event_id);
+          .eq("id", existing.id);
 
         if (error) {
-          console.log(`  ❌ Error updating ${event.event_id}: ${error.message}`);
+          console.log(`  ❌ Error updating ${clientName}: ${error.message}`);
           errors++;
         } else {
-          console.log(`  ✏️ Updated: ${event.client_name} (${event.event_id})`);
+          console.log(`  ✏️ Updated: ${clientName} (${eventDate})`);
           updated++;
         }
       } else {
@@ -223,15 +227,15 @@ async function main() {
         const { error } = await supabase.from("events").insert(event);
 
         if (error) {
-          console.log(`  ❌ Error inserting ${event.event_id}: ${error.message}`);
+          console.log(`  ❌ Error inserting ${clientName}: ${error.message}`);
           errors++;
         } else {
-          console.log(`  ✅ Inserted: ${event.client_name} (${event.event_id})`);
+          console.log(`  ✅ Inserted: ${clientName} (${eventDate})`);
           inserted++;
         }
       }
     } catch (err) {
-      console.log(`  ❌ Exception for ${event.event_id}: ${err}`);
+      console.log(`  ❌ Exception for ${clientName}: ${err}`);
       errors++;
     }
   }
