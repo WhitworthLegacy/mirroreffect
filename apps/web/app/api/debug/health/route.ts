@@ -1,49 +1,34 @@
-import { gasPost } from "@/lib/gas";
+import { createSupabaseServerClient } from "@/lib/supabase";
 
-// Health check - mirrors hardcoded to 4 for MVP
+// Health check - miroirs codés en dur à 4 pour le MVP
 const TOTAL_MIRRORS = 4;
 
 export async function GET() {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
   try {
-    // Read Clients sheet to count today's reservations
-    const result = await gasPost({
-      action: "readSheet",
-      key: process.env.GAS_KEY,
-      data: { sheetName: "Clients" }
-    });
+    const supabase = createSupabaseServerClient();
 
-    let todayReservations = 0;
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    // Compter les réservations du jour depuis la table events
+    const { count, error } = await supabase
+      .from("events")
+      .select("*", { count: "exact", head: true })
+      .eq("date_event", today)
+      .not("acompte", "is", null);
 
-    // GAS returns { values: [...] } for readSheet action
-    if (result.values) {
-      const rows = result.values as unknown[][];
-      if (rows.length >= 2) {
-        const headers = (rows[0] as string[]).map(h => String(h).trim());
-        const dateIdx = headers.findIndex(h => h === "Date Event");
-        const depositPaidIdx = headers.findIndex(h => h === "Date Acompte Payé" || h === "Date acompte payé");
-
-        if (dateIdx >= 0) {
-          todayReservations = rows.slice(1).filter(row => {
-            // Only count rows with paid deposit
-            if (depositPaidIdx >= 0) {
-              const depositPaid = String(row[depositPaidIdx] || "").trim();
-              if (!depositPaid) return false;
-            }
-
-            const eventDate = String(row[dateIdx] || "").trim();
-            if (eventDate === today) return true;
-            // Handle DD/MM/YYYY format
-            const match = eventDate.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-            if (match) {
-              const normalized = `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
-              return normalized === today;
-            }
-            return false;
-          }).length;
-        }
-      }
+    if (error) {
+      console.error("[health] Erreur Supabase:", error);
+      return Response.json({
+        ok: true,
+        mirrors_total: TOTAL_MIRRORS,
+        today_reservations: 0,
+        today_remaining: TOTAL_MIRRORS,
+        date: today,
+        error: "database_unavailable"
+      });
     }
+
+    const todayReservations = count || 0;
 
     return Response.json({
       ok: true,
@@ -53,13 +38,14 @@ export async function GET() {
       date: today
     });
   } catch (error) {
-    console.error("[health] Error:", error);
+    console.error("[health] Erreur:", error);
     return Response.json({
       ok: true,
       mirrors_total: TOTAL_MIRRORS,
       today_reservations: 0,
       today_remaining: TOTAL_MIRRORS,
-      error: "sheets_unavailable"
+      date: today,
+      error: "internal_error"
     });
   }
 }

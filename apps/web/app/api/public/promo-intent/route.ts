@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { gasPost } from "@/lib/gas";
+import { createSupabaseServerClient } from "@/lib/supabase";
 import { generateLeadId } from "@/lib/date-utils";
-import { toDDMMYYYY, toDDMMYYYYHHmm } from "@/lib/date";
 
 const PromoIntentSchema = z.object({
   request_id: z.string().optional(),
@@ -20,127 +19,102 @@ const PromoIntentSchema = z.object({
   }).optional()
 });
 
-const LEADS_HEADERS = [
-  "Lead ID",
-  "Created At",
-  "Step",
-  "Status",
-  "Nom",
-  "Email",
-  "Phone",
-  "Language",
-  "Date Event",
-  "Lieu Event",
-  "Pack",
-  "Invités",
-  "Transport (€)",
-  "Total",
-  "Acompte",
-  "UTM Source",
-  "UTM Campaign",
-  "UTM Medium"
-];
-
-function buildLeadValues(record: Record<string, unknown>): Record<string, string> {
-  const values: Record<string, string> = {};
-  for (const header of LEADS_HEADERS) {
-    const value = record[header];
-    values[header] = value !== undefined && value !== null ? String(value) : "";
-  }
-  return values;
-}
-
 export async function POST(req: Request) {
   const requestId = crypto.randomUUID();
   const forwardedId = req.headers.get("x-request-id") ?? undefined;
-  console.log(`[promo][${requestId}] Received request`, { forwardedId });
+  console.log(`[promo][${requestId}] Requête reçue`, { forwardedId });
 
   const body = await req.json().catch(() => null);
   const parsed = PromoIntentSchema.safeParse(body);
 
   if (!parsed.success) {
-    console.warn(`[promo][${requestId}] Validation failed`, parsed.error.format());
+    console.warn(`[promo][${requestId}] Validation échouée`, parsed.error.format());
     return Response.json(
       { error: "invalid_body", requestId, issues: parsed.error.format() },
       { status: 400 }
     );
   }
 
-  const { request_id, email, locale, payload } = parsed.data;
-  console.log(`[promo][${requestId}] Valid payload`, { request_id, email, locale, payload });
+  const { email, locale, payload } = parsed.data;
+  console.log(`[promo][${requestId}] Payload valide`, { email, locale, payload });
 
-  const sendAfter = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-  const createdAt = new Date().toISOString();
+  const supabase = createSupabaseServerClient();
 
   try {
-    // 1. Write to Notifications sheet
-    const notificationValues = {
-      Template: "B2C_PROMO_48H",
-      Email: email,
-      Locale: locale,
-      Payload: JSON.stringify(payload ?? {}),
-      "Send After": sendAfter,
-      Status: "queued",
-      "Created At": createdAt
-    };
+    // Générer l'ID du lead
+    const leadId = generateLeadId();
+    const clientName = `${payload?.first_name?.trim() || ""} ${payload?.last_name?.trim() || ""}`.trim();
 
-    await gasPost({
-      action: "appendRow",
-      key: process.env.GAS_KEY,
-      data: {
-        sheetName: "Notifications",
-        values: notificationValues
+    // Vérifier si le lead existe déjà par email
+    const { data: existingLead } = await supabase
+      .from("leads")
+      .select("lead_id")
+      .eq("email", email.toLowerCase())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (existingLead) {
+      // Mettre à jour le lead existant
+      const { error: updateError } = await supabase
+        .from("leads")
+        .update({
+          nom: clientName || undefined,
+          phone: payload?.phone?.trim() || undefined,
+          language: locale.toUpperCase(),
+          date_event: payload?.date || undefined,
+          lieu_event: payload?.location?.trim() || undefined,
+          invites: payload?.guests?.trim() || undefined,
+          step: 5,
+          status: "progress",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("lead_id", existingLead.lead_id);
+
+      if (updateError) {
+        console.error(`[promo][${requestId}] Échec mise à jour lead:`, updateError);
+        throw new Error(updateError.message);
       }
-    });
 
-    console.log(`[promo][${requestId}] Notifications appendRow success`);
+      console.log(`[promo][${requestId}] Lead existant mis à jour`, { leadId: existingLead.lead_id });
 
-    // 2. Write to Leads sheet (non-blocking - don't fail if this errors)
-    let leadId: string | null = null;
-    try {
-      leadId = generateLeadId();
-      const clientName = `${payload?.first_name?.trim() || ""} ${payload?.last_name?.trim() || ""}`.trim();
-      const eventDate = payload?.date ? toDDMMYYYY(payload.date) || payload.date : "";
-
-      const leadValues = buildLeadValues({
-        "Lead ID": leadId,
-        "Created At": toDDMMYYYYHHmm(new Date()) || createdAt,
-        Step: "5",
-        Status: "step_5_completed",
-        Nom: clientName,
-        Email: email,
-        Phone: payload?.phone?.trim() || "",
-        Language: locale,
-        "Date Event": eventDate,
-        "Lieu Event": payload?.location?.trim() || "",
-        Pack: "",
-        "Invités": payload?.guests?.trim() || "",
-        "Transport (€)": "",
-        Total: "",
-        Acompte: "",
-        "UTM Source": "",
-        "UTM Campaign": "",
-        "UTM Medium": ""
+      return Response.json({
+        queued: true,
+        requestId,
+        lead_id: existingLead.lead_id,
+        updated: true
       });
-
-      await gasPost({
-        action: "appendRow",
-        key: process.env.GAS_KEY,
-        data: {
-          sheetName: "Leads",
-          values: leadValues
-        }
-      });
-
-      console.log(`[promo][${requestId}] Leads appendRow success`, { leadId });
-    } catch (leadsError) {
-      console.error(`[promo][${requestId}] Leads appendRow failed (non-blocking)`, leadsError);
-      leadId = null;
     }
+
+    // Créer un nouveau lead dans Supabase
+    const { error: insertError } = await supabase
+      .from("leads")
+      .insert({
+        lead_id: leadId,
+        email: email.toLowerCase(),
+        nom: clientName || null,
+        phone: payload?.phone?.trim() || null,
+        language: locale.toUpperCase(),
+        date_event: payload?.date || null,
+        lieu_event: payload?.location?.trim() || null,
+        invites: payload?.guests?.trim() || null,
+        step: 5,
+        status: "progress",
+      });
+
+    if (insertError) {
+      console.error(`[promo][${requestId}] Échec création lead:`, insertError);
+      throw new Error(insertError.message);
+    }
+
+    console.log(`[promo][${requestId}] Lead créé dans Supabase`, { leadId });
+
+    // Note: L'email de nurturing (PROMO_72H) sera envoyé par le cron job
+    // /api/cron/send-emails qui vérifie les leads > 72h sans promo_sent_at
 
     return Response.json({ queued: true, requestId, lead_id: leadId });
   } catch (error) {
-    console.error(`[promo][${requestId}] Notifications GAS error`, error);
+    console.error(`[promo][${requestId}] Erreur:`, error);
     return Response.json(
       { error: "internal_error", requestId },
       { status: 500 }

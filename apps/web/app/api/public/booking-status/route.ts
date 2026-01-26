@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { gasPost } from "@/lib/gas";
+import { createSupabaseServerClient } from "@/lib/supabase";
 
 const BookingStatusQuerySchema = z.object({
   event_id: z.string().min(1)
@@ -17,150 +17,98 @@ export async function GET(req: Request) {
   }
 
   const { event_id } = parsed.data;
+  const supabase = createSupabaseServerClient();
 
   try {
-    // Lire Clients sheet pour trouver l'event
-    const clientsResult = await gasPost({
-      action: "readSheet",
-      key: process.env.GAS_KEY,
-      data: { sheetName: "Clients" }
-    });
+    // 1. Vérifier la table events
+    const { data: event, error: eventError } = await supabase
+      .from("events")
+      .select("*")
+      .eq("event_id", event_id)
+      .single();
 
-    // GAS returns { values: [...] } for readSheet action
-    const values = clientsResult.values as unknown[][] | undefined;
-    if (!values) {
-      console.error("[booking-status] No values in GAS response:", clientsResult);
-      return Response.json({ error: "sheets_error" }, { status: 500 });
+    if (eventError && eventError.code !== "PGRST116") {
+      console.error("[booking-status] Erreur requête events:", eventError);
+      return Response.json({ error: "database_error" }, { status: 500 });
     }
 
-    const rows = values;
-    if (rows.length < 2) {
-      return Response.json({ error: "event_not_found" }, { status: 404 });
+    // 2. Vérifier la table payments
+    const { data: payments, error: paymentsError } = await supabase
+      .from("payments")
+      .select("*")
+      .eq("event_id", event_id)
+      .order("created_at", { ascending: false });
+
+    if (paymentsError) {
+      console.error("[booking-status] Erreur requête payments:", paymentsError);
+      return Response.json({ error: "database_error" }, { status: 500 });
     }
 
-    const headers = (rows[0] as string[]).map(h => String(h).trim());
-    const eventIdIdx = headers.findIndex(h => h === "Event ID");
-    const clientNameIdx = headers.findIndex(h => h === "Nom");
-    const eventDateIdx = headers.findIndex(h => h === "Date Event");
-    const totalIdx = headers.findIndex(h => h === "Total");
+    // Si pas d'event trouvé, vérifier s'il y a un paiement
+    if (!event) {
+      if (payments && payments.length > 0) {
+        const latestPayment = payments[0];
+        const depositPaid = payments.some(
+          (p) => p.status === "paid" && p.amount_cents === DEPOSIT_CENTS
+        );
+        const paidPayment = payments.find((p) => p.status === "paid");
 
-    // Chercher l'event par ID
-    const eventRow = rows.slice(1).find(row => String(row[eventIdIdx]).trim() === event_id);
-
-    if (!eventRow) {
-      // Si pas dans Clients, vérifier dans Payments uniquement
-      // Lire Payments sheet
-      const paymentsResult = await gasPost({
-        action: "readSheet",
-        key: process.env.GAS_KEY,
-        data: { sheetName: "Payments" }
-      });
-
-      if (paymentsResult.values) {
-        const paymentRows = paymentsResult.values as unknown[][];
-        if (paymentRows.length >= 2) {
-          const paymentHeaders = (paymentRows[0] as string[]).map(h => String(h).trim());
-          const pEventIdIdx = paymentHeaders.findIndex(h => h === "Event ID");
-          const pStatusIdx = paymentHeaders.findIndex(h => h === "Status");
-
-          const eventPayment = paymentRows.slice(1).find(row =>
-            String(row[pEventIdIdx]).trim() === event_id
-          );
-
-          if (eventPayment) {
-            const paymentStatus = String(eventPayment[pStatusIdx] || "unknown").trim();
-            return Response.json({
-              ok: true,
-              event_id,
-              client_name: null,
-              event_date: null,
-              total_cents: null,
-              status: "pending",
-              deposit_paid: paymentStatus === "paid",
-              payment_status: paymentStatus,
-              paid_at: null
-            });
-          }
-        }
+        return Response.json({
+          ok: true,
+          event_id,
+          client_name: null,
+          event_date: null,
+          total_cents: null,
+          status: "pending",
+          deposit_paid: depositPaid,
+          payment_status: latestPayment.status,
+          paid_at: paidPayment?.paid_at || null
+        });
       }
 
       return Response.json({ ok: false, error: "not_found" }, { status: 404 });
     }
 
-    // Parser le total en cents
-    const parseCents = (val: unknown): number | null => {
-      if (!val) return null;
-      const str = String(val).trim().replace(/\s/g, "").replace(",", ".");
-      const num = parseFloat(str);
-      return isNaN(num) ? null : Math.round(num * 100);
-    };
-
-    // Lire Payments sheet pour vérifier le statut
-    const paymentsResult = await gasPost({
-      action: "readSheet",
-      key: process.env.GAS_KEY,
-      data: { sheetName: "Payments" }
-    });
-
+    // Event trouvé - déterminer le statut du paiement
     let depositPaid = false;
     let paymentStatus = "unknown";
     let paidAt: string | null = null;
 
-    // GAS returns { values: [...] } for readSheet action
-    if (paymentsResult.values) {
-      const paymentRows = paymentsResult.values as unknown[][];
-      if (paymentRows.length >= 2) {
-        const paymentHeaders = (paymentRows[0] as string[]).map(h => String(h).trim());
-        const pEventIdIdx = paymentHeaders.findIndex(h => h === "Event ID");
-        const pStatusIdx = paymentHeaders.findIndex(h => h === "Status");
-        const pAmountIdx = paymentHeaders.findIndex(h => h === "Amount Cents");
-        const pPaidAtIdx = paymentHeaders.findIndex(h => h === "Paid At");
+    if (payments && payments.length > 0) {
+      const latestPayment = payments[0];
+      paymentStatus = latestPayment.status || "unknown";
 
-        const eventPayments = paymentRows.slice(1).filter(row =>
-          String(row[pEventIdIdx]).trim() === event_id
-        );
+      const paidPayment = payments.find(
+        (p) => p.status === "paid" && p.amount_cents === DEPOSIT_CENTS
+      );
 
-        // Vérifier si acompte payé
-        const paidPayment = eventPayments.find(row => {
-          const status = String(row[pStatusIdx] || "").trim().toLowerCase();
-          const amount = parseCents(row[pAmountIdx]);
-          return status === "paid" && amount === DEPOSIT_CENTS;
-        });
-
-        if (paidPayment) {
-          depositPaid = true;
-          if (pPaidAtIdx >= 0) {
-            paidAt = String(paidPayment[pPaidAtIdx] || "").trim() || null;
-          }
-        }
-
-        // Dernier statut (prendre le plus récent)
-        if (eventPayments.length > 0) {
-          // Trier par Created At ou prendre le premier
-          paymentStatus = String(eventPayments[eventPayments.length - 1][pStatusIdx] || "unknown").trim();
-        }
+      if (paidPayment) {
+        depositPaid = true;
+        paidAt = paidPayment.paid_at || null;
       }
     }
 
-    // Si dans Clients sheet = acompte payé (par définition de la règle)
-    // Clients ne contient que les events avec acompte payé
-    if (eventRow) {
+    // Si l'event existe dans la table events, l'acompte a été payé (par définition)
+    if (event.acompte && event.acompte > 0) {
       depositPaid = true;
     }
+
+    // Convertir le total en centimes
+    const totalCents = event.total ? Math.round(event.total * 100) : null;
 
     return Response.json({
       ok: true,
       event_id,
-      client_name: eventRow[clientNameIdx] ? String(eventRow[clientNameIdx]).trim() : null,
-      event_date: eventRow[eventDateIdx] ? String(eventRow[eventDateIdx]).trim() : null,
-      total_cents: parseCents(eventRow[totalIdx]),
+      client_name: event.nom || null,
+      event_date: event.date_event || null,
+      total_cents: totalCents,
       status: "active",
       deposit_paid: depositPaid,
       payment_status: paymentStatus,
       paid_at: paidAt
     });
   } catch (error) {
-    console.error("[booking-status] Error:", error);
+    console.error("[booking-status] Erreur:", error);
     return Response.json({ error: "internal_error" }, { status: 500 });
   }
 }

@@ -6,6 +6,7 @@ import blogAvantApres from "./blog-avant-apres-cadre";
 import blogBapteme from "./blog-bapteme";
 import blogImpressions from "./blog-impressions";
 import blogRgpd from "./blog-rgpd";
+import blogPhotoboothMiroirMariageBruxellesAnimationPhotoHautDeGamme from "./blog-photobooth-miroir-mariage-bruxelles-animation-photo-haut-de-gamme";
 import etudeBirmingham from "./etude-de-cas-birmingham";
 import etudeHilton from "./etude-de-cas-hilton";
 import merciForm from "./merci-form";
@@ -48,6 +49,7 @@ export type SeoPage = {
 };
 
 export const seoPages: SeoPage[] = [
+  blogPhotoboothMiroirMariageBruxellesAnimationPhotoHautDeGamme,
   blog,
   blog10Idees,
   blog5Idees,
