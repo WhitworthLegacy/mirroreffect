@@ -104,6 +104,14 @@ export default function DashboardPageClient({ selectedYear }: Props) {
     });
   }, [monthlyStats, selectedYear]);
 
+  // Filter events by year for fallback calculations
+  const eventsForYear = useMemo(() => {
+    return events.filter((event) => {
+      if (!event.event_date) return false;
+      return new Date(event.event_date).getFullYear() === selectedYear;
+    });
+  }, [events, selectedYear]);
+
   // Calculate KPIs from Supabase view data OR fallback to events data
   const kpis = useMemo(() => {
     // First try from the stats view
@@ -173,14 +181,6 @@ export default function DashboardPageClient({ selectedYear }: Props) {
       eventsCount,
     };
   }, [statsForYear, eventsForYear]);
-
-  // Filter events by year for fallback calculations
-  const eventsForYear = useMemo(() => {
-    return events.filter((event) => {
-      if (!event.event_date) return false;
-      return new Date(event.event_date).getFullYear() === selectedYear;
-    });
-  }, [events, selectedYear]);
 
   // Upcoming events (future only)
   const upcomingEvents = useMemo(() => {
