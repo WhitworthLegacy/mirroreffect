@@ -36,12 +36,12 @@ export async function GET(req: Request) {
     const supabase = createSupabaseServerClient();
 
     // Compter les événements pour la date demandée
-    // On ne compte que les événements avec un event_id (confirmés)
+    // On compte tous les événements actifs (status != cancelled)
     const { count, error, data } = await supabase
       .from("events")
-      .select("event_id", { count: "exact" })
+      .select("id", { count: "exact" })
       .eq("event_date", queryDateISO)
-      .not("event_id", "is", null);
+      .neq("status", "cancelled");
 
     if (error) {
       console.error("[availability] Erreur Supabase:", error);
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
           query_date_iso: queryDateISO,
           normalized_query_date: normalizedQueryDate,
           matched_rows: reserved,
-          sample_event_ids: data?.slice(0, 5).map((e) => e.event_id) || []
+          sample_ids: data?.slice(0, 5).map((e) => e.id) || []
         }
       });
     }
