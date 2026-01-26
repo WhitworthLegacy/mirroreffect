@@ -31,33 +31,30 @@ const emailWrapper = (content: string, locale: string, unsubscribeUrl?: string) 
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
   </style>
 </head>
-<body style="margin: 0; padding: 0; background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%); min-height: 100vh;">
+<body style="margin: 0; padding: 0; background: #f8f9fa; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f8f9fa; min-height: 100vh;">
     <tr>
       <td align="center" style="padding: 40px 16px;">
 
         <!-- Main Container -->
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px;">
 
-          <!-- Luxe Header with Glow Effect -->
+          <!-- Luxe Header with Gold Gradient Banner -->
           <tr>
-            <td style="padding: 0 0 32px;">
+            <td style="padding: 0 0 0;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td align="center" style="padding: 48px 40px; background: linear-gradient(135deg, #12130F 0%, #1a1b17 50%, #12130F 100%); border-radius: 24px 24px 0 0; border: 1px solid rgba(193, 149, 14, 0.3); border-bottom: none; position: relative;">
-                    <!-- Golden Glow Effect -->
-                    <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 200px; height: 2px; background: linear-gradient(90deg, transparent, #C1950E, transparent);"></div>
-
+                  <td align="center" style="padding: 48px 40px; background: linear-gradient(135deg, #C1950E 0%, #D4A828 25%, #E8C547 50%, #D4A828 75%, #C1950E 100%); border-radius: 24px 24px 0 0;">
                     <!-- Logo Text -->
-                    <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 600; letter-spacing: 0.15em; background: linear-gradient(135deg, #C1950E 0%, #E8C547 50%, #C1950E 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 600; letter-spacing: 0.15em; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                       MIRROR EFFECT
                     </h1>
-                    <p style="margin: 12px 0 0; color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 400; letter-spacing: 0.25em; text-transform: uppercase;">
+                    <p style="margin: 12px 0 0; color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 400; letter-spacing: 0.25em; text-transform: uppercase;">
                       Photobooth Miroir Premium
                     </p>
 
                     <!-- Decorative Line -->
-                    <div style="margin-top: 24px; width: 60px; height: 1px; background: linear-gradient(90deg, transparent, rgba(193, 149, 14, 0.6), transparent);"></div>
+                    <div style="margin-top: 24px; width: 60px; height: 1px; background: rgba(255,255,255,0.4);"></div>
                   </td>
                 </tr>
               </table>
@@ -67,7 +64,7 @@ const emailWrapper = (content: string, locale: string, unsubscribeUrl?: string) 
           <!-- Content Card -->
           <tr>
             <td>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #ffffff; border-radius: 0 0 24px 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(193, 149, 14, 0.1);">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #ffffff; border-radius: 0 0 24px 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
                 <tr>
                   <td style="padding: 48px 40px 40px;">
                     ${content}
@@ -115,27 +112,27 @@ const emailWrapper = (content: string, locale: string, unsubscribeUrl?: string) 
                     <table role="presentation" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
                       <tr>
                         <td style="padding: 0 8px;">
-                          <a href="https://mirroreffect.co" style="display: inline-block; width: 40px; height: 40px; background: rgba(255,255,255,0.08); border-radius: 10px; text-align: center; line-height: 40px; text-decoration: none; color: rgba(255,255,255,0.6); font-size: 14px;">
+                          <a href="https://mirroreffect.co" style="display: inline-block; width: 40px; height: 40px; background: rgba(193, 149, 14, 0.1); border-radius: 10px; text-align: center; line-height: 40px; text-decoration: none; color: #C1950E; font-size: 14px;">
                             🌐
                           </a>
                         </td>
                         <td style="padding: 0 8px;">
-                          <a href="https://instagram.com/mirroreffect.co" style="display: inline-block; width: 40px; height: 40px; background: rgba(255,255,255,0.08); border-radius: 10px; text-align: center; line-height: 40px; text-decoration: none; color: rgba(255,255,255,0.6); font-size: 14px;">
+                          <a href="https://instagram.com/mirroreffect.co" style="display: inline-block; width: 40px; height: 40px; background: rgba(193, 149, 14, 0.1); border-radius: 10px; text-align: center; line-height: 40px; text-decoration: none; color: #C1950E; font-size: 14px;">
                             📸
                           </a>
                         </td>
                       </tr>
                     </table>
 
-                    <p style="margin: 0 0 8px; color: rgba(255,255,255,0.4); font-size: 12px;">
+                    <p style="margin: 0 0 8px; color: #717182; font-size: 12px;">
                       Mirror Effect · Photobooth Miroir Premium
                     </p>
-                    <p style="margin: 0; color: rgba(255,255,255,0.3); font-size: 11px;">
+                    <p style="margin: 0; color: #9ca3af; font-size: 11px;">
                       Bruxelles & toute la Belgique
                     </p>
                     ${unsubscribeUrl ? `
                     <p style="margin: 16px 0 0;">
-                      <a href="${unsubscribeUrl}" style="color: rgba(255,255,255,0.3); font-size: 11px; text-decoration: underline;">
+                      <a href="${unsubscribeUrl}" style="color: #9ca3af; font-size: 11px; text-decoration: underline;">
                         ${locale === 'nl' ? 'Uitschrijven' : 'Se désabonner'}
                       </a>
                     </p>
@@ -175,7 +172,7 @@ const infoBox = (content: string, variant: 'gold' | 'light' | 'dark' = 'light') 
   const styles = {
     gold: 'background: linear-gradient(135deg, #fdfbf4 0%, #fef9e7 100%); border: 1px solid rgba(193, 149, 14, 0.3);',
     light: 'background: #f8f9fa; border: 1px solid #e9ecef;',
-    dark: 'background: linear-gradient(135deg, #12130F 0%, #1a1b17 100%); border: 1px solid rgba(193, 149, 14, 0.2);'
+    dark: 'background: linear-gradient(135deg, #C1950E 0%, #D4A828 50%, #C1950E 100%); border: none;'
   };
   return `
 <div style="${styles[variant]} border-radius: 16px; padding: 24px; margin: 24px 0;">
@@ -781,8 +778,8 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
 
         ${infoBox(`
           <div style="text-align: center;">
-            <p style="margin: 0 0 8px; color: rgba(255,255,255,0.6); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Code promo</p>
-            <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 700; color: #C1950E; letter-spacing: 0.1em;">
+            <p style="margin: 0 0 8px; color: rgba(255,255,255,0.85); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Code promo</p>
+            <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: 0.1em; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">
               ANNIV10
             </p>
           </div>
@@ -821,8 +818,8 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
 
         ${infoBox(`
           <div style="text-align: center;">
-            <p style="margin: 0 0 8px; color: rgba(255,255,255,0.6); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Promotiecode</p>
-            <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 700; color: #C1950E; letter-spacing: 0.1em;">
+            <p style="margin: 0 0 8px; color: rgba(255,255,255,0.85); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Promotiecode</p>
+            <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: 0.1em; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">
               ANNIV10
             </p>
           </div>
