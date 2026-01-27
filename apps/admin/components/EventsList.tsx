@@ -218,6 +218,12 @@ export default function EventsList({ events, packs }: Props) {
                 <th style={{ textAlign: "left", padding: "16px 24px", fontSize: "0.875rem", color: "var(--night)" }}>
                   Acompte
                 </th>
+                <th
+                  onClick={() => handleSort("closing_date")}
+                  style={{ textAlign: "left", padding: "16px 24px", fontSize: "0.875rem", color: "var(--night)", cursor: "pointer" }}
+                >
+                  Date Closing
+                </th>
                 <th style={{ textAlign: "left", padding: "16px 24px", fontSize: "0.875rem", color: "var(--night)" }}>
                   Status
                 </th>
@@ -273,6 +279,9 @@ export default function EventsList({ events, packs }: Props) {
                     <td style={{ padding: "16px 24px", fontSize: "0.875rem", color: "var(--night)" }}>
                       {formatEuro(event.deposit_cents)}
                     </td>
+                    <td style={{ padding: "16px 24px", fontSize: "0.875rem", color: "var(--night)" }}>
+                      {event.closing_date ? new Date(event.closing_date).toLocaleDateString("fr-FR") : "—"}
+                    </td>
                     <td style={{ padding: "16px 24px" }}>
                       <span style={{
                         display: "inline-flex",
@@ -291,7 +300,7 @@ export default function EventsList({ events, packs }: Props) {
               })}
               {filteredAndSortedRows.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: 48, color: "var(--gray-muted)" }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: 48, color: "var(--gray-muted)" }}>
                     Aucun événement trouvé.
                   </td>
                 </tr>
