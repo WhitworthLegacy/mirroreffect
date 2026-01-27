@@ -830,113 +830,73 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
     fr: {
       subject: "Une question, {{client_name}} ?",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            On répond à vos questions
-          </h2>
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bonjour {{client_name}},
+        </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bonjour <strong>{{client_name}}</strong>,
+          C'est Jonathan de Mirror Effect. Je me permets de vous écrire car on reçoit souvent les mêmes questions, et je me suis dit que ça pourrait vous être utile.
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Vous hésitez encore ? Voici les réponses aux questions qu'on nous pose le plus souvent :
+        <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Combien de place faut-il ?</strong><br>
+          Un espace d'environ 2m x 2m suffit. On s'adapte à votre lieu.
         </p>
 
-        ${infoBox(`
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-            <tr>
-              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
-                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Combien de place faut-il ?</p>
-                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Un espace d'environ 2m x 2m suffit. On s'adapte à votre lieu.</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
-                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Et si mon lieu est difficile d'accès ?</p>
-                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">On gère la logistique de A à Z. On a l'habitude de tous types de lieux (châteaux, salles, jardins, etc.).</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
-                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">C'est quoi exactement un photobooth miroir ?</p>
-                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">C'est un miroir interactif grandeur nature qui prend des photos de qualité pro. Vos invités se voient dans le miroir et suivent des animations ludiques à l'écran.</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 14px 0;">
-                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Comment se passe le paiement ?</p>
-                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Un acompte à la réservation, le solde le jour de l'événement. Simple et sécurisé via Mollie.</p>
-              </td>
-            </tr>
-          </table>
-        `, 'light')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Une autre question ? Répondez directement à cet email, on vous répond rapidement.
+        <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Et si mon lieu est difficile d'accès ?</strong><br>
+          On gère la logistique de A à Z. Châteaux, salles, jardins — on a l'habitude.
         </p>
 
-        <div style="text-align: center;">
-          ${ctaButton("Voir nos packs", "https://mirroreffect.co")}
-        </div>
+        <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>C'est quoi exactement un photobooth miroir ?</strong><br>
+          C'est un miroir interactif grandeur nature qui prend des photos de qualité pro. Vos invités se voient dans le miroir et suivent des animations ludiques à l'écran.
+        </p>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Comment se passe le paiement ?</strong><br>
+          Un acompte à la réservation, le solde le jour de l'événement. Simple et sécurisé.
+        </p>
+
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Si vous avez une autre question, répondez directement à cet email. Je vous réponds personnellement.
+        </p>
       `
     },
     nl: {
-      subject: "{{client_name}}, we beantwoorden uw vragen",
+      subject: "Een vraag, {{client_name}} ?",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            We beantwoorden uw vragen
-          </h2>
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hallo {{client_name}},
+        </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hallo <strong>{{client_name}}</strong>,
+          Dit is Jonathan van Mirror Effect. Ik schrijf u omdat we vaak dezelfde vragen krijgen, en ik dacht dat dit handig kon zijn.
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Twijfelt u nog? Hier zijn de antwoorden op de vragen die we het vaakst krijgen:
+        <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Hoeveel ruimte is er nodig?</strong><br>
+          Een ruimte van ongeveer 2m x 2m is voldoende. We passen ons aan uw locatie aan.
         </p>
 
-        ${infoBox(`
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-            <tr>
-              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
-                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Hoeveel ruimte is er nodig?</p>
-                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Een ruimte van ongeveer 2m x 2m is voldoende. We passen ons aan uw locatie aan.</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
-                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Wat als mijn locatie moeilijk bereikbaar is?</p>
-                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Wij regelen de logistiek van A tot Z. We zijn gewend aan alle soorten locaties (kastelen, zalen, tuinen, enz.).</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
-                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Wat is precies een spiegel photobooth?</p>
-                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Het is een interactieve spiegel op ware grootte die professionele foto's maakt. Uw gasten zien zichzelf in de spiegel en volgen leuke animaties op het scherm.</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 14px 0;">
-                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Hoe werkt de betaling?</p>
-                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Een aanbetaling bij reservering, het saldo op de dag van het evenement. Eenvoudig en veilig via Mollie.</p>
-              </td>
-            </tr>
-          </table>
-        `, 'light')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Nog een vraag? Beantwoord direct deze email, we reageren snel.
+        <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Wat als mijn locatie moeilijk bereikbaar is?</strong><br>
+          Wij regelen de logistiek van A tot Z. Kastelen, zalen, tuinen — we zijn het gewend.
         </p>
 
-        <div style="text-align: center;">
-          ${ctaButton("Onze pakketten bekijken", "https://mirroreffect.co")}
-        </div>
+        <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Wat is precies een spiegel photobooth?</strong><br>
+          Het is een interactieve spiegel op ware grootte die professionele foto's maakt. Uw gasten zien zichzelf in de spiegel en volgen leuke animaties op het scherm.
+        </p>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Hoe werkt de betaling?</strong><br>
+          Een aanbetaling bij reservering, het saldo op de dag van het evenement. Eenvoudig en veilig.
+        </p>
+
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Heeft u nog een vraag? Beantwoord gewoon deze email. Ik reageer persoonlijk.
+        </p>
       `
     }
   },
