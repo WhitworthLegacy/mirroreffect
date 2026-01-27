@@ -1485,7 +1485,7 @@ const packs = useMemo(
               <div className="rounded-2xl border border-[#eee] bg-white px-4 py-4 text-sm text-[#4a4a4a]">
                 <div className="font-black">{t("recapTitle")}</div>
                 <p className="mt-2">
-                  {t("recapPack")}: {selectedPack ? selectedPack.name : "—"}
+                  {t("recapPack")}: {selectedPack ? `${selectedPack.name} — ${selectedPack.price}€` : "—"}
                 </p>
                 {selectedOptionsForRecap.length > 0 && (
                   <p>
