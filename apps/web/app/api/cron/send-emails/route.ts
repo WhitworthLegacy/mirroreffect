@@ -34,7 +34,7 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
 
     const { data: leads, error } = await supabase
       .from("leads")
-      .select("lead_id, nom, email, language")
+      .select("lead_id, client_name, client_email, language")
       .eq("status", "progress")
       .gte("created_at", after)
       .lte("created_at", before);
@@ -52,7 +52,7 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
         .from("notifications")
         .select("id")
         .eq("template_key", step.key)
-        .eq("to_email", lead.email)
+        .eq("to_email", lead.client_email)
         .maybeSingle();
 
       if (existing) continue; // Already queued or sent
@@ -62,19 +62,19 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
         .from("notifications")
         .insert({
           template_key: step.key,
-          to_email: lead.email,
+          to_email: lead.client_email,
           locale: (lead.language || "fr").toLowerCase(),
           payload: {
-            client_name: lead.nom || "",
+            client_name: lead.client_name || "",
           },
           status: "queued",
         });
 
       if (insertError) {
-        console.error(`[nurturing] Error queuing ${step.key} for ${lead.email}:`, insertError.message);
+        console.error(`[nurturing] Error queuing ${step.key} for ${lead.client_email}:`, insertError.message);
       } else {
         queued++;
-        console.log(`[nurturing] Queued ${step.key} for ${lead.email}`);
+        console.log(`[nurturing] Queued ${step.key} for ${lead.client_email}`);
       }
     }
   }
@@ -222,6 +222,9 @@ export async function GET(request: NextRequest) {
         results.push({ id, status: "failed", error: errorMessage });
         console.error(`[cron/send-emails] Exception for ${id}:`, errorMessage);
       }
+
+      // Small delay between sends to avoid Resend rate limits (2/s)
+      await new Promise((r) => setTimeout(r, 600));
     }
 
     const duration = Date.now() - startTime;
