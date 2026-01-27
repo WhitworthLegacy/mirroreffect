@@ -45,7 +45,10 @@ export async function GET(req: Request) {
 
     if (error) {
       console.error("[availability] Erreur Supabase:", error);
-      return Response.json({ error: "database_error" }, { status: 500 });
+      return Response.json(
+        { error: "database_error", details: error.message, code: error.code },
+        { status: 500 }
+      );
     }
 
     const reserved = count || 0;
@@ -75,6 +78,9 @@ export async function GET(req: Request) {
     return Response.json(output);
   } catch (error) {
     console.error("[availability] Erreur:", error);
-    return Response.json({ error: "internal_error" }, { status: 500 });
+    return Response.json(
+      { error: "internal_error", message: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
   }
 }
