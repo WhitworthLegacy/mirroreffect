@@ -28,8 +28,13 @@ const emailWrapper = (content: string, locale: string, unsubscribeUrl?: string) 
 
           <!-- Header: fond noir, titre doré -->
           <tr>
-            <td align="center" style="padding: 32px 40px; background-color: #12130F;">
-              <img src="https://mirroreffect.co/images/logo-white.png" alt="Mirror Effect" width="180" style="display: block; max-width: 180px; height: auto;" />
+            <td align="center" style="padding: 40px 40px 32px; background-color: #12130F; border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: 0.15em; color: #C1950E;">
+                MIRROR EFFECT
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase;">
+                Photobooth Miroir Premium
+              </p>
             </td>
           </tr>
 
@@ -823,7 +828,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   NURTURE_J3_FAQ: {
     fr: {
-      subject: "Vos questions les plus fréquentes",
+      subject: "{{client_name}}, on répond à vos questions",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
 
@@ -879,7 +884,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       `
     },
     nl: {
-      subject: "Uw meest gestelde vragen",
+      subject: "{{client_name}}, we beantwoorden uw vragen",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
 
@@ -1063,7 +1068,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   NURTURE_J14_PROMO: {
     fr: {
-      subject: "Un geste pour vous, {{client_name}}",
+      subject: "{{client_name}}, un petit mot de Jonathan",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
 
@@ -1110,7 +1115,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       `
     },
     nl: {
-      subject: "Een gebaar voor u, {{client_name}}",
+      subject: "{{client_name}}, een berichtje van Jonathan",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
 
