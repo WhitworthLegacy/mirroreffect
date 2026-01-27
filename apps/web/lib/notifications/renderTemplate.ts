@@ -126,135 +126,83 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   B2C_BOOKING_CONFIRMED: {
     fr: {
-      subject: "Votre réservation est confirmée - Mirror Effect",
+      subject: "C'est confirmé, {{client_name}} !",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Réservation confirmée
-          </h2>
-          <p style="margin: 8px 0 0; color: #717182; font-size: 15px;">
-            Merci pour votre confiance
-          </p>
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bonjour {{client_name}},
+        </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bonjour <strong>{{client_name}}</strong>,
+          C'est Jonathan de Mirror Effect. Votre réservation est bien confirmée, merci pour votre confiance !
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Votre réservation <strong>Mirror Effect</strong> est bien confirmée ! Nous avons hâte de rendre votre événement inoubliable.
+        <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.7;">
+          Voici le récap :
         </p>
 
-        ${infoBox(`
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-            <tr>
-              <td style="padding: 8px 0;">
-                <span style="color: #717182; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">📅 Date</span>
-                <p style="margin: 4px 0 0; color: #12130F; font-size: 16px; font-weight: 600;">{{event_date}}</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0;">
-                <span style="color: #717182; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">📍 Lieu</span>
-                <p style="margin: 4px 0 0; color: #12130F; font-size: 16px; font-weight: 600;">{{address}}</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0;">
-                <span style="color: #717182; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">📦 Pack</span>
-                <p style="margin: 4px 0 0; color: #12130F; font-size: 16px; font-weight: 600;">{{pack_code}}</p>
-              </td>
-            </tr>
-          </table>
-        `, 'gold')}
+        <p style="margin: 0 0 4px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Date :</strong> {{event_date}}
+        </p>
+        <p style="margin: 0 0 4px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Lieu :</strong> {{address}}
+        </p>
+        <p style="margin: 0 0 4px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Pack :</strong> {{pack_code}}
+        </p>
+        <p style="margin: 0 0 4px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Acompte versé :</strong> {{deposit}} €
+        </p>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Solde restant :</strong> {{balance}} €
+        </p>
 
-        ${infoBox(`
-          <p style="margin: 0 0 12px; color: #717182; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">💳 Récapitulatif financier</p>
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
-            <tr>
-              <td style="padding: 10px 0; color: #717182; font-size: 14px; border-bottom: 1px solid #e9ecef;">Acompte versé</td>
-              <td style="padding: 10px 0; color: #059669; font-size: 14px; text-align: right; font-weight: 600; border-bottom: 1px solid #e9ecef;">{{deposit}} €</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #12130F; font-size: 15px; font-weight: 600;">Solde restant</td>
-              <td style="padding: 12px 0; color: #C1950E; font-size: 18px; text-align: right; font-weight: 700;">{{balance}} €</td>
-            </tr>
-          </table>
-        `, 'light')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          <strong>Prochaines étapes :</strong> Nous vous recontacterons <strong>5 à 10 jours avant</strong> votre événement pour finaliser la logistique, les horaires et vous partager votre galerie personnalisée.
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Je vous recontacte 5 à 10 jours avant votre événement pour finaliser la logistique, les horaires et vous partager votre galerie personnalisée.
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          À très bientôt        </p>
+          À très bientôt !
+        </p>
       `
     },
     nl: {
-      subject: "Uw reservering is bevestigd - Mirror Effect",
+      subject: "Het is bevestigd, {{client_name}} !",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Reservering bevestigd
-          </h2>
-          <p style="margin: 8px 0 0; color: #717182; font-size: 15px;">
-            Bedankt voor uw vertrouwen
-          </p>
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hallo {{client_name}},
+        </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hallo <strong>{{client_name}}</strong>,
+          Dit is Jonathan van Mirror Effect. Uw reservering is bevestigd, bedankt voor uw vertrouwen!
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Uw <strong>Mirror Effect</strong> reservering is bevestigd! We kijken ernaar uit om uw evenement onvergetelijk te maken.
+        <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hier is de samenvatting:
         </p>
 
-        ${infoBox(`
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-            <tr>
-              <td style="padding: 8px 0;">
-                <span style="color: #717182; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">📅 Datum</span>
-                <p style="margin: 4px 0 0; color: #12130F; font-size: 16px; font-weight: 600;">{{event_date}}</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0;">
-                <span style="color: #717182; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">📍 Locatie</span>
-                <p style="margin: 4px 0 0; color: #12130F; font-size: 16px; font-weight: 600;">{{address}}</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0;">
-                <span style="color: #717182; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">📦 Pakket</span>
-                <p style="margin: 4px 0 0; color: #12130F; font-size: 16px; font-weight: 600;">{{pack_code}}</p>
-              </td>
-            </tr>
-          </table>
-        `, 'gold')}
+        <p style="margin: 0 0 4px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Datum:</strong> {{event_date}}
+        </p>
+        <p style="margin: 0 0 4px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Locatie:</strong> {{address}}
+        </p>
+        <p style="margin: 0 0 4px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Pakket:</strong> {{pack_code}}
+        </p>
+        <p style="margin: 0 0 4px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Aanbetaling:</strong> {{deposit}} €
+        </p>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          <strong>Resterend saldo:</strong> {{balance}} €
+        </p>
 
-        ${infoBox(`
-          <p style="margin: 0 0 12px; color: #717182; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">💳 Financieel overzicht</p>
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
-            <tr>
-              <td style="padding: 10px 0; color: #717182; font-size: 14px; border-bottom: 1px solid #e9ecef;">Aanbetaling</td>
-              <td style="padding: 10px 0; color: #059669; font-size: 14px; text-align: right; font-weight: 600; border-bottom: 1px solid #e9ecef;">{{deposit}} €</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #12130F; font-size: 15px; font-weight: 600;">Resterend saldo</td>
-              <td style="padding: 12px 0; color: #C1950E; font-size: 18px; text-align: right; font-weight: 700;">{{balance}} €</td>
-            </tr>
-          </table>
-        `, 'light')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          <strong>Volgende stappen:</strong> We nemen <strong>5 tot 10 dagen voor</strong> uw evenement contact met u op om de logistiek, tijden af te ronden en uw gepersonaliseerde galerij te delen.
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Ik neem 5 tot 10 dagen voor uw evenement contact met u op om de logistiek, tijden af te ronden en uw gepersonaliseerde galerij te delen.
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Tot binnenkort        </p>
+          Tot binnenkort!
+        </p>
       `
     }
   },
@@ -264,84 +212,58 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   B2C_AVIS_GOOGLE: {
     fr: {
-      subject: "Merci ! Votre avis compte pour nous",
+      subject: "{{client_name}}, comment s'est passé votre événement ?",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Votre avis compte
-          </h2>
-        </div>
-
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bonjour <strong>{{client_name}}</strong>,
+          Bonjour {{client_name}},
         </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Merci encore pour votre confiance ✨ Nous espérons que votre événement s'est parfaitement déroulé.
+          C'est Jonathan. J'espère que votre événement s'est super bien passé !
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Si vous avez <strong>30 secondes</strong>, votre avis nous aide énormément (et nous permet de continuer à offrir un service premium).
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          J'ai une petite demande : si vous avez 30 secondes, un avis Google nous aide vraiment beaucoup. C'est grâce à ça que d'autres personnes nous découvrent.
         </p>
 
-        <div style="text-align: center;">
-          ${ctaButton("⭐ Laisser un avis Google", "{{review_link}}")}
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Voici le lien direct : <a href="{{review_link}}" style="color: #C1950E; text-decoration: none; font-weight: 600;">laisser un avis</a>
+        </p>
 
-        ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #C1950E; text-transform: uppercase; letter-spacing: 0.05em;">Bonus VIP</p>
-            <p style="margin: 12px 0 0; color: #12130F; font-size: 15px; font-weight: 500;">
-              {{vip_reduction}}
-            </p>
-          </div>
-        `, 'gold')}
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Et pour vous remercier, vous bénéficiez de <strong>{{vip_reduction}}</strong> en tant que client fidèle.
+        </p>
 
-        <p style="margin: 24px 0 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Merci ✨<br>
-          À très vite !
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Merci d'avance et à bientôt !
         </p>
       `
     },
     nl: {
-      subject: "Bedankt! Uw mening telt voor ons",
+      subject: "{{client_name}}, hoe was uw evenement?",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Uw mening telt
-          </h2>
-        </div>
-
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hallo <strong>{{client_name}}</strong>,
+          Hallo {{client_name}},
         </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Nogmaals bedankt voor uw vertrouwen ✨ We hopen dat uw evenement perfect is verlopen.
+          Dit is Jonathan. Ik hoop dat uw evenement super goed is verlopen!
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Als u <strong>30 seconden</strong> heeft, helpt uw review ons enorm (en stelt ons in staat om premium service te blijven bieden).
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Ik heb een klein verzoek: als u 30 seconden heeft, helpt een Google review ons echt enorm. Dankzij reviews ontdekken andere mensen ons.
         </p>
 
-        <div style="text-align: center;">
-          ${ctaButton("⭐ Google review achterlaten", "{{review_link}}")}
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hier is de directe link: <a href="{{review_link}}" style="color: #C1950E; text-decoration: none; font-weight: 600;">review achterlaten</a>
+        </p>
 
-        ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #C1950E; text-transform: uppercase; letter-spacing: 0.05em;">VIP Bonus</p>
-            <p style="margin: 12px 0 0; color: #12130F; font-size: 15px; font-weight: 500;">
-              {{vip_reduction}}
-            </p>
-          </div>
-        `, 'gold')}
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          En als dank profiteert u van <strong>{{vip_reduction}}</strong> als trouwe klant.
+        </p>
 
-        <p style="margin: 24px 0 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Bedankt ✨<br>
-          Tot snel!
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Alvast bedankt en tot binnenkort!
         </p>
       `
     }
@@ -420,89 +342,51 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   B2C_EVENT_ANNIVERSARY: {
     fr: {
-      subject: "🎂 3 mois déjà ! Une offre VIP pour vous",
+      subject: "{{client_name}}, des nouvelles de Jonathan",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎂</span>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Joyeux anniversaire !
-          </h2>
-          <p style="margin: 8px 0 0; color: #717182; font-size: 15px;">
-            3 mois depuis votre événement
-          </p>
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bonjour {{client_name}},
+        </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bonjour <strong>{{client_name}}</strong>,
+          C'est Jonathan de Mirror Effect. Ça fait déjà 3 mois depuis votre événement, le temps passe vite !
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Le temps passe vite ! Dans 3 mois, ce sera l'anniversaire de votre magnifique événement Mirror Effect !
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Je voulais simplement prendre de vos nouvelles et vous dire que si vous avez un autre événement en vue (anniversaire, fête, soirée d'entreprise...), vous bénéficiez de <strong>{{vip_reduction}}</strong> sur votre prochaine réservation en tant que client fidèle.
         </p>
 
-        ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #C1950E; text-transform: uppercase; letter-spacing: 0.05em;">Client VIP</p>
-            <p style="margin: 16px 0 8px; font-size: 24px; font-weight: 600; color: #12130F;">
-              Avez-vous prévu une autre célébration ?
-            </p>
-            <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">
-              En tant que client VIP, vous avez droit à une<br>
-              <strong style="color: #C1950E; font-size: 18px;">réduction spéciale de {{vip_reduction}}</strong><br>
-              sur votre prochaine location.
-            </p>
-          </div>
-        `, 'gold')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Répondez simplement à cet email si vous souhaitez en discuter. Nous serions ravis de faire partie de vos nouvelles festivités !
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Pas de pression, l'offre reste valable. Répondez à cet email si vous souhaitez en discuter.
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Amicalement        </p>
+          À bientôt !
+        </p>
       `
     },
     nl: {
-      subject: "🎂 Al 3 maanden! Een VIP-aanbieding voor u",
+      subject: "{{client_name}}, nieuws van Jonathan",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎂</span>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Gelukkige verjaardag!
-          </h2>
-          <p style="margin: 8px 0 0; color: #717182; font-size: 15px;">
-            3 maanden sinds uw evenement
-          </p>
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hallo {{client_name}},
+        </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hallo <strong>{{client_name}}</strong>,
+          Dit is Jonathan van Mirror Effect. Het is al 3 maanden geleden sinds uw evenement, de tijd vliegt!
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          De tijd vliegt! Over 3 maanden is het de verjaardag van uw prachtige Mirror Effect evenement!
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Ik wilde gewoon even horen hoe het gaat en u laten weten dat als u een ander evenement plant (verjaardag, feest, bedrijfsevenement...), u profiteert van <strong>{{vip_reduction}}</strong> op uw volgende reservering als trouwe klant.
         </p>
 
-        ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #C1950E; text-transform: uppercase; letter-spacing: 0.05em;">VIP Klant</p>
-            <p style="margin: 16px 0 8px; font-size: 24px; font-weight: 600; color: #12130F;">
-              Plant u nog een feest?
-            </p>
-            <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">
-              Als VIP-klant heeft u recht op een<br>
-              <strong style="color: #C1950E; font-size: 18px;">speciale korting van {{vip_reduction}}</strong><br>
-              op uw volgende huur.
-            </p>
-          </div>
-        `, 'gold')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Beantwoord gewoon deze email als u het wilt bespreken. We zouden graag deel uitmaken van uw nieuwe festiviteiten!
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Geen druk, het aanbod blijft geldig. Beantwoord deze email als u het wilt bespreken.
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Met vriendelijke groet        </p>
+          Tot binnenkort!
+        </p>
       `
     }
   },
@@ -512,200 +396,52 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   B2C_OFFRE_ANNIVERSAIRE: {
     fr: {
-      subject: "Un an déjà ! -10% pour fêter ça",
+      subject: "{{client_name}}, ça fait déjà un an !",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎊</span>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Joyeux anniversaire d'événement !
-          </h2>
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bonjour {{client_name}},
+        </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bonjour <strong>{{client_name}}</strong>,
+          C'est Jonathan. Ça fait déjà un an que vous avez fait appel à Mirror Effect ! Le temps file.
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Il y a bientôt un an, vous avez fait appel à Mirror Effect pour votre événement. Le temps passe vite !
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Si un autre événement se profile (ou celui d'un proche), sachez que vous bénéficiez de <strong>-10%</strong> sur votre prochaine réservation. Mentionnez simplement le code <strong>ANNIV10</strong> ou répondez à cet email.
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Pour célébrer cet anniversaire, nous vous offrons <strong style="color: #C1950E;">-10% sur votre prochaine réservation</strong>.
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Quoi qu'il en soit, merci encore pour votre confiance cette année-là. C'était un plaisir.
         </p>
 
-        ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0 0 8px; color: rgba(255,255,255,0.85); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Code promo</p>
-            <p style="margin: 0; font-size: 28px; font-weight: 700; color: #12130F;">
-              ANNIV10
-            </p>
-          </div>
-        `, 'gold')}
-
-        <div style="text-align: center;">
-          ${ctaButton("Réserver maintenant", "https://mirroreffect.co/reserver")}
-        </div>
-
-        <p style="margin: 0; color: #717182; font-size: 13px; text-align: center;">
-          Offre valable 30 jours.
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          À bientôt,<br>
+          Jonathan
         </p>
       `
     },
     nl: {
-      subject: "Al een jaar! -10% om dit te vieren",
+      subject: "{{client_name}}, al een jaar geleden!",
       body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎊</span>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Gelukkige evenement-verjaardag!
-          </h2>
-        </div>
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hallo {{client_name}},
+        </p>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hallo <strong>{{client_name}}</strong>,
+          Dit is Jonathan. Het is al een jaar geleden dat u Mirror Effect heeft ingeschakeld! De tijd vliegt.
         </p>
-
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bijna een jaar geleden heeft u Mirror Effect ingeschakeld voor uw evenement. De tijd vliegt!
-        </p>
-
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Om dit jubileum te vieren, bieden wij u <strong style="color: #C1950E;">-10% op uw volgende reservering</strong>.
-        </p>
-
-        ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0 0 8px; color: rgba(255,255,255,0.85); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Promotiecode</p>
-            <p style="margin: 0; font-size: 28px; font-weight: 700; color: #12130F;">
-              ANNIV10
-            </p>
-          </div>
-        `, 'gold')}
-
-        <div style="text-align: center;">
-          ${ctaButton("Nu reserveren", "https://mirroreffect.co/reserveren")}
-        </div>
-
-        <p style="margin: 0; color: #717182; font-size: 13px; text-align: center;">
-          Aanbieding geldig gedurende 30 dagen.
-        </p>
-      `
-    }
-  },
-
-  // =============================================================================
-  // EVENT RECAP (full details - legacy support)
-  // =============================================================================
-  B2C_EVENT_RECAP: {
-    fr: {
-      subject: "📋 Récapitulatif de votre événement - Mirror Effect",
-      body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">📋</span>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Récapitulatif
-          </h2>
-        </div>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bonjour <strong>{{client_name}}</strong>,
+          Als er een ander evenement op komst is (of dat van iemand in uw omgeving), profiteert u van <strong>-10%</strong> op uw volgende reservering. Vermeld gewoon de code <strong>ANNIV10</strong> of beantwoord deze email.
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Voici le récapitulatif complet de votre réservation :
-        </p>
-
-        ${infoBox(`
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">📅 Date</td>
-              <td style="padding: 12px 0; color: #12130F; font-size: 14px; text-align: right; font-weight: 600; border-bottom: 1px solid rgba(193,149,14,0.2);">{{event_date}}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">📍 Lieu</td>
-              <td style="padding: 12px 0; color: #12130F; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(193,149,14,0.2);">{{address}}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">📦 Pack</td>
-              <td style="padding: 12px 0; color: #12130F; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(193,149,14,0.2);">{{pack_code}}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">💰 Total</td>
-              <td style="padding: 12px 0; color: #12130F; font-size: 14px; text-align: right; font-weight: 600; border-bottom: 1px solid rgba(193,149,14,0.2);">{{total}} €</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">✅ Acompte versé</td>
-              <td style="padding: 12px 0; color: #059669; font-size: 14px; text-align: right; font-weight: 600; border-bottom: 1px solid rgba(193,149,14,0.2);">- {{deposit}} €</td>
-            </tr>
-            <tr>
-              <td style="padding: 16px 0 0; color: #12130F; font-size: 15px; font-weight: 600;">Solde restant</td>
-              <td style="padding: 16px 0 0; color: #C1950E; font-size: 20px; text-align: right; font-weight: 700;">{{balance}} €</td>
-            </tr>
-          </table>
-        `, 'gold')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Le solde sera à régler le jour de l'événement.
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hoe dan ook, nogmaals bedankt voor uw vertrouwen destijds. Het was een plezier.
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Des questions ? Répondez à cet email.
-        </p>
-      `
-    },
-    nl: {
-      subject: "📋 Samenvatting van uw evenement - Mirror Effect",
-      body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">📋</span>
-          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
-            Samenvatting
-          </h2>
-        </div>
-
-        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hallo <strong>{{client_name}}</strong>,
-        </p>
-
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hier is de volledige samenvatting van uw reservering:
-        </p>
-
-        ${infoBox(`
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">📅 Datum</td>
-              <td style="padding: 12px 0; color: #12130F; font-size: 14px; text-align: right; font-weight: 600; border-bottom: 1px solid rgba(193,149,14,0.2);">{{event_date}}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">📍 Locatie</td>
-              <td style="padding: 12px 0; color: #12130F; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(193,149,14,0.2);">{{address}}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">📦 Pakket</td>
-              <td style="padding: 12px 0; color: #12130F; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(193,149,14,0.2);">{{pack_code}}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">💰 Totaal</td>
-              <td style="padding: 12px 0; color: #12130F; font-size: 14px; text-align: right; font-weight: 600; border-bottom: 1px solid rgba(193,149,14,0.2);">{{total}} €</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #717182; font-size: 14px; border-bottom: 1px solid rgba(193,149,14,0.2);">✅ Aanbetaling</td>
-              <td style="padding: 12px 0; color: #059669; font-size: 14px; text-align: right; font-weight: 600; border-bottom: 1px solid rgba(193,149,14,0.2);">- {{deposit}} €</td>
-            </tr>
-            <tr>
-              <td style="padding: 16px 0 0; color: #12130F; font-size: 15px; font-weight: 600;">Resterend saldo</td>
-              <td style="padding: 16px 0 0; color: #C1950E; font-size: 20px; text-align: right; font-weight: 700;">{{balance}} €</td>
-            </tr>
-          </table>
-        `, 'gold')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Het saldo dient op de dag van het evenement te worden voldaan.
-        </p>
-
-        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Vragen? Beantwoord deze email.
+          Tot binnenkort,<br>
+          Jonathan
         </p>
       `
     }
