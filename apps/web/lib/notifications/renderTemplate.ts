@@ -331,176 +331,6 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   },
 
   // =============================================================================
-  // PROMO 72H - Abandoned cart with discount
-  // =============================================================================
-  B2C_PROMO_72H: {
-    fr: {
-      subject: "🎁 -50€ pour finaliser votre réservation",
-      body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">💝</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
-            Un petit cadeau pour vous
-          </h2>
-        </div>
-
-        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bonjour <strong>{{client_name}}</strong>,
-        </p>
-
-        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Merci pour votre intérêt pour <strong>Mirror Effect</strong> ✨ Il semble que la réservation n'ait pas été finalisée.
-        </p>
-
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Par curiosité (et pour nous aider à améliorer l'expérience), pouvez-vous nous dire ce qui vous a freiné ?
-          <br><span style="color: #717182; font-size: 14px;">(date/infos à confirmer, budget, question logistique, autre…)</span>
-        </p>
-
-        ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0 0 8px; color: #C1950E; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
-              🎁 Cadeau exclusif
-            </p>
-            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 700; color: #12130F;">
-              -50 €
-            </p>
-            <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
-              sur votre <strong>solde restant</strong> si vous finalisez<br>dans les <strong>72 heures</strong>
-            </p>
-            <p style="margin: 12px 0 0; color: #717182; font-size: 12px;">
-              Aucun code promo — on s'en occupe !
-            </p>
-          </div>
-        `, 'gold')}
-
-        ${infoBox(`
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-            <tr>
-              <td style="padding: 6px 0;">
-                <span style="color: #717182; font-size: 13px;">📅 Date</span>
-                <span style="float: right; color: #12130F; font-size: 14px; font-weight: 600;">{{event_date}}</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0;">
-                <span style="color: #717182; font-size: 13px;">📍 Lieu</span>
-                <span style="float: right; color: #12130F; font-size: 14px; font-weight: 600;">{{event_place}}</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0;">
-                <span style="color: #717182; font-size: 13px;">📦 Pack</span>
-                <span style="float: right; color: #12130F; font-size: 14px; font-weight: 600;">{{pack_name}}</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; border-top: 1px solid #e9ecef; margin-top: 8px;">
-                <span style="color: #717182; font-size: 13px;">💰 Total</span>
-                <span style="float: right; color: #C1950E; font-size: 15px; font-weight: 700;">{{total_amount}}</span>
-              </td>
-            </tr>
-          </table>
-        `, 'light')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Pour finaliser, vous pouvez :
-        </p>
-        <ul style="margin: 0 0 24px 20px; padding: 0; color: #333; font-size: 15px; line-height: 1.8;">
-          <li>Répondre directement à cet email (on s'occupe du reste)</li>
-          <li>Ou retourner sur <a href="https://mirroreffect.co" style="color: #C1950E; text-decoration: none; font-weight: 600;">mirroreffect.co</a></li>
-        </ul>
-
-        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          À très vite ✨
-        </p>
-      `
-    },
-    nl: {
-      subject: "🎁 -50€ om uw reservering af te ronden",
-      body: `
-        <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">💝</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
-            Een cadeautje voor u
-          </h2>
-        </div>
-
-        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hallo <strong>{{client_name}}</strong>,
-        </p>
-
-        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bedankt voor uw interesse in <strong>Mirror Effect</strong> ✨ Het lijkt erop dat de reservering niet is afgerond.
-        </p>
-
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Uit nieuwsgierigheid (en om ons te helpen de ervaring te verbeteren), kunt u ons vertellen wat u tegenhield?
-          <br><span style="color: #717182; font-size: 14px;">(datum/info te bevestigen, budget, logistieke vraag, anders…)</span>
-        </p>
-
-        ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0 0 8px; color: #C1950E; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
-              🎁 Exclusief cadeau
-            </p>
-            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 700; color: #12130F;">
-              -50 €
-            </p>
-            <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
-              op uw <strong>resterend saldo</strong> als u afrondt<br>binnen <strong>72 uur</strong>
-            </p>
-            <p style="margin: 12px 0 0; color: #717182; font-size: 12px;">
-              Geen promotiecode nodig — wij regelen het!
-            </p>
-          </div>
-        `, 'gold')}
-
-        ${infoBox(`
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-            <tr>
-              <td style="padding: 6px 0;">
-                <span style="color: #717182; font-size: 13px;">📅 Datum</span>
-                <span style="float: right; color: #12130F; font-size: 14px; font-weight: 600;">{{event_date}}</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0;">
-                <span style="color: #717182; font-size: 13px;">📍 Locatie</span>
-                <span style="float: right; color: #12130F; font-size: 14px; font-weight: 600;">{{event_place}}</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0;">
-                <span style="color: #717182; font-size: 13px;">📦 Pakket</span>
-                <span style="float: right; color: #12130F; font-size: 14px; font-weight: 600;">{{pack_name}}</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; border-top: 1px solid #e9ecef; margin-top: 8px;">
-                <span style="color: #717182; font-size: 13px;">💰 Totaal</span>
-                <span style="float: right; color: #C1950E; font-size: 15px; font-weight: 700;">{{total_amount}}</span>
-              </td>
-            </tr>
-          </table>
-        `, 'light')}
-
-        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Om af te ronden kunt u:
-        </p>
-        <ul style="margin: 0 0 24px 20px; padding: 0; color: #333; font-size: 15px; line-height: 1.8;">
-          <li>Direct op deze email antwoorden (wij regelen de rest)</li>
-          <li>Of terugkeren naar <a href="https://mirroreffect.co" style="color: #C1950E; text-decoration: none; font-weight: 600;">mirroreffect.co</a></li>
-        </ul>
-
-        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Tot snel ✨
-        </p>
-      `
-    }
-  },
-
-  // =============================================================================
   // J+1 GOOGLE REVIEW REQUEST
   // =============================================================================
   B2C_AVIS_GOOGLE: {
@@ -955,82 +785,524 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   },
 
   // =============================================================================
-  // NURTURING: 48H REMINDER (abandoned cart - legacy)
+  // NURTURING J+1: VALUE — Why Mirror Effect?
   // =============================================================================
-  B2C_PROMO_48H: {
+  NURTURE_J1_VALUE: {
     fr: {
-      subject: "⏰ Votre photobooth vous attend encore...",
+      subject: "✨ Ce qui rend Mirror Effect unique",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">⏰</span>
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">✨</span>
           <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
-            Votre réservation n'est pas terminée
+            Pourquoi Mirror Effect ?
           </h2>
         </div>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Bonjour,
+          Bonjour <strong>{{client_name}}</strong>,
         </p>
 
-        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          Vous avez commencé à réserver votre photobooth miroir pour le <strong>{{event_date}}</strong>, mais vous n'avez pas finalisé votre paiement.
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Merci d'avoir pris le temps de découvrir Mirror Effect. On sait que choisir une animation pour son événement, c'est une décision importante, alors voici ce qui nous différencie :
         </p>
 
         ${infoBox(`
-          <div style="text-align: center;">
-            <p style="margin: 0; font-size: 18px; color: #12130F; font-weight: 600;">
-              Cette date est encore disponible !
-            </p>
-            <p style="margin: 8px 0 0; color: #717182; font-size: 14px;">
-              Ne la laissez pas s'envoler ✨
-            </p>
-          </div>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid rgba(193,149,14,0.2);">
+                <p style="margin: 0; color: #12130F; font-size: 15px; font-weight: 600;">Installation clé en main</p>
+                <p style="margin: 4px 0 0; color: #717182; font-size: 14px; line-height: 1.5;">Notre équipe arrive sur place à l'heure convenue et s'occupe de tout. 30 à 60 minutes d'installation, zéro stress pour vous.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid rgba(193,149,14,0.2);">
+                <p style="margin: 0; color: #12130F; font-size: 15px; font-weight: 600;">Photos illimitées</p>
+                <p style="margin: 4px 0 0; color: #717182; font-size: 14px; line-height: 1.5;">Illimité tant que le pack le permet. Vos invités se lâchent, sans compter.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0;">
+                <p style="margin: 0; color: #12130F; font-size: 15px; font-weight: 600;">Galerie en ligne personnalisée</p>
+                <p style="margin: 4px 0 0; color: #717182; font-size: 14px; line-height: 1.5;">Toutes les photos accessibles en ligne après l'événement, avec un design aux couleurs de votre fête.</p>
+              </td>
+            </tr>
+          </table>
         `, 'gold')}
 
+        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Envie d'en savoir plus ou de finaliser votre réservation ? Répondez simplement à cet email ou visitez notre site.
+        </p>
+
         <div style="text-align: center;">
-          ${ctaButton("Finaliser ma réservation", "https://mirroreffect.co/reserver")}
+          ${ctaButton("Découvrir nos packs", "https://mirroreffect.co")}
         </div>
 
-        <p style="margin: 0; color: #717182; font-size: 13px; text-align: center;">
-          Des questions ? Répondez simplement à cet email.
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          À bientôt ✨
         </p>
       `
     },
     nl: {
-      subject: "⏰ Uw photobooth wacht nog steeds op u...",
+      subject: "✨ Wat Mirror Effect uniek maakt",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">⏰</span>
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">✨</span>
           <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
-            Uw reservering is niet voltooid
+            Waarom Mirror Effect?
           </h2>
         </div>
 
         <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
-          Hallo,
+          Hallo <strong>{{client_name}}</strong>,
+        </p>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bedankt dat u de tijd heeft genomen om Mirror Effect te ontdekken. We weten dat het kiezen van entertainment voor uw evenement een belangrijke beslissing is, dus dit is wat ons onderscheidt:
+        </p>
+
+        ${infoBox(`
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid rgba(193,149,14,0.2);">
+                <p style="margin: 0; color: #12130F; font-size: 15px; font-weight: 600;">Turnkey installatie</p>
+                <p style="margin: 4px 0 0; color: #717182; font-size: 14px; line-height: 1.5;">Ons team komt op het afgesproken tijdstip en regelt alles. 30 tot 60 minuten installatie, geen stress voor u.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid rgba(193,149,14,0.2);">
+                <p style="margin: 0; color: #12130F; font-size: 15px; font-weight: 600;">Onbeperkte foto's</p>
+                <p style="margin: 4px 0 0; color: #717182; font-size: 14px; line-height: 1.5;">Onbeperkt zolang het pakket het toelaat. Uw gasten gaan los, zonder te tellen.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0;">
+                <p style="margin: 0; color: #12130F; font-size: 15px; font-weight: 600;">Gepersonaliseerde online galerij</p>
+                <p style="margin: 4px 0 0; color: #717182; font-size: 14px; line-height: 1.5;">Alle foto's online beschikbaar na het evenement, met een design in de kleuren van uw feest.</p>
+              </td>
+            </tr>
+          </table>
+        `, 'gold')}
+
+        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Meer weten of uw reservering afronden? Beantwoord gewoon deze email of bezoek onze website.
+        </p>
+
+        <div style="text-align: center;">
+          ${ctaButton("Onze pakketten ontdekken", "https://mirroreffect.co")}
+        </div>
+
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Tot binnenkort ✨
+        </p>
+      `
+    }
+  },
+
+  // =============================================================================
+  // NURTURING J+3: FAQ — Common questions answered
+  // =============================================================================
+  NURTURE_J3_FAQ: {
+    fr: {
+      subject: "💡 Vos questions les plus fréquentes",
+      body: `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">💡</span>
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+            On répond à vos questions
+          </h2>
+        </div>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bonjour <strong>{{client_name}}</strong>,
         </p>
 
         <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
-          U bent begonnen met het reserveren van uw spiegel photobooth voor <strong>{{event_date}}</strong>, maar u heeft uw betaling niet afgerond.
+          Vous hésitez encore ? Voici les réponses aux questions qu'on nous pose le plus souvent :
+        </p>
+
+        ${infoBox(`
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
+                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Combien de place faut-il ?</p>
+                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Un espace d'environ 2m x 2m suffit. On s'adapte à votre lieu.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
+                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Et si mon lieu est difficile d'accès ?</p>
+                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">On gère la logistique de A à Z. On a l'habitude de tous types de lieux (châteaux, salles, jardins, etc.).</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
+                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">C'est quoi exactement un photobooth miroir ?</p>
+                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">C'est un miroir interactif grandeur nature qui prend des photos de qualité pro. Vos invités se voient dans le miroir et suivent des animations ludiques à l'écran.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 0;">
+                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Comment se passe le paiement ?</p>
+                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Un acompte à la réservation, le solde le jour de l'événement. Simple et sécurisé via Mollie.</p>
+              </td>
+            </tr>
+          </table>
+        `, 'light')}
+
+        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Une autre question ? Répondez directement à cet email, on vous répond rapidement.
+        </p>
+
+        <div style="text-align: center;">
+          ${ctaButton("Voir nos packs", "https://mirroreffect.co")}
+        </div>
+      `
+    },
+    nl: {
+      subject: "💡 Uw meest gestelde vragen",
+      body: `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">💡</span>
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+            We beantwoorden uw vragen
+          </h2>
+        </div>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hallo <strong>{{client_name}}</strong>,
+        </p>
+
+        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
+          Twijfelt u nog? Hier zijn de antwoorden op de vragen die we het vaakst krijgen:
+        </p>
+
+        ${infoBox(`
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
+                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Hoeveel ruimte is er nodig?</p>
+                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Een ruimte van ongeveer 2m x 2m is voldoende. We passen ons aan uw locatie aan.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
+                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Wat als mijn locatie moeilijk bereikbaar is?</p>
+                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Wij regelen de logistiek van A tot Z. We zijn gewend aan alle soorten locaties (kastelen, zalen, tuinen, enz.).</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 0; border-bottom: 1px solid #e9ecef;">
+                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Wat is precies een spiegel photobooth?</p>
+                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Het is een interactieve spiegel op ware grootte die professionele foto's maakt. Uw gasten zien zichzelf in de spiegel en volgen leuke animaties op het scherm.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 0;">
+                <p style="margin: 0; color: #C1950E; font-size: 14px; font-weight: 600;">Hoe werkt de betaling?</p>
+                <p style="margin: 6px 0 0; color: #333; font-size: 14px; line-height: 1.6;">Een aanbetaling bij reservering, het saldo op de dag van het evenement. Eenvoudig en veilig via Mollie.</p>
+              </td>
+            </tr>
+          </table>
+        `, 'light')}
+
+        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Nog een vraag? Beantwoord direct deze email, we reageren snel.
+        </p>
+
+        <div style="text-align: center;">
+          ${ctaButton("Onze pakketten bekijken", "https://mirroreffect.co")}
+        </div>
+      `
+    }
+  },
+
+  // =============================================================================
+  // NURTURING J+7: SOCIAL PROOF — Testimonials
+  // =============================================================================
+  NURTURE_J7_PROOF: {
+    fr: {
+      subject: "⭐ Ce que nos clients disent de nous",
+      body: `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">⭐</span>
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+            Ils ont choisi Mirror Effect
+          </h2>
+        </div>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bonjour <strong>{{client_name}}</strong>,
+        </p>
+
+        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
+          Rien de mieux que l'avis de ceux qui ont vécu l'expérience. Voici ce que nos clients disent :
+        </p>
+
+        ${infoBox(`
+          <div style="text-align: center; padding: 8px 0;">
+            <p style="margin: 0; font-size: 20px;">⭐⭐⭐⭐⭐</p>
+            <p style="margin: 12px 0 8px; color: #333; font-size: 15px; font-style: italic; line-height: 1.6;">
+              "Le photobooth miroir a été la star de notre mariage ! Tous nos invités en parlent encore. Service impeccable, photos magnifiques."
+            </p>
+            <p style="margin: 0; color: #C1950E; font-size: 13px; font-weight: 600;">— Sarah & Thomas, Mariage</p>
+          </div>
+        `, 'gold')}
+
+        ${infoBox(`
+          <div style="text-align: center; padding: 8px 0;">
+            <p style="margin: 0; font-size: 20px;">⭐⭐⭐⭐⭐</p>
+            <p style="margin: 12px 0 8px; color: #333; font-size: 15px; font-style: italic; line-height: 1.6;">
+              "Professionnels, ponctuels et le résultat est top. On a adoré les animations sur le miroir. Je recommande à 100%."
+            </p>
+            <p style="margin: 0; color: #C1950E; font-size: 13px; font-weight: 600;">— Mehdi, Anniversaire 30 ans</p>
+          </div>
+        `, 'light')}
+
+        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Envie de vivre la même expérience ? On est là pour vous.
+        </p>
+
+        <div style="text-align: center;">
+          ${ctaButton("Réserver maintenant", "https://mirroreffect.co")}
+        </div>
+
+        <p style="margin: 24px 0 0; color: #717182; font-size: 13px; line-height: 1.6; text-align: center;">
+          Vous recevrez encore 2 emails de notre part sur les prochaines semaines. Après cela, plus de messages si vous ne souhaitez pas donner suite. Vous pouvez aussi vous désinscrire à tout moment via le lien en bas de cet email.
+        </p>
+      `
+    },
+    nl: {
+      subject: "⭐ Wat onze klanten over ons zeggen",
+      body: `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">⭐</span>
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+            Zij kozen Mirror Effect
+          </h2>
+        </div>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hallo <strong>{{client_name}}</strong>,
+        </p>
+
+        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
+          Niets beter dan de mening van wie de ervaring heeft beleefd. Dit zeggen onze klanten:
+        </p>
+
+        ${infoBox(`
+          <div style="text-align: center; padding: 8px 0;">
+            <p style="margin: 0; font-size: 20px;">⭐⭐⭐⭐⭐</p>
+            <p style="margin: 12px 0 8px; color: #333; font-size: 15px; font-style: italic; line-height: 1.6;">
+              "De spiegel photobooth was de ster van onze bruiloft! Al onze gasten praten er nog steeds over. Onberispelijke service, prachtige foto's."
+            </p>
+            <p style="margin: 0; color: #C1950E; font-size: 13px; font-weight: 600;">— Sarah & Thomas, Bruiloft</p>
+          </div>
+        `, 'gold')}
+
+        ${infoBox(`
+          <div style="text-align: center; padding: 8px 0;">
+            <p style="margin: 0; font-size: 20px;">⭐⭐⭐⭐⭐</p>
+            <p style="margin: 12px 0 8px; color: #333; font-size: 15px; font-style: italic; line-height: 1.6;">
+              "Professioneel, punctueel en het resultaat is top. We waren dol op de animaties op de spiegel. Ik beveel het 100% aan."
+            </p>
+            <p style="margin: 0; color: #C1950E; font-size: 13px; font-weight: 600;">— Mehdi, 30e verjaardag</p>
+          </div>
+        `, 'light')}
+
+        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Wilt u dezelfde ervaring beleven? We zijn er voor u.
+        </p>
+
+        <div style="text-align: center;">
+          ${ctaButton("Nu reserveren", "https://mirroreffect.co")}
+        </div>
+
+        <p style="margin: 24px 0 0; color: #717182; font-size: 13px; line-height: 1.6; text-align: center;">
+          U ontvangt nog 2 emails van ons de komende weken. Daarna geen berichten meer als u niet geïnteresseerd bent. U kunt zich ook op elk moment uitschrijven via de link onderaan deze email.
+        </p>
+      `
+    }
+  },
+
+  // =============================================================================
+  // NURTURING J+14: PROMO — -50€ discount offer
+  // =============================================================================
+  NURTURE_J14_PROMO: {
+    fr: {
+      subject: "🎁 -50€ sur votre réservation Mirror Effect",
+      body: `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎁</span>
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+            Un cadeau pour vous
+          </h2>
+        </div>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bonjour <strong>{{client_name}}</strong>,
+        </p>
+
+        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
+          On sait que planifier un événement, ça demande du temps. Alors pour vous faciliter la décision, on vous offre un coup de pouce :
         </p>
 
         ${infoBox(`
           <div style="text-align: center;">
-            <p style="margin: 0; font-size: 18px; color: #12130F; font-weight: 600;">
-              Deze datum is nog beschikbaar!
+            <p style="margin: 0 0 8px; color: #C1950E; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
+              Offre exclusive
             </p>
-            <p style="margin: 8px 0 0; color: #717182; font-size: 14px;">
-              Laat hem niet ontsnappen ✨
+            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 700; color: #12130F;">
+              -50 €
+            </p>
+            <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
+              sur votre <strong>solde restant</strong> si vous réservez<br>dans les <strong>7 prochains jours</strong>
+            </p>
+            <p style="margin: 12px 0 0; color: #717182; font-size: 12px;">
+              Aucun code promo nécessaire — répondez à cet email et on s'en occupe !
             </p>
           </div>
         `, 'gold')}
 
+        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Pour en profiter, répondez à cet email ou réservez directement :
+        </p>
+
         <div style="text-align: center;">
-          ${ctaButton("Reservering afronden", "https://mirroreffect.co/reserveren")}
+          ${ctaButton("Réserver avec -50€", "https://mirroreffect.co")}
         </div>
 
-        <p style="margin: 0; color: #717182; font-size: 13px; text-align: center;">
-          Vragen? Beantwoord gewoon deze email.
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          À bientôt ✨
+        </p>
+      `
+    },
+    nl: {
+      subject: "🎁 -50€ op uw Mirror Effect reservering",
+      body: `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎁</span>
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+            Een cadeautje voor u
+          </h2>
+        </div>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hallo <strong>{{client_name}}</strong>,
+        </p>
+
+        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
+          We weten dat het plannen van een evenement tijd kost. Daarom geven we u een duwtje in de rug:
+        </p>
+
+        ${infoBox(`
+          <div style="text-align: center;">
+            <p style="margin: 0 0 8px; color: #C1950E; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
+              Exclusief aanbod
+            </p>
+            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 700; color: #12130F;">
+              -50 €
+            </p>
+            <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
+              op uw <strong>resterend saldo</strong> als u reserveert<br>binnen de <strong>komende 7 dagen</strong>
+            </p>
+            <p style="margin: 12px 0 0; color: #717182; font-size: 12px;">
+              Geen promotiecode nodig — beantwoord deze email en wij regelen het!
+            </p>
+          </div>
+        `, 'gold')}
+
+        <p style="margin: 24px 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Om hiervan te profiteren, beantwoord deze email of reserveer direct:
+        </p>
+
+        <div style="text-align: center;">
+          ${ctaButton("Reserveren met -50€", "https://mirroreffect.co")}
+        </div>
+
+        <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
+          Tot binnenkort ✨
+        </p>
+      `
+    }
+  },
+
+  // =============================================================================
+  // NURTURING J+21: GOODBYE — Last email, no pressure
+  // =============================================================================
+  NURTURE_J21_GOODBYE: {
+    fr: {
+      subject: "👋 On reste disponible pour vous",
+      body: `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">👋</span>
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+            Dernier petit mot
+          </h2>
+        </div>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Bonjour <strong>{{client_name}}</strong>,
+        </p>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          C'est le dernier email de notre part. On ne veut surtout pas vous embêter.
+        </p>
+
+        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
+          Si le timing n'est pas le bon, aucun souci. Sachez simplement que Mirror Effect reste disponible pour vous, aujourd'hui comme dans 6 mois.
+        </p>
+
+        ${infoBox(`
+          <div style="text-align: center;">
+            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 600; color: #12130F;">
+              Quand vous serez prêt...
+            </p>
+            <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
+              Répondez à cet email ou visitez <a href="https://mirroreffect.co" style="color: #C1950E; text-decoration: none; font-weight: 600;">mirroreffect.co</a>
+            </p>
+          </div>
+        `, 'light')}
+
+        <p style="margin: 24px 0 0; color: #333; font-size: 15px; line-height: 1.7;">
+          On vous souhaite un magnifique événement, avec ou sans nous ✨
+        </p>
+      `
+    },
+    nl: {
+      subject: "👋 We blijven beschikbaar voor u",
+      body: `
+        <div style="text-align: center; margin-bottom: 32px;">
+          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">👋</span>
+          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+            Laatste berichtje
+          </h2>
+        </div>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Hallo <strong>{{client_name}}</strong>,
+        </p>
+
+        <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+          Dit is onze laatste email. We willen u zeker niet storen.
+        </p>
+
+        <p style="margin: 0 0 24px; color: #333; font-size: 15px; line-height: 1.7;">
+          Als de timing niet goed is, geen probleem. Weet gewoon dat Mirror Effect beschikbaar blijft voor u, vandaag en over 6 maanden.
+        </p>
+
+        ${infoBox(`
+          <div style="text-align: center;">
+            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 600; color: #12130F;">
+              Wanneer u klaar bent...
+            </p>
+            <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
+              Beantwoord deze email of bezoek <a href="https://mirroreffect.co" style="color: #C1950E; text-decoration: none; font-weight: 600;">mirroreffect.co</a>
+            </p>
+          </div>
+        `, 'light')}
+
+        <p style="margin: 24px 0 0; color: #333; font-size: 15px; line-height: 1.7;">
+          We wensen u een prachtig evenement, met of zonder ons ✨
         </p>
       `
     }

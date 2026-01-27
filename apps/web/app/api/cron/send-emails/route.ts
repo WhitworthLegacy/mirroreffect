@@ -6,9 +6,93 @@ import { renderTemplate } from "@/lib/notifications/renderTemplate";
 // Vercel Cron protection
 const CRON_SECRET = process.env.CRON_SECRET;
 
+// Nurturing sequence: day offset → template key
+const NURTURE_STEPS = [
+  { day: 1, key: "NURTURE_J1_VALUE" },
+  { day: 3, key: "NURTURE_J3_FAQ" },
+  { day: 7, key: "NURTURE_J7_PROOF" },
+  { day: 14, key: "NURTURE_J14_PROMO" },
+  { day: 21, key: "NURTURE_J21_GOODBYE" },
+] as const;
+
 /**
- * Cron job to process queued emails
- * Runs every 5 minutes via Vercel Cron
+ * Phase 1: Queue nurturing emails for abandoned leads
+ * Checks leads with status='progress' and queues the appropriate
+ * nurturing email based on how many days since lead creation.
+ */
+async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseServerClient>) {
+  let queued = 0;
+
+  for (const step of NURTURE_STEPS) {
+    // Find leads created exactly N days ago (±12h window to avoid duplicates)
+    // e.g. for day=1, find leads created between 12h ago and 36h ago
+    const minHours = step.day * 24 - 12;
+    const maxHours = step.day * 24 + 12;
+    const now = new Date();
+    const after = new Date(now.getTime() - maxHours * 60 * 60 * 1000).toISOString();
+    const before = new Date(now.getTime() - minHours * 60 * 60 * 1000).toISOString();
+
+    const { data: leads, error } = await supabase
+      .from("leads")
+      .select("lead_id, nom, email, language")
+      .eq("status", "progress")
+      .gte("created_at", after)
+      .lte("created_at", before);
+
+    if (error) {
+      console.error(`[nurturing] Error fetching leads for ${step.key}:`, error.message);
+      continue;
+    }
+
+    if (!leads || leads.length === 0) continue;
+
+    for (const lead of leads) {
+      // Check if this nurturing email was already queued/sent for this lead
+      const { data: existing } = await supabase
+        .from("notifications_log")
+        .select("id")
+        .eq("template_key", step.key)
+        .eq("to_email", lead.email)
+        .maybeSingle();
+
+      if (existing) continue; // Already queued or sent
+
+      // Queue the nurturing email
+      const { error: insertError } = await supabase
+        .from("notifications_log")
+        .insert({
+          template_key: step.key,
+          to_email: lead.email,
+          locale: (lead.language || "fr").toLowerCase(),
+          payload: {
+            client_name: lead.nom || "",
+          },
+          status: "queued",
+        });
+
+      if (insertError) {
+        console.error(`[nurturing] Error queuing ${step.key} for ${lead.email}:`, insertError.message);
+      } else {
+        queued++;
+        console.log(`[nurturing] Queued ${step.key} for ${lead.email}`);
+      }
+    }
+  }
+
+  // Mark leads older than 21 days as abandoned (stop nurturing)
+  const abandonCutoff = new Date(Date.now() - 22 * 24 * 60 * 60 * 1000).toISOString();
+  await supabase
+    .from("leads")
+    .update({ status: "abandoned" })
+    .eq("status", "progress")
+    .lte("created_at", abandonCutoff);
+
+  return queued;
+}
+
+/**
+ * Cron job: queue nurturing emails + process queued emails
+ * Runs daily at 8am via Vercel Cron
  *
  * GET /api/cron/send-emails
  */
@@ -24,7 +108,11 @@ export async function GET(request: NextRequest) {
   const supabase = createSupabaseServerClient();
 
   try {
-    // Fetch queued notifications (limit 20 per run to avoid timeout)
+    // Phase 1: Queue nurturing emails for abandoned leads
+    const nurtureQueued = await queueNurturingEmails(supabase);
+    console.log(`[cron/send-emails] Phase 1: queued ${nurtureQueued} nurturing emails`);
+
+    // Phase 2: Send all queued emails (limit 20 per run to avoid timeout)
     const { data: notifications, error: fetchError } = await supabase
       .from("notifications_log")
       .select("*")
@@ -41,6 +129,7 @@ export async function GET(request: NextRequest) {
     if (!notifications || notifications.length === 0) {
       return Response.json({
         ok: true,
+        nurture_queued: nurtureQueued,
         processed: 0,
         message: "No queued emails",
         duration: `${Date.now() - startTime}ms`
@@ -145,6 +234,7 @@ export async function GET(request: NextRequest) {
 
     return Response.json({
       ok: true,
+      nurture_queued: nurtureQueued,
       processed: notifications.length,
       sent,
       failed,
