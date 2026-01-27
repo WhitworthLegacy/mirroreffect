@@ -3,9 +3,6 @@ import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 // Finance fields that can be updated
 const FINANCE_FIELDS = [
-  "student_name",
-  "student_hours",
-  "student_rate_cents",
   "km_one_way",
   "km_total",
   "fuel_cost_cents",

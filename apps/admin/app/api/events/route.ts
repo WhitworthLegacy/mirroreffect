@@ -21,7 +21,6 @@ const EVENT_FIELDS = [
   "balance_status",
   "status",
   // Assignations (reference only)
-  "student_name",
   "commercial_name",
   // Closing date
   "closing_date"
@@ -104,7 +103,6 @@ export async function POST(request: Request) {
       balance_status: (eventPayload.balance_status as string) || null,
       status: (eventPayload.status as string) || "active",
       guest_count: (eventPayload.guest_count as number) || null,
-      student_name: (eventPayload.student_name as string) || null,
       commercial_name: (eventPayload.commercial_name as string) || null,
       closing_date: (eventPayload.closing_date as string) || null,
     };

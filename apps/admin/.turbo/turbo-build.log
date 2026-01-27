@@ -9,21 +9,21 @@
  ✓ Compiled successfully
    Linting and checking validity of types ...
    Collecting page data ...
-   Generating static pages (0/17) ...
-   Generating static pages (4/17) 
-   Generating static pages (8/17) 
+   Generating static pages (0/16) ...
 [getAdminSnapshot] Chargement des events depuis Supabase
 [getAdminSnapshot] Chargement des events depuis Supabase
 [getAdminSnapshot] 151 events chargés depuis Supabase
 [getAdminSnapshot] 151 events chargés depuis Supabase
-   Generating static pages (12/17) 
+   Generating static pages (4/16) 
+   Generating static pages (8/16) 
 [stats/google-sheets] Erreur Supabase: {
   code: 'PGRST205',
   details: null,
   hint: null,
   message: "Could not find the table 'public.v_monthly_stats' in the schema cache"
 }
- ✓ Generating static pages (17/17)
+   Generating static pages (12/16) 
+ ✓ Generating static pages (16/16)
    Finalizing page optimization ...
    Collecting build traces ...
 
@@ -39,9 +39,8 @@ Route (app)                              Size     First Load JS
 ├ ƒ /api/stats/commercial                0 B                0 B
 ├ ƒ /api/stats/google-sheets             0 B                0 B
 ├ ƒ /api/stats/monthly                   0 B                0 B
-├ ƒ /api/stats/students                  0 B                0 B
-├ ○ /availability                        5.42 kB         146 kB
-├ ○ /events                              7.67 kB         149 kB
+├ ○ /availability                        5.4 kB          146 kB
+├ ○ /events                              7.6 kB          149 kB
 ├ ○ /health                              149 B          87.3 kB
 └ ○ /login                               1.37 kB         142 kB
 + First Load JS shared by all            87.1 kB

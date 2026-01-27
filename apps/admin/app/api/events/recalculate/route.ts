@@ -60,12 +60,6 @@ export async function POST(request: Request) {
     const kmOneWay = roundTwo(meters / 1000);
     const kmTotal = roundTwo(kmOneWay * 4); // Aller-retour x2
 
-    // Heures étudiant = (temps aller x 4) + 60 min installation, arrondi au 0.5 supérieur
-    const minutesTotal = (durationSeconds * 4) + 3600; // 4 trajets + 60 min
-    const heuresReelles = minutesTotal / 3600;
-    const studentHours = Math.ceil(heuresReelles * 2) / 2; // Arrondi au 0.5 supérieur
-
-    const studentRateCents = 1400; // 14€/h
     const fuelCostCents = Math.round(kmTotal * 0.15 * 100); // 0.15€/km
 
     // Update event in Supabase
@@ -73,8 +67,6 @@ export async function POST(request: Request) {
       .from("events")
       .update({
         address: addressOverride || event.address,
-        student_hours: studentHours,
-        student_rate_cents: studentRateCents,
         km_one_way: kmOneWay,
         km_total: kmTotal,
         fuel_cost_cents: fuelCostCents,
@@ -91,8 +83,6 @@ export async function POST(request: Request) {
       ok: true,
       km_one_way: kmOneWay,
       km_total: kmTotal,
-      student_hours: studentHours,
-      student_rate_cents: studentRateCents,
       fuel_cost_cents: fuelCostCents
     });
   } catch (error) {

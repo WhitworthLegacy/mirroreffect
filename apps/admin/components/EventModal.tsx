@@ -177,8 +177,6 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
         address: draft.address,
         guest_count: draft.guest_count,
         closing_date: draft.closing_date || null,
-        // Keep these for sync to Google Sheets
-        student_name: draft.student_name || null,
         commercial_name: draft.commercial_name || null,
       };
 
@@ -414,15 +412,6 @@ export default function EventModal({ event, packs, onClose, onSaved, isNew = fal
           {/* Section Assignations (for reference, managed in Google Sheets) */}
           <h3 style={{ marginTop: 24, marginBottom: 12, fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>Assignations</h3>
           <div className="admin-form-grid">
-            <label className="admin-field">
-              <span>Étudiant</span>
-              <input
-                type="text"
-                value={draft.student_name ?? ""}
-                onChange={(e) => updateField("student_name", e.target.value || null)}
-                placeholder="Nom de l'étudiant"
-              />
-            </label>
             <label className="admin-field">
               <span>Commercial</span>
               <input

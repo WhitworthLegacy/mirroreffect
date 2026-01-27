@@ -37,7 +37,6 @@ function mapSupabaseEventToEventRow(row: Record<string, unknown>): EventRow {
     guest_count: toInt(row.guest_count),
     created_at: row.created_at ? String(row.created_at) : null,
     updated_at: row.updated_at ? String(row.updated_at) : null,
-    student_name: row.student_name ? String(row.student_name) : null,
     commercial_name: row.commercial_name ? String(row.commercial_name) : null,
     closing_date: row.closing_date ? String(row.closing_date) : null,
   };
@@ -192,7 +191,6 @@ export const useSheetsStore = create<SheetsStore>((set, get) => ({
           "address",
           "pack_id",
           "guest_count",
-          "student_name",
           "commercial_name",
           "status",
           "balance_status",

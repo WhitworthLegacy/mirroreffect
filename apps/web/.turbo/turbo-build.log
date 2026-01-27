@@ -11,7 +11,7 @@ warn - Your `content` configuration includes a pattern which looks like it's acc
 warn - Pattern: `../../packages/**/*.ts`
 warn - See our documentation for recommendations:
 warn - https://tailwindcss.com/docs/content-configuration#pattern-recommendations
-(node:63603) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(node:65751) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
  ✓ Compiled successfully
    Linting and checking validity of types ...
@@ -45,7 +45,7 @@ Route (app)                                                                    S
 ├ ○ /booking/failed                                                            936 B            88 kB
 ├ ○ /booking/success                                                           1.75 kB        88.8 kB
 ├ ○ /debug/styles                                                              136 B          87.2 kB
-├ ○ /nl                                                                        1.39 kB         135 kB
+├ ƒ /nl                                                                        1.39 kB         135 kB
 └ ○ /reservation                                                               14.7 kB         107 kB
 + First Load JS shared by all                                                  87.1 kB
   ├ chunks/753-653bc614463f067d.js                                             31.5 kB
