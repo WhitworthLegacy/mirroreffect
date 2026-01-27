@@ -1,22 +1,59 @@
 
-
-> @mirroreffect/web@ build /Users/macbook/Dev/mirroreffect/apps/web
+> @mirroreffect/web@ build /Users/macbook/Dev/clients/mirroreffect/apps/web
 > next build
 
-  [1m[38;2;173;127;168m▲ Next.js 14.2.5[39m[22m
+  ▲ Next.js 14.2.5
   - Environments: .env.local
 
- [37m[1m [22m[39m Creating an optimized production build ...
- [32m[1m✓[22m[39m Compiled successfully
-[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[31mFailed to compile.
-[39m
-[36m./lib/email/smtp.ts[39m:[33m1[39m:[33m24[39m
-[31m[1mType error[22m[39m: Could not find a declaration file for module 'nodemailer'. '/Users/macbook/Dev/mirroreffect/node_modules/.pnpm/nodemailer@6.10.1/node_modules/nodemailer/lib/nodemailer.js' implicitly has an 'any' type.
-  Try `npm i --save-dev @types/nodemailer` if it exists or add a new declaration (.d.ts) file containing `declare module 'nodemailer';`
+   Creating an optimized production build ...
 
-[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m nodemailer [36mfrom[39m [32m"nodemailer"[39m[33m;[39m[0m
-[0m [90m   |[39m                        [31m[1m^[22m[39m[0m
-[0m [90m 2 |[39m[0m
-[0m [90m 3 |[39m type [33mSendEmailInput[39m [33m=[39m {[0m
-[0m [90m 4 |[39m   to[33m:[39m string[33m;[39m[0m
-[?25h[41m[30m ELIFECYCLE [39m[49m [31mCommand failed with exit code 1.[39m
+warn - Your `content` configuration includes a pattern which looks like it's accidentally matching all of `node_modules` and can cause serious performance issues.
+warn - Pattern: `../../packages/**/*.ts`
+warn - See our documentation for recommendations:
+warn - https://tailwindcss.com/docs/content-configuration#pattern-recommendations
+(node:63603) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/52) ...
+   Generating static pages (13/52) 
+   Generating static pages (26/52) 
+   Generating static pages (39/52) 
+ ✓ Generating static pages (52/52)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                                    Size     First Load JS
+┌ ƒ /                                                                          1.39 kB         135 kB
+├ ○ /_not-found                                                                874 B          87.9 kB
+├ ● /[...slug]                                                                 269 B          90.7 kB
+├   ├ /nl/blog/selfie-zuil-corporate-evenement-premium-foto-animatie-belgie
+├   ├ /blog/borne-selfie-evenement-corporate-belgique
+├   ├ /blog/photobooth-miroir-mariage-bruxelles-animation-photo-haut-de-gamme
+├   └ [+30 more paths]
+├ ƒ /api/cron/send-emails                                                      0 B                0 B
+├ ○ /api/debug/env                                                             0 B                0 B
+├ ○ /api/debug/health                                                          0 B                0 B
+├ ƒ /api/public/availability                                                   0 B                0 B
+├ ƒ /api/public/booking-status                                                 0 B                0 B
+├ ƒ /api/public/checkout                                                       0 B                0 B
+├ ƒ /api/public/leads                                                          0 B                0 B
+├ ƒ /api/public/promo-intent                                                   0 B                0 B
+├ ƒ /api/unsubscribe                                                           0 B                0 B
+├ ƒ /api/webhooks/mollie                                                       0 B                0 B
+├ ○ /booking/failed                                                            936 B            88 kB
+├ ○ /booking/success                                                           1.75 kB        88.8 kB
+├ ○ /debug/styles                                                              136 B          87.2 kB
+├ ○ /nl                                                                        1.39 kB         135 kB
+└ ○ /reservation                                                               14.7 kB         107 kB
++ First Load JS shared by all                                                  87.1 kB
+  ├ chunks/753-653bc614463f067d.js                                             31.5 kB
+  ├ chunks/abf17911-eca322e9a437f846.js                                        53.7 kB
+  └ other shared chunks (total)                                                1.88 kB
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+

@@ -16,8 +16,6 @@ export default function StudentsPageClient() {
       console.log("[Students] First event sample:", {
         id: events[0].id,
         student_name: events[0].student_name,
-        student_hours: events[0].student_hours,
-        student_rate_cents: events[0].student_rate_cents,
       });
     }
 
@@ -28,8 +26,8 @@ export default function StudentsPageClient() {
         event_date: event.event_date!,
         client_name: event.client_name,
         student_name: event.student_name!,
-        student_hours: event.student_hours,
-        student_total_cents: event.student_rate_cents, // Total from "Etudiant €/Event" column
+        student_hours: null, // Removed from DB, now managed in Google Sheets
+        student_total_cents: null, // Removed from DB, now managed in Google Sheets
       }));
   }, [events]);
 
