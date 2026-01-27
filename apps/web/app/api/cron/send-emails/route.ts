@@ -187,6 +187,8 @@ async function queuePostEventEmails(supabase: ReturnType<typeof createSupabaseSe
             client_name: event.client_name || "",
             event_date: event.event_date || "",
             address: event.address || "",
+            review_link: "https://maps.app.goo.gl/2fRxsTJnuZzjJ92B6",
+            vip_reduction: "-50 € sur votre prochaine commande",
           },
           status: "queued",
         });
