@@ -42,7 +42,7 @@ async function findLeadByEmail(supabase: ReturnType<typeof createSupabaseServerC
   const { data, error } = await supabase
     .from("leads")
     .select("lead_id, created_at")
-    .eq("email", email.toLowerCase())
+    .eq("client_email", email.toLowerCase())
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
@@ -218,7 +218,8 @@ export async function POST(req: Request) {
       .update({
         status: "paid",
         paid_at: paidAt,
-        provider_payment_id: molliePaymentId
+        provider_payment_id: molliePaymentId,
+        description: payment.description || null
       })
       .eq("payment_id", molliePaymentId);
 

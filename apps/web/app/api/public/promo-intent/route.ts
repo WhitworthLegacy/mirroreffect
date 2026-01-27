@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const { data: existingLead } = await supabase
       .from("leads")
       .select("lead_id")
-      .eq("email", email.toLowerCase())
+      .eq("client_email", email.toLowerCase())
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -59,12 +59,11 @@ export async function POST(req: Request) {
       const { error: updateError } = await supabase
         .from("leads")
         .update({
-          nom: clientName || undefined,
-          phone: payload?.phone?.trim() || undefined,
-          language: locale.toUpperCase(),
-          date_event: payload?.date || undefined,
-          lieu_event: payload?.location?.trim() || undefined,
-          invites: payload?.guests?.trim() || undefined,
+          client_name: clientName || undefined,
+          client_phone: payload?.phone?.trim() || undefined,
+          language: locale.toLowerCase(),
+          event_date: payload?.date || undefined,
+          event_location: payload?.location?.trim() || undefined,
           step: 5,
           status: "progress",
           updated_at: new Date().toISOString(),
@@ -91,13 +90,12 @@ export async function POST(req: Request) {
       .from("leads")
       .insert({
         lead_id: leadId,
-        email: email.toLowerCase(),
-        nom: clientName || null,
-        phone: payload?.phone?.trim() || null,
-        language: locale.toUpperCase(),
-        date_event: payload?.date || null,
-        lieu_event: payload?.location?.trim() || null,
-        invites: payload?.guests?.trim() || null,
+        client_email: email.toLowerCase(),
+        client_name: clientName || null,
+        client_phone: payload?.phone?.trim() || null,
+        language: locale.toLowerCase(),
+        event_date: payload?.date || null,
+        event_location: payload?.location?.trim() || null,
         step: 5,
         status: "progress",
       });

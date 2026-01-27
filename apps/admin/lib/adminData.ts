@@ -61,6 +61,7 @@ export type PaymentRow = {
   amount_cents: number | null;
   status: string | null;
   paid_at: string | null;
+  description: string | null;
 };
 
 export type PackRow = {

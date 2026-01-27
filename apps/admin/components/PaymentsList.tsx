@@ -24,6 +24,7 @@ export default function PaymentsList({ payments }: Props) {
       result = result.filter((p) =>
         (p.payment_id?.toLowerCase().includes(q)) ||
         (p.event_id?.toLowerCase().includes(q)) ||
+        (p.description?.toLowerCase().includes(q)) ||
         (p.status?.toLowerCase().includes(q))
       );
     }
@@ -124,6 +125,7 @@ export default function PaymentsList({ payments }: Props) {
             <thead style={{ background: "var(--seasalt)", position: "sticky", top: 0 }}>
               <tr>
                 <th onClick={() => handleSort("created_at")} style={thStyle(true)}>Date</th>
+                <th style={thStyle()}>Client</th>
                 <th style={thStyle()}>Payment ID</th>
                 <th style={thStyle()}>Event ID</th>
                 <th onClick={() => handleSort("amount_cents")} style={thStyle(true)}>Montant</th>
@@ -144,6 +146,9 @@ export default function PaymentsList({ payments }: Props) {
                   >
                     <td style={tdStyle}>
                       {payment.created_at ? new Date(payment.created_at).toLocaleDateString("fr-FR") : "—"}
+                    </td>
+                    <td style={tdStyle}>
+                      {payment.description || "—"}
                     </td>
                     <td style={tdStyle}>
                       <span style={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
@@ -179,7 +184,7 @@ export default function PaymentsList({ payments }: Props) {
               })}
               {filteredAndSortedRows.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: 48, color: "var(--gray-muted)" }}>
+                  <td colSpan={7} style={{ textAlign: "center", padding: 48, color: "var(--gray-muted)" }}>
                     Aucun paiement trouvé.
                   </td>
                 </tr>

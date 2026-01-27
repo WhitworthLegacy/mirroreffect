@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     const { error: leadError } = await supabase
       .from("leads")
       .update({ status: "unsubscribed", updated_at: new Date().toISOString() })
-      .eq("email", email.toLowerCase());
+      .eq("client_email", email.toLowerCase());
 
     if (leadError) {
       console.error("[unsubscribe] Lead update error:", leadError);

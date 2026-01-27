@@ -3,6 +3,7 @@ import { z } from "zod";
 const MolliePaymentSchema = z.object({
   id: z.string().min(1),
   status: z.string().min(1),
+  description: z.string().optional(),
   amount: z.object({
     value: z.string().min(1),
     currency: z.string().min(1)
@@ -52,6 +53,7 @@ export async function fetchMolliePaymentStatus(paymentId: string) {
   return {
     id: parsed.data.id,
     status: parsed.data.status,
+    description: parsed.data.description ?? null,
     amount_cents: parseAmountToCents(parsed.data.amount),
     currency: parsed.data.amount.currency,
     paid_at: parsed.data.paidAt ?? null,
