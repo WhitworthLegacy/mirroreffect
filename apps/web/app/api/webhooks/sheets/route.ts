@@ -83,6 +83,15 @@ export async function POST(req: Request) {
     ? totalSheetCents - depositCents
     : null;
 
+  const supabase = createSupabaseServerClient();
+
+  // pack_id stocké en TEXT (code du pack : "premium", "essentiel", "decouverte")
+  // Nécessite: ALTER TABLE public.events ALTER COLUMN pack_id TYPE TEXT USING pack_id::TEXT;
+  const packRaw = row["Pack"] || null;
+  const packCode = packRaw
+    ? packRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    : null;
+
   const eventData = {
     event_id: eventId,
     client_name: clientName,
@@ -93,7 +102,7 @@ export async function POST(req: Request) {
     event_type: row["Type Event"] || null,
     address: row["Lieu Event"] || null,
     guest_count: row["Invités"] ? parseInt(row["Invités"], 10) || null : null,
-    pack_id: row["Pack"] || null,
+    pack_id: packCode,
     total_cents: packCents,
     transport_fee_cents: transportCents,
     deposit_cents: depositCents,
@@ -103,8 +112,6 @@ export async function POST(req: Request) {
     student_name: row["Etudiant"] || null,
     commercial_name: row["Commercial"] || null,
   };
-
-  const supabase = createSupabaseServerClient();
 
   try {
     // Vérifier si l'event existe déjà
