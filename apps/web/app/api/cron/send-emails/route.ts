@@ -15,39 +15,46 @@ const NURTURE_STEPS = [
   { day: 21, key: "NURTURE_J21_GOODBYE" },
 ] as const;
 
+// Launch date: all leads created before this start nurturing from this date.
+// New leads created after use their own created_at.
+const NURTURE_LAUNCH_DATE = new Date("2026-01-27T00:00:00Z");
+
+function getNurtureStartDate(createdAt: string): Date {
+  const created = new Date(createdAt);
+  return created < NURTURE_LAUNCH_DATE ? NURTURE_LAUNCH_DATE : created;
+}
+
 /**
- * Phase 1: Queue nurturing emails for abandoned leads
- * Checks leads with status='progress' and queues the appropriate
- * nurturing email based on how many days since lead creation.
+ * Phase 1: Queue nurturing emails for leads with status='progress'
+ * Computes nurture day from effective start date, queues the right template.
  */
 async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseServerClient>) {
   let queued = 0;
 
-  for (const step of NURTURE_STEPS) {
-    // Find leads created exactly N days ago (±12h window to avoid duplicates)
-    // e.g. for day=1, find leads created between 12h ago and 36h ago
-    const minHours = step.day * 24 - 12;
-    const maxHours = step.day * 24 + 12;
-    const now = new Date();
-    const after = new Date(now.getTime() - maxHours * 60 * 60 * 1000).toISOString();
-    const before = new Date(now.getTime() - minHours * 60 * 60 * 1000).toISOString();
+  // Fetch all leads still in nurturing
+  const { data: leads, error } = await supabase
+    .from("leads")
+    .select("lead_id, client_name, client_email, language, created_at")
+    .eq("status", "progress");
 
-    const { data: leads, error } = await supabase
-      .from("leads")
-      .select("lead_id, client_name, client_email, language")
-      .eq("status", "progress")
-      .gte("created_at", after)
-      .lte("created_at", before);
+  if (error) {
+    console.error("[nurturing] Error fetching leads:", error.message);
+    return 0;
+  }
 
-    if (error) {
-      console.error(`[nurturing] Error fetching leads for ${step.key}:`, error.message);
-      continue;
-    }
+  if (!leads || leads.length === 0) return 0;
 
-    if (!leads || leads.length === 0) continue;
+  const now = new Date();
 
-    for (const lead of leads) {
-      // Check if this nurturing email was already queued/sent for this lead
+  for (const lead of leads) {
+    const startDate = getNurtureStartDate(lead.created_at);
+    const daysSinceStart = (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    // Find which step matches today (±0.5 day window = ±12h)
+    for (const step of NURTURE_STEPS) {
+      if (Math.abs(daysSinceStart - step.day) > 0.5) continue;
+
+      // Check if already queued/sent
       const { data: existing } = await supabase
         .from("notifications")
         .select("id")
@@ -55,7 +62,7 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
         .eq("to_email", lead.client_email)
         .maybeSingle();
 
-      if (existing) continue; // Already queued or sent
+      if (existing) continue;
 
       // Queue the nurturing email
       const { error: insertError } = await supabase
@@ -74,18 +81,19 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
         console.error(`[nurturing] Error queuing ${step.key} for ${lead.client_email}:`, insertError.message);
       } else {
         queued++;
-        console.log(`[nurturing] Queued ${step.key} for ${lead.client_email}`);
+        console.log(`[nurturing] Queued ${step.key} for ${lead.client_email} (day ${step.day})`);
       }
     }
-  }
 
-  // Mark leads older than 21 days as abandoned (stop nurturing)
-  const abandonCutoff = new Date(Date.now() - 22 * 24 * 60 * 60 * 1000).toISOString();
-  await supabase
-    .from("leads")
-    .update({ status: "abandoned" })
-    .eq("status", "progress")
-    .lte("created_at", abandonCutoff);
+    // Mark as abandoned if past day 22
+    if (daysSinceStart > 22) {
+      await supabase
+        .from("leads")
+        .update({ status: "abandoned" })
+        .eq("lead_id", lead.lead_id);
+      console.log(`[nurturing] Marked ${lead.client_email} as abandoned`);
+    }
+  }
 
   return queued;
 }
