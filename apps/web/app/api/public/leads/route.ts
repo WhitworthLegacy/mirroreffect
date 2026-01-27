@@ -193,18 +193,16 @@ export async function POST(req: Request) {
 
     logContext.isWriteAttempt = true;
 
-    // Données de base du lead
+    // Données de base du lead (column names match actual Supabase schema)
     const baseValues = {
-      language: sanitize(data.language || "").toUpperCase() || "FR",
-      nom: sanitize(data.client_name || ""),
-      email: clientEmail.toLowerCase(),
-      phone: sanitize(data.client_phone || ""),
+      language: sanitize(data.language || "").toLowerCase() || "fr",
+      client_name: sanitize(data.client_name || ""),
+      client_email: clientEmail.toLowerCase(),
+      client_phone: sanitize(data.client_phone || ""),
       event_type: sanitize(data.event_type || "") || null,
-      date_event: sanitize(data.event_date || "") || null,
-      lieu_event: sanitize(data.address || ""),
+      event_date: sanitize(data.event_date || "") || null,
+      event_location: sanitize(data.address || ""),
       zone: sanitize(data.zone || "") || null,
-      pack: sanitize(data.pack_code || ""),
-      invites: sanitize(data.guests || ""),
       vibe: sanitize(data.vibe || "") || null,
       theme: sanitize(data.theme || "") || null,
       priority: sanitize(data.priority || "") || null,
@@ -325,10 +323,17 @@ export async function POST(req: Request) {
 
       return Response.json({ ok: true, requestId, lead_id: newLeadId, created: true }, { status: 200 });
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      console.warn(`[leads][${requestId}] lead_progress erreur`, { ...logContext, error: errMsg });
+      const errMsg = error instanceof Error
+        ? error.message
+        : (error && typeof error === "object" && "message" in error)
+          ? String((error as { message: unknown }).message)
+          : JSON.stringify(error);
+      const errDetails = (error && typeof error === "object" && "details" in error)
+        ? String((error as { details: unknown }).details)
+        : undefined;
+      console.warn(`[leads][${requestId}] lead_progress erreur`, { ...logContext, error: errMsg, details: errDetails });
       return Response.json(
-        { ok: false, requestId, skipped: true, error: { type: "DB_ERROR", message: errMsg } },
+        { ok: false, requestId, skipped: true, error: { type: "DB_ERROR", message: errMsg, details: errDetails } },
         { status: 200 }
       );
     }

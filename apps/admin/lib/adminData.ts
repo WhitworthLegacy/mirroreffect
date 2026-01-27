@@ -25,6 +25,44 @@ export type EventRow = {
   closing_date: string | null;
 };
 
+export type LeadRow = {
+  id: string;
+  lead_id: string;
+  created_at: string | null;
+  updated_at: string | null;
+  step: number | null;
+  status: string | null;
+  client_name: string | null;
+  client_email: string | null;
+  client_phone: string | null;
+  language: string | null;
+  event_date: string | null;
+  event_location: string | null;
+  pack_id: string | null;
+  guest_count: number | null;
+  utm_source: string | null;
+  utm_campaign: string | null;
+  utm_medium: string | null;
+  event_type: string | null;
+  zone: string | null;
+  vibe: string | null;
+  theme: string | null;
+  priority: string | null;
+};
+
+export type PaymentRow = {
+  id: string;
+  payment_id: string;
+  event_id: string;
+  created_at: string | null;
+  updated_at: string | null;
+  provider: string | null;
+  provider_payment_id: string | null;
+  amount_cents: number | null;
+  status: string | null;
+  paid_at: string | null;
+};
+
 export type PackRow = {
   id: string;
   code?: string | null;
@@ -69,6 +107,36 @@ function mapSupabaseEventToEventRow(row: Record<string, unknown>): EventRow {
     commercial_name: row.commercial_name ? String(row.commercial_name) : null,
     closing_date: row.closing_date ? String(row.closing_date) : null,
   };
+}
+
+export async function getLeads(): Promise<{ leads: LeadRow[]; error: string | null }> {
+  const supabase = createSupabaseServerClient();
+  try {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) return { leads: [], error: error.message };
+    return { leads: (data ?? []) as unknown as LeadRow[], error: null };
+  } catch (err) {
+    return { leads: [], error: err instanceof Error ? err.message : "Erreur chargement leads" };
+  }
+}
+
+export async function getPayments(): Promise<{ payments: PaymentRow[]; error: string | null }> {
+  const supabase = createSupabaseServerClient();
+  try {
+    const { data, error } = await supabase
+      .from("payments")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) return { payments: [], error: error.message };
+    return { payments: (data ?? []) as unknown as PaymentRow[], error: null };
+  } catch (err) {
+    return { payments: [], error: err instanceof Error ? err.message : "Erreur chargement payments" };
+  }
 }
 
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
