@@ -828,7 +828,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   NURTURE_J3_FAQ: {
     fr: {
-      subject: "{{client_name}}, on répond à vos questions",
+      subject: "Une question, {{client_name}} ?",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
 
