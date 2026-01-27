@@ -6,3 +6,5 @@ dist
 .env.*
 .vercel
 .DS_Store
+.turbo
+**/.turbo
