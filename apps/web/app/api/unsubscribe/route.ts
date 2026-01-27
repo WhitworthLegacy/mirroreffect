@@ -46,8 +46,8 @@ export async function GET(request: NextRequest) {
 
     // Cancel any pending notifications for this email
     const { error: notifError } = await supabase
-      .from("notifications_log")
-      .update({ status: "cancelled", error: "User unsubscribed" })
+      .from("notifications")
+      .update({ status: "cancelled" })
       .eq("to_email", email.toLowerCase())
       .eq("status", "queued");
 

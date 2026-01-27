@@ -332,7 +332,7 @@ export async function POST(req: Request) {
     // =============================================================================
     const locale = (meta.language as string) || "fr";
 
-    await supabase.from("notifications_log").insert([
+    await supabase.from("notifications").insert([
       {
         event_id: eventId,
         template_key: "B2C_BOOKING_CONFIRMED",

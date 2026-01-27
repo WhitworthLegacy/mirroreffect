@@ -49,7 +49,7 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
     for (const lead of leads) {
       // Check if this nurturing email was already queued/sent for this lead
       const { data: existing } = await supabase
-        .from("notifications_log")
+        .from("notifications")
         .select("id")
         .eq("template_key", step.key)
         .eq("to_email", lead.email)
@@ -59,7 +59,7 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
 
       // Queue the nurturing email
       const { error: insertError } = await supabase
-        .from("notifications_log")
+        .from("notifications")
         .insert({
           template_key: step.key,
           to_email: lead.email,
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     // Phase 2: Send all queued emails (limit 20 per run to avoid timeout)
     const { data: notifications, error: fetchError } = await supabase
-      .from("notifications_log")
+      .from("notifications")
       .select("*")
       .eq("status", "queued")
       .or("send_after.is.null,send_after.lte.now()")
@@ -159,10 +159,9 @@ export async function GET(request: NextRequest) {
         if (!rendered) {
           console.warn(`[cron/send-emails] Template not found: ${template_key}`);
           await supabase
-            .from("notifications_log")
+            .from("notifications")
             .update({
               status: "failed",
-              error: `Template not found: ${template_key}`,
               sent_at: new Date().toISOString()
             })
             .eq("id", id);
@@ -185,12 +184,10 @@ export async function GET(request: NextRequest) {
 
         if (result.success) {
           await supabase
-            .from("notifications_log")
+            .from("notifications")
             .update({
               status: "sent",
-              sent_at: new Date().toISOString(),
-              resend_message_id: result.messageId,
-              error: null
+              sent_at: new Date().toISOString()
             })
             .eq("id", id);
 
@@ -199,10 +196,9 @@ export async function GET(request: NextRequest) {
           console.log(`[cron/send-emails] Sent: ${template_key} to ${to_email}`);
         } else {
           await supabase
-            .from("notifications_log")
+            .from("notifications")
             .update({
               status: "failed",
-              error: result.error,
               sent_at: new Date().toISOString()
             })
             .eq("id", id);
@@ -215,10 +211,9 @@ export async function GET(request: NextRequest) {
         const errorMessage = err instanceof Error ? err.message : String(err);
 
         await supabase
-          .from("notifications_log")
+          .from("notifications")
           .update({
             status: "failed",
-            error: errorMessage,
             sent_at: new Date().toISOString()
           })
           .eq("id", id);
