@@ -107,18 +107,41 @@ export async function POST(req: Request) {
   const supabase = createSupabaseServerClient();
 
   try {
-    // Upsert: insert ou update si event_id existe déjà
-    const { error } = await supabase
+    // Vérifier si l'event existe déjà
+    const { data: existing } = await supabase
       .from("events")
-      .upsert(eventData, { onConflict: "event_id" });
+      .select("id")
+      .eq("event_id", eventId)
+      .maybeSingle();
 
-    if (error) {
-      console.error("[sheets-webhook] Supabase upsert error:", error);
-      return Response.json({ ok: false, error: error.message }, { status: 500 });
+    if (existing) {
+      // Update
+      const { error } = await supabase
+        .from("events")
+        .update(eventData)
+        .eq("event_id", eventId);
+
+      if (error) {
+        console.error("[sheets-webhook] Supabase update error:", error);
+        return Response.json({ ok: false, error: error.message }, { status: 500 });
+      }
+
+      console.log("[sheets-webhook] Event updated:", { event_id: eventId, client: clientName });
+    } else {
+      // Insert
+      const { error } = await supabase
+        .from("events")
+        .insert(eventData);
+
+      if (error) {
+        console.error("[sheets-webhook] Supabase insert error:", error);
+        return Response.json({ ok: false, error: error.message }, { status: 500 });
+      }
+
+      console.log("[sheets-webhook] Event inserted:", { event_id: eventId, client: clientName });
     }
 
-    console.log("[sheets-webhook] Event upserted:", { event_id: eventId, client: clientName });
-    return Response.json({ ok: true, event_id: eventId });
+    return Response.json({ ok: true, event_id: eventId, action: existing ? "updated" : "inserted" });
   } catch (err) {
     console.error("[sheets-webhook] Exception:", err);
     return Response.json(
