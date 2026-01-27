@@ -754,12 +754,14 @@ const packs = useMemo(
       const res = await fetch(`/api/public/availability?date=${eventDate}`);
       const data = await res.json();
       if (!res.ok) {
+        console.error("[availability] API error:", { status: res.status, data });
         setAvailability("error");
         return;
       }
       setRemaining(data.remaining_mirrors ?? null);
       setAvailability(data.available ? "available" : "unavailable");
-    } catch {
+    } catch (err) {
+      console.error("[availability] Fetch error:", err);
       setAvailability("error");
     }
   };
