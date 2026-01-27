@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { generateLeadId } from "@/lib/date-utils";
+import { normalizeDateToISO } from "@/lib/date";
 import { trackLead } from "@/lib/metaCapi";
 
 const LeadPayloadSchema = z.object({
@@ -200,7 +201,7 @@ export async function POST(req: Request) {
       client_email: clientEmail.toLowerCase(),
       client_phone: sanitize(data.client_phone || ""),
       event_type: sanitize(data.event_type || "") || null,
-      event_date: sanitize(data.event_date || "") || null,
+      event_date: normalizeDateToISO(sanitize(data.event_date || "")) || null,
       event_location: sanitize(data.address || ""),
       zone: sanitize(data.zone || "") || null,
       vibe: sanitize(data.vibe || "") || null,
