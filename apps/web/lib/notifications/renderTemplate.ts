@@ -9,7 +9,7 @@ type RenderedTemplate = {
   html: string;
 };
 
-// Premium email wrapper with MirrorEffect branding
+// Clean email wrapper — designed for Gmail Primary tab
 const emailWrapper = (content: string, locale: string, unsubscribeUrl?: string) => `
 <!DOCTYPE html>
 <html lang="${locale}">
@@ -18,81 +18,43 @@ const emailWrapper = (content: string, locale: string, unsubscribeUrl?: string) 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Mirror Effect</title>
-  <!--[if mso]>
-  <noscript>
-    <xml>
-      <o:OfficeDocumentSettings>
-        <o:PixelsPerInch>96</o:PixelsPerInch>
-      </o:OfficeDocumentSettings>
-    </xml>
-  </noscript>
-  <![endif]-->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-  </style>
 </head>
-<body style="margin: 0; padding: 0; background: #f8f9fa; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f8f9fa; min-height: 100vh;">
+<body style="margin: 0; padding: 0; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #333;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #ffffff;">
     <tr>
-      <td align="center" style="padding: 40px 16px;">
+      <td align="center" style="padding: 0;">
 
-        <!-- Main Container -->
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px;">
 
-          <!-- Luxe Header with Gold Gradient Banner -->
+          <!-- Header: fond noir, titre doré -->
           <tr>
-            <td style="padding: 0 0 0;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td align="center" style="padding: 48px 40px; background: linear-gradient(135deg, #C1950E 0%, #D4A828 25%, #E8C547 50%, #D4A828 75%, #C1950E 100%); border-radius: 24px 24px 0 0;">
-                    <!-- Logo Text -->
-                    <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 600; letter-spacing: 0.15em; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                      MIRROR EFFECT
-                    </h1>
-                    <p style="margin: 12px 0 0; color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 400; letter-spacing: 0.25em; text-transform: uppercase;">
-                      Photobooth Miroir Premium
-                    </p>
-
-                    <!-- Decorative Line -->
-                    <div style="margin-top: 24px; width: 60px; height: 1px; background: rgba(255,255,255,0.4);"></div>
-                  </td>
-                </tr>
-              </table>
+            <td align="center" style="padding: 32px 40px; background-color: #12130F;">
+              <img src="https://mirroreffect.co/images/logo-white.png" alt="Mirror Effect" width="180" style="display: block; max-width: 180px; height: auto;" />
             </td>
           </tr>
 
-          <!-- Content Card -->
+          <!-- Content -->
           <tr>
-            <td>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #ffffff; border-radius: 0 0 24px 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
-                <tr>
-                  <td style="padding: 48px 40px 40px;">
-                    ${content}
-                  </td>
-                </tr>
+            <td style="padding: 40px 32px 32px; background: #ffffff;">
+              ${content}
+            </td>
+          </tr>
 
-                <!-- Signature -->
+          <!-- Signature -->
+          <tr>
+            <td style="padding: 0 32px 32px; background: #ffffff;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="padding: 0 40px 40px;">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <td style="padding-top: 24px; border-top: 1px solid #eee;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td style="padding-top: 32px; border-top: 1px solid #f0f0f0;">
-                          <table role="presentation" cellspacing="0" cellpadding="0">
-                            <tr>
-                              <td style="padding-right: 16px;">
-                                <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #12130F 0%, #2a2b27 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                                  <span style="font-family: 'Playfair Display', serif; font-size: 24px; color: #C1950E; font-weight: 600;">M</span>
-                                </div>
-                              </td>
-                              <td>
-                                <p style="margin: 0; font-weight: 600; font-size: 15px; color: #12130F;">Jonathan Whitworth</p>
-                                <p style="margin: 4px 0 0; font-size: 13px; color: #717182;">Mirror Effect</p>
-                                <p style="margin: 4px 0 0;">
-                                  <a href="tel:+32460242430" style="font-size: 13px; color: #C1950E; text-decoration: none;">+32 460 24 24 30</a>
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
+                        <td style="padding-right: 14px; vertical-align: top;">
+                          <img src="https://mirroreffect.co/images/logo-icon-gold.png" alt="M" width="44" height="44" style="display: block; border-radius: 8px;" />
+                        </td>
+                        <td style="vertical-align: top;">
+                          <p style="margin: 0; font-weight: 600; font-size: 14px; color: #12130F;">Jonathan Whitworth</p>
+                          <p style="margin: 2px 0 0; font-size: 13px; color: #666;">Mirror Effect</p>
+                          <p style="margin: 2px 0 0; font-size: 13px; color: #666;">+32 460 24 24 30</p>
                         </td>
                       </tr>
                     </table>
@@ -104,42 +66,17 @@ const emailWrapper = (content: string, locale: string, unsubscribeUrl?: string) 
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 32px 20px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td align="center">
-                    <!-- Social Links -->
-                    <table role="presentation" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
-                      <tr>
-                        <td style="padding: 0 8px;">
-                          <a href="https://mirroreffect.co" style="display: inline-block; width: 40px; height: 40px; background: rgba(193, 149, 14, 0.1); border-radius: 10px; text-align: center; line-height: 40px; text-decoration: none; color: #C1950E; font-size: 14px;">
-                            🌐
-                          </a>
-                        </td>
-                        <td style="padding: 0 8px;">
-                          <a href="https://instagram.com/mirroreffect.co" style="display: inline-block; width: 40px; height: 40px; background: rgba(193, 149, 14, 0.1); border-radius: 10px; text-align: center; line-height: 40px; text-decoration: none; color: #C1950E; font-size: 14px;">
-                            📸
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <p style="margin: 0 0 8px; color: #717182; font-size: 12px;">
-                      Mirror Effect · Photobooth Miroir Premium
-                    </p>
-                    <p style="margin: 0; color: #9ca3af; font-size: 11px;">
-                      Bruxelles & toute la Belgique
-                    </p>
-                    ${unsubscribeUrl ? `
-                    <p style="margin: 16px 0 0;">
-                      <a href="${unsubscribeUrl}" style="color: #9ca3af; font-size: 11px; text-decoration: underline;">
-                        ${locale === 'nl' ? 'Uitschrijven' : 'Se désabonner'}
-                      </a>
-                    </p>
-                    ` : ''}
-                  </td>
-                </tr>
-              </table>
+            <td style="padding: 20px 32px; background: #fafafa;">
+              <p style="margin: 0; color: #999; font-size: 11px; text-align: center;">
+                Mirror Effect · Bruxelles & toute la Belgique
+              </p>
+              ${unsubscribeUrl ? `
+              <p style="margin: 8px 0 0; text-align: center;">
+                <a href="${unsubscribeUrl}" style="color: #999; font-size: 11px; text-decoration: underline;">
+                  ${locale === 'nl' ? 'Uitschrijven' : 'Se désabonner'}
+                </a>
+              </p>
+              ` : ''}
             </td>
           </tr>
 
@@ -151,42 +88,31 @@ const emailWrapper = (content: string, locale: string, unsubscribeUrl?: string) 
 </html>
 `;
 
-// Premium CTA Button
-const ctaButton = (text: string, url: string, variant: 'primary' | 'secondary' = 'primary') => {
-  const isPrimary = variant === 'primary';
-  return `
-<table role="presentation" cellspacing="0" cellpadding="0" style="margin: 28px 0;">
+// Simple CTA Button — clean, no gradients
+const ctaButton = (text: string, url: string) => `
+<table role="presentation" cellspacing="0" cellpadding="0" style="margin: 24px 0;">
   <tr>
-    <td style="border-radius: 12px; background: ${isPrimary ? 'linear-gradient(135deg, #C1950E 0%, #D4A828 50%, #C1950E 100%)' : 'transparent'}; ${isPrimary ? 'box-shadow: 0 4px 14px rgba(193, 149, 14, 0.4);' : 'border: 2px solid #C1950E;'}">
-      <a href="${url}" style="display: inline-block; padding: 16px 36px; color: ${isPrimary ? '#ffffff' : '#C1950E'}; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 0.02em;">
+    <td style="border-radius: 8px; background-color: #C1950E;">
+      <a href="${url}" style="display: inline-block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px;">
         ${text}
       </a>
     </td>
   </tr>
 </table>
 `;
-};
 
-// Info Box Component
-const infoBox = (content: string, variant: 'gold' | 'light' | 'dark' = 'light') => {
+// Info Box Component — simple
+const infoBox = (content: string, variant: 'gold' | 'light' = 'light') => {
   const styles = {
-    gold: 'background: linear-gradient(135deg, #fdfbf4 0%, #fef9e7 100%); border: 1px solid rgba(193, 149, 14, 0.3);',
+    gold: 'background: #fdf8ec; border: 1px solid #e8d5a0;',
     light: 'background: #f8f9fa; border: 1px solid #e9ecef;',
-    dark: 'background: linear-gradient(135deg, #C1950E 0%, #D4A828 50%, #C1950E 100%); border: none;'
   };
   return `
-<div style="${styles[variant]} border-radius: 16px; padding: 24px; margin: 24px 0;">
+<div style="${styles[variant]} border-radius: 8px; padding: 20px; margin: 20px 0;">
   ${content}
 </div>
 `;
 };
-
-// VIP Badge
-const vipBadge = (text: string) => `
-<span style="display: inline-block; background: linear-gradient(135deg, #C1950E 0%, #E8C547 100%); color: #12130F; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; padding: 6px 12px; border-radius: 20px; text-transform: uppercase;">
-  ${text}
-</span>
-`;
 
 // Templates
 const TEMPLATES: Record<string, Record<string, { subject: string; body: string }>> = {
@@ -195,11 +121,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   B2C_BOOKING_CONFIRMED: {
     fr: {
-      subject: "✨ Votre réservation est confirmée - Mirror Effect",
+      subject: "Votre réservation est confirmée - Mirror Effect",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎉</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Réservation confirmée
           </h2>
           <p style="margin: 8px 0 0; color: #717182; font-size: 15px;">
@@ -257,16 +183,15 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          À très bientôt ✨
-        </p>
+          À très bientôt        </p>
       `
     },
     nl: {
-      subject: "✨ Uw reservering is bevestigd - Mirror Effect",
+      subject: "Uw reservering is bevestigd - Mirror Effect",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎉</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Reservering bevestigd
           </h2>
           <p style="margin: 8px 0 0; color: #717182; font-size: 15px;">
@@ -324,8 +249,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Tot binnenkort ✨
-        </p>
+          Tot binnenkort        </p>
       `
     }
   },
@@ -335,11 +259,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   B2C_AVIS_GOOGLE: {
     fr: {
-      subject: "✨ Merci ! Votre avis compte pour nous",
+      subject: "Merci ! Votre avis compte pour nous",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">⭐</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Votre avis compte
           </h2>
         </div>
@@ -362,7 +286,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
 
         ${infoBox(`
           <div style="text-align: center;">
-            ${vipBadge('Bonus VIP')}
+            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #C1950E; text-transform: uppercase; letter-spacing: 0.05em;">Bonus VIP</p>
             <p style="margin: 12px 0 0; color: #12130F; font-size: 15px; font-weight: 500;">
               {{vip_reduction}}
             </p>
@@ -376,11 +300,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       `
     },
     nl: {
-      subject: "✨ Bedankt! Uw mening telt voor ons",
+      subject: "Bedankt! Uw mening telt voor ons",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">⭐</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Uw mening telt
           </h2>
         </div>
@@ -403,7 +327,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
 
         ${infoBox(`
           <div style="text-align: center;">
-            ${vipBadge('VIP Bonus')}
+            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #C1950E; text-transform: uppercase; letter-spacing: 0.05em;">VIP Bonus</p>
             <p style="margin: 12px 0 0; color: #12130F; font-size: 15px; font-weight: 500;">
               {{vip_reduction}}
             </p>
@@ -423,11 +347,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   B2C_RELANCE_AVIS: {
     fr: {
-      subject: "⭐ Un petit mot pour nous ?",
+      subject: "Un petit mot pour nous ?",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
           <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">💬</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Votre avis fait la différence
           </h2>
         </div>
@@ -454,11 +378,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       `
     },
     nl: {
-      subject: "⭐ Een woordje voor ons?",
+      subject: "Een woordje voor ons?",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
           <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">💬</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Uw review maakt het verschil
           </h2>
         </div>
@@ -495,7 +419,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
           <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎂</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Joyeux anniversaire !
           </h2>
           <p style="margin: 8px 0 0; color: #717182; font-size: 15px;">
@@ -513,8 +437,8 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
 
         ${infoBox(`
           <div style="text-align: center;">
-            ${vipBadge('Client VIP')}
-            <p style="margin: 16px 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 600; color: #12130F;">
+            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #C1950E; text-transform: uppercase; letter-spacing: 0.05em;">Client VIP</p>
+            <p style="margin: 16px 0 8px; font-size: 24px; font-weight: 600; color: #12130F;">
               Avez-vous prévu une autre célébration ?
             </p>
             <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">
@@ -530,8 +454,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Amicalement ✨
-        </p>
+          Amicalement        </p>
       `
     },
     nl: {
@@ -539,7 +462,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
           <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎂</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Gelukkige verjaardag!
           </h2>
           <p style="margin: 8px 0 0; color: #717182; font-size: 15px;">
@@ -557,8 +480,8 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
 
         ${infoBox(`
           <div style="text-align: center;">
-            ${vipBadge('VIP Klant')}
-            <p style="margin: 16px 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 600; color: #12130F;">
+            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #C1950E; text-transform: uppercase; letter-spacing: 0.05em;">VIP Klant</p>
+            <p style="margin: 16px 0 8px; font-size: 24px; font-weight: 600; color: #12130F;">
               Plant u nog een feest?
             </p>
             <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">
@@ -574,8 +497,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </p>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Met vriendelijke groet ✨
-        </p>
+          Met vriendelijke groet        </p>
       `
     }
   },
@@ -585,11 +507,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   B2C_OFFRE_ANNIVERSAIRE: {
     fr: {
-      subject: "🎉 Un an déjà ! -10% pour fêter ça",
+      subject: "Un an déjà ! -10% pour fêter ça",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
           <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎊</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Joyeux anniversaire d'événement !
           </h2>
         </div>
@@ -609,11 +531,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         ${infoBox(`
           <div style="text-align: center;">
             <p style="margin: 0 0 8px; color: rgba(255,255,255,0.85); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Code promo</p>
-            <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: 0.1em; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+            <p style="margin: 0; font-size: 28px; font-weight: 700; color: #12130F;">
               ANNIV10
             </p>
           </div>
-        `, 'dark')}
+        `, 'gold')}
 
         <div style="text-align: center;">
           ${ctaButton("Réserver maintenant", "https://mirroreffect.co/reserver")}
@@ -625,11 +547,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       `
     },
     nl: {
-      subject: "🎉 Al een jaar! -10% om dit te vieren",
+      subject: "Al een jaar! -10% om dit te vieren",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
           <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎊</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Gelukkige evenement-verjaardag!
           </h2>
         </div>
@@ -649,11 +571,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         ${infoBox(`
           <div style="text-align: center;">
             <p style="margin: 0 0 8px; color: rgba(255,255,255,0.85); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;">Promotiecode</p>
-            <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: 0.1em; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+            <p style="margin: 0; font-size: 28px; font-weight: 700; color: #12130F;">
               ANNIV10
             </p>
           </div>
-        `, 'dark')}
+        `, 'gold')}
 
         <div style="text-align: center;">
           ${ctaButton("Nu reserveren", "https://mirroreffect.co/reserveren")}
@@ -675,7 +597,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
           <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">📋</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Récapitulatif
           </h2>
         </div>
@@ -731,7 +653,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
           <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">📋</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Samenvatting
           </h2>
         </div>
@@ -789,11 +711,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   NURTURE_J1_VALUE: {
     fr: {
-      subject: "✨ Ce qui rend Mirror Effect unique",
+      subject: "Ce qui rend Mirror Effect unique",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">✨</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Pourquoi Mirror Effect ?
           </h2>
         </div>
@@ -838,16 +760,15 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </div>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          À bientôt ✨
-        </p>
+          À bientôt        </p>
       `
     },
     nl: {
-      subject: "✨ Wat Mirror Effect uniek maakt",
+      subject: "Wat Mirror Effect uniek maakt",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">✨</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Waarom Mirror Effect?
           </h2>
         </div>
@@ -892,8 +813,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </div>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Tot binnenkort ✨
-        </p>
+          Tot binnenkort        </p>
       `
     }
   },
@@ -903,11 +823,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   NURTURE_J3_FAQ: {
     fr: {
-      subject: "💡 Vos questions les plus fréquentes",
+      subject: "Vos questions les plus fréquentes",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">💡</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             On répond à vos questions
           </h2>
         </div>
@@ -959,11 +879,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       `
     },
     nl: {
-      subject: "💡 Uw meest gestelde vragen",
+      subject: "Uw meest gestelde vragen",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">💡</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             We beantwoorden uw vragen
           </h2>
         </div>
@@ -1021,11 +941,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   NURTURE_J7_PROOF: {
     fr: {
-      subject: "⭐ Ce que nos clients disent de nous",
+      subject: "Ce que nos clients disent de nous",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">⭐</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Ils ont choisi Mirror Effect
           </h2>
         </div>
@@ -1039,22 +959,29 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </p>
 
         ${infoBox(`
-          <div style="text-align: center; padding: 8px 0;">
-            <p style="margin: 0; font-size: 20px;">⭐⭐⭐⭐⭐</p>
-            <p style="margin: 12px 0 8px; color: #333; font-size: 15px; font-style: italic; line-height: 1.6;">
-              "Le photobooth miroir a été la star de notre mariage ! Tous nos invités en parlent encore. Service impeccable, photos magnifiques."
+          <div style="padding: 4px 0;">
+            <p style="margin: 0 0 8px; color: #333; font-size: 14px; font-style: italic; line-height: 1.6;">
+              "Nous avons loué le photobooth miroir pour notre mariage. Qualité au top, nous avons pu choisir et même personnaliser le fond d'écran des photos. Disponibles et ont répondu à nos attentes. A recommander."
             </p>
-            <p style="margin: 0; color: #C1950E; font-size: 13px; font-weight: 600;">— Sarah & Thomas, Mariage</p>
+            <p style="margin: 0; color: #666; font-size: 13px; font-weight: 600;">— Florence C., Google</p>
           </div>
-        `, 'gold')}
+        `, 'light')}
 
         ${infoBox(`
-          <div style="text-align: center; padding: 8px 0;">
-            <p style="margin: 0; font-size: 20px;">⭐⭐⭐⭐⭐</p>
-            <p style="margin: 12px 0 8px; color: #333; font-size: 15px; font-style: italic; line-height: 1.6;">
-              "Professionnels, ponctuels et le résultat est top. On a adoré les animations sur le miroir. Je recommande à 100%."
+          <div style="padding: 4px 0;">
+            <p style="margin: 0 0 8px; color: #333; font-size: 14px; font-style: italic; line-height: 1.6;">
+              "Mirror Effect nous a apporté beaucoup de joie et de bonne humeur, ainsi qu'à nos 214 invités ! L'équipe est extrêmement PRO et sympathique, et la qualité des photos, imprimées instantanément, est surprenante !"
             </p>
-            <p style="margin: 0; color: #C1950E; font-size: 13px; font-weight: 600;">— Mehdi, Anniversaire 30 ans</p>
+            <p style="margin: 0; color: #666; font-size: 13px; font-weight: 600;">— Christian B., CEO HD4You, Google</p>
+          </div>
+        `, 'light')}
+
+        ${infoBox(`
+          <div style="padding: 4px 0;">
+            <p style="margin: 0 0 8px; color: #333; font-size: 14px; font-style: italic; line-height: 1.6;">
+              "Quelle idée innovatrice ! Un très beau cadre très original avec le tapis rouge, le miroir et les barrières, on se sent comme des stars ! Et surtout, un personnel au top et super professionnel."
+            </p>
+            <p style="margin: 0; color: #666; font-size: 13px; font-weight: 600;">— Amélie S., Google</p>
           </div>
         `, 'light')}
 
@@ -1072,11 +999,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
       `
     },
     nl: {
-      subject: "⭐ Wat onze klanten over ons zeggen",
+      subject: "Wat onze klanten over ons zeggen",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">⭐</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Zij kozen Mirror Effect
           </h2>
         </div>
@@ -1090,22 +1017,29 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </p>
 
         ${infoBox(`
-          <div style="text-align: center; padding: 8px 0;">
-            <p style="margin: 0; font-size: 20px;">⭐⭐⭐⭐⭐</p>
-            <p style="margin: 12px 0 8px; color: #333; font-size: 15px; font-style: italic; line-height: 1.6;">
-              "De spiegel photobooth was de ster van onze bruiloft! Al onze gasten praten er nog steeds over. Onberispelijke service, prachtige foto's."
+          <div style="padding: 4px 0;">
+            <p style="margin: 0 0 8px; color: #333; font-size: 14px; font-style: italic; line-height: 1.6;">
+              "We huurden de spiegel photobooth voor ons huwelijk. Kwaliteit top, we konden de achtergrond van de foto's kiezen en zelfs personaliseren. Beschikbaar en voldeden aan onze verwachtingen. Aan te raden."
             </p>
-            <p style="margin: 0; color: #C1950E; font-size: 13px; font-weight: 600;">— Sarah & Thomas, Bruiloft</p>
+            <p style="margin: 0; color: #666; font-size: 13px; font-weight: 600;">— Florence C., Google</p>
           </div>
-        `, 'gold')}
+        `, 'light')}
 
         ${infoBox(`
-          <div style="text-align: center; padding: 8px 0;">
-            <p style="margin: 0; font-size: 20px;">⭐⭐⭐⭐⭐</p>
-            <p style="margin: 12px 0 8px; color: #333; font-size: 15px; font-style: italic; line-height: 1.6;">
-              "Professioneel, punctueel en het resultaat is top. We waren dol op de animaties op de spiegel. Ik beveel het 100% aan."
+          <div style="padding: 4px 0;">
+            <p style="margin: 0 0 8px; color: #333; font-size: 14px; font-style: italic; line-height: 1.6;">
+              "Mirror Effect bracht ons en onze 214 gasten veel plezier en goed humeur! Het team is uiterst PRO en sympathiek, en de kwaliteit van de direct geprinte foto's is verrassend!"
             </p>
-            <p style="margin: 0; color: #C1950E; font-size: 13px; font-weight: 600;">— Mehdi, 30e verjaardag</p>
+            <p style="margin: 0; color: #666; font-size: 13px; font-weight: 600;">— Christian B., CEO HD4You, Google</p>
+          </div>
+        `, 'light')}
+
+        ${infoBox(`
+          <div style="padding: 4px 0;">
+            <p style="margin: 0 0 8px; color: #333; font-size: 14px; font-style: italic; line-height: 1.6;">
+              "Wat een innovatief idee! Een prachtig en origineel kader met de rode loper, de spiegel en de afzettingen, je voelt je een ster! En vooral, top personeel en super professioneel."
+            </p>
+            <p style="margin: 0; color: #666; font-size: 13px; font-weight: 600;">— Amélie S., Google</p>
           </div>
         `, 'light')}
 
@@ -1129,11 +1063,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   NURTURE_J14_PROMO: {
     fr: {
-      subject: "🎁 -50€ sur votre réservation Mirror Effect",
+      subject: "Un geste pour vous, {{client_name}}",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎁</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Un cadeau pour vous
           </h2>
         </div>
@@ -1149,9 +1083,9 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         ${infoBox(`
           <div style="text-align: center;">
             <p style="margin: 0 0 8px; color: #C1950E; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
-              Offre exclusive
+              Rien que pour vous
             </p>
-            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 700; color: #12130F;">
+            <p style="margin: 0 0 8px; font-size: 36px; font-weight: 700; color: #12130F;">
               -50 €
             </p>
             <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
@@ -1172,16 +1106,15 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </div>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          À bientôt ✨
-        </p>
+          À bientôt        </p>
       `
     },
     nl: {
-      subject: "🎁 -50€ op uw Mirror Effect reservering",
+      subject: "Een gebaar voor u, {{client_name}}",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">🎁</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Een cadeautje voor u
           </h2>
         </div>
@@ -1197,9 +1130,9 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         ${infoBox(`
           <div style="text-align: center;">
             <p style="margin: 0 0 8px; color: #C1950E; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
-              Exclusief aanbod
+              Speciaal voor u
             </p>
-            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 36px; font-weight: 700; color: #12130F;">
+            <p style="margin: 0 0 8px; font-size: 36px; font-weight: 700; color: #12130F;">
               -50 €
             </p>
             <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
@@ -1220,8 +1153,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         </div>
 
         <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.7;">
-          Tot binnenkort ✨
-        </p>
+          Tot binnenkort        </p>
       `
     }
   },
@@ -1231,11 +1163,11 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
   // =============================================================================
   NURTURE_J21_GOODBYE: {
     fr: {
-      subject: "👋 On reste disponible pour vous",
+      subject: "On reste disponible pour vous",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">👋</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Dernier petit mot
           </h2>
         </div>
@@ -1254,7 +1186,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
 
         ${infoBox(`
           <div style="text-align: center;">
-            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 600; color: #12130F;">
+            <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: #12130F;">
               Quand vous serez prêt...
             </p>
             <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
@@ -1264,16 +1196,15 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         `, 'light')}
 
         <p style="margin: 24px 0 0; color: #333; font-size: 15px; line-height: 1.7;">
-          On vous souhaite un magnifique événement, avec ou sans nous ✨
-        </p>
+          On vous souhaite un magnifique événement, avec ou sans nous        </p>
       `
     },
     nl: {
-      subject: "👋 We blijven beschikbaar voor u",
+      subject: "We blijven beschikbaar voor u",
       body: `
         <div style="text-align: center; margin-bottom: 32px;">
-          <span style="display: inline-block; font-size: 48px; margin-bottom: 16px;">👋</span>
-          <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 600; color: #12130F;">
+
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #12130F;">
             Laatste berichtje
           </h2>
         </div>
@@ -1292,7 +1223,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
 
         ${infoBox(`
           <div style="text-align: center;">
-            <p style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 600; color: #12130F;">
+            <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: #12130F;">
               Wanneer u klaar bent...
             </p>
             <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
@@ -1302,8 +1233,7 @@ const TEMPLATES: Record<string, Record<string, { subject: string; body: string }
         `, 'light')}
 
         <p style="margin: 24px 0 0; color: #333; font-size: 15px; line-height: 1.7;">
-          We wensen u een prachtig evenement, met of zonder ons ✨
-        </p>
+          We wensen u een prachtig evenement, met of zonder ons        </p>
       `
     }
   }
