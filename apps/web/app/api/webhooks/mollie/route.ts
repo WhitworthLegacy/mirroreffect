@@ -332,22 +332,25 @@ export async function POST(req: Request) {
     // =============================================================================
     const locale = (meta.language as string) || "fr";
 
-    await supabase.from("notifications").insert([
-      {
-        event_id: eventId,
-        template_key: "B2C_BOOKING_CONFIRMED",
-        to_email: clientEmail,
-        locale,
-        status: "queued"
+    // Queue booking confirmation with full event payload
+    const totalCentsVal = meta.total_cents ? Number(meta.total_cents) : null;
+    const balanceCentsVal = meta.balance_due_cents ? Number(meta.balance_due_cents) : null;
+
+    await supabase.from("notifications").insert({
+      event_id: eventId,
+      template_key: "B2C_BOOKING_CONFIRMED",
+      to_email: clientEmail,
+      locale,
+      payload: {
+        client_name: (meta.client_name as string) || "",
+        event_date: (meta.event_date as string) || "",
+        address: (meta.address as string) || "",
+        pack_code: (meta.pack_code as string) || "",
+        deposit: DEPOSIT_CENTS / 100,
+        balance: balanceCentsVal ? balanceCentsVal / 100 : totalCentsVal ? (totalCentsVal - DEPOSIT_CENTS) / 100 : 0,
       },
-      {
-        event_id: eventId,
-        template_key: "B2C_EVENT_RECAP",
-        to_email: clientEmail,
-        locale,
-        status: "queued"
-      }
-    ]);
+      status: "queued"
+    });
 
     console.log(`[mollie-webhook] Notifications créées:`, { ...logContext, eventId });
 

@@ -15,6 +15,14 @@ const NURTURE_STEPS = [
   { day: 21, key: "NURTURE_J21_GOODBYE" },
 ] as const;
 
+// Post-event sequence: day offset from event_date → template key
+const POST_EVENT_STEPS = [
+  { day: 1, key: "B2C_AVIS_GOOGLE" },
+  { day: 4, key: "B2C_RELANCE_AVIS" },
+  { day: 90, key: "B2C_EVENT_ANNIVERSARY" },   // ~3 mois
+  { day: 270, key: "B2C_OFFRE_ANNIVERSAIRE" },  // ~9 mois
+] as const;
+
 // Launch date: all leads created before this start nurturing from this date.
 // New leads created after use their own created_at.
 const NURTURE_LAUNCH_DATE = new Date("2026-01-27T00:00:00Z");
@@ -64,6 +72,12 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
 
       if (existing) continue;
 
+      // Check unsubscribe before queuing
+      if (await isUnsubscribed(supabase, lead.client_email)) {
+        console.log(`[nurturing] Skipped ${step.key} for ${lead.client_email} (unsubscribed)`);
+        continue;
+      }
+
       // Queue the nurturing email
       const { error: insertError } = await supabase
         .from("notifications")
@@ -99,7 +113,98 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
 }
 
 /**
- * Cron job: queue nurturing emails + process queued emails
+ * Check if an email address has unsubscribed (lead status = 'unsubscribed')
+ */
+async function isUnsubscribed(supabase: ReturnType<typeof createSupabaseServerClient>, email: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("leads")
+    .select("status")
+    .eq("client_email", email.toLowerCase())
+    .eq("status", "unsubscribed")
+    .maybeSingle();
+
+  return !!data;
+}
+
+/**
+ * Phase 2: Queue post-event emails based on event_date
+ * J+1 → avis Google, J+4 → relance avis, M+3 → anniversaire, M+9 → offre
+ */
+async function queuePostEventEmails(supabase: ReturnType<typeof createSupabaseServerClient>) {
+  let queued = 0;
+
+  // Fetch events that have an event_date in the past (event already happened)
+  const { data: events, error } = await supabase
+    .from("events")
+    .select("event_id, client_name, client_email, language, event_date, pack_id, address")
+    .not("event_date", "is", null)
+    .lte("event_date", new Date().toISOString().split("T")[0]);
+
+  if (error) {
+    console.error("[post-event] Error fetching events:", error.message);
+    return 0;
+  }
+
+  if (!events || events.length === 0) return 0;
+
+  const now = new Date();
+
+  for (const event of events) {
+    const eventDate = new Date(event.event_date + "T00:00:00Z");
+    const daysSinceEvent = (now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    for (const step of POST_EVENT_STEPS) {
+      // ±0.5 day window for J+1/J+4, ±3 day window for monthly steps
+      const tolerance = step.day >= 90 ? 3 : 0.5;
+      if (Math.abs(daysSinceEvent - step.day) > tolerance) continue;
+
+      // Check if already queued/sent for this event + template
+      const { data: existing } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("template_key", step.key)
+        .eq("to_email", event.client_email)
+        .eq("event_id", event.event_id)
+        .maybeSingle();
+
+      if (existing) continue;
+
+      // Check unsubscribe
+      if (await isUnsubscribed(supabase, event.client_email)) {
+        console.log(`[post-event] Skipped ${step.key} for ${event.client_email} (unsubscribed)`);
+        continue;
+      }
+
+      // Queue the post-event email
+      const { error: insertError } = await supabase
+        .from("notifications")
+        .insert({
+          event_id: event.event_id,
+          template_key: step.key,
+          to_email: event.client_email,
+          locale: (event.language || "fr").toLowerCase(),
+          payload: {
+            client_name: event.client_name || "",
+            event_date: event.event_date || "",
+            address: event.address || "",
+          },
+          status: "queued",
+        });
+
+      if (insertError) {
+        console.error(`[post-event] Error queuing ${step.key} for ${event.client_email}:`, insertError.message);
+      } else {
+        queued++;
+        console.log(`[post-event] Queued ${step.key} for ${event.client_email} (day ${step.day}, event ${event.event_id})`);
+      }
+    }
+  }
+
+  return queued;
+}
+
+/**
+ * Cron job: queue nurturing emails + post-event emails + process queued emails
  * Runs daily at 8am via Vercel Cron
  *
  * GET /api/cron/send-emails
@@ -116,11 +221,15 @@ export async function GET(request: NextRequest) {
   const supabase = createSupabaseServerClient();
 
   try {
-    // Phase 1: Queue nurturing emails for abandoned leads
+    // Phase 1: Queue nurturing emails for leads in progress
     const nurtureQueued = await queueNurturingEmails(supabase);
     console.log(`[cron/send-emails] Phase 1: queued ${nurtureQueued} nurturing emails`);
 
-    // Phase 2: Send all queued emails (limit 20 per run to avoid timeout)
+    // Phase 2: Queue post-event emails based on event_date
+    const postEventQueued = await queuePostEventEmails(supabase);
+    console.log(`[cron/send-emails] Phase 2: queued ${postEventQueued} post-event emails`);
+
+    // Phase 3: Send all queued emails (limit 20 per run to avoid timeout)
     const { data: notifications, error: fetchError } = await supabase
       .from("notifications")
       .select("*")
@@ -138,6 +247,7 @@ export async function GET(request: NextRequest) {
       return Response.json({
         ok: true,
         nurture_queued: nurtureQueued,
+        post_event_queued: postEventQueued,
         processed: 0,
         message: "No queued emails",
         duration: `${Date.now() - startTime}ms`
@@ -241,6 +351,7 @@ export async function GET(request: NextRequest) {
     return Response.json({
       ok: true,
       nurture_queued: nurtureQueued,
+      post_event_queued: postEventQueued,
       processed: notifications.length,
       sent,
       failed,
