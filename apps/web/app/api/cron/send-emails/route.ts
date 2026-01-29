@@ -113,17 +113,29 @@ async function queueNurturingEmails(supabase: ReturnType<typeof createSupabaseSe
 }
 
 /**
- * Check if an email address has unsubscribed (lead status = 'unsubscribed')
+ * Check if an email address has unsubscribed
+ * Checks both leads table (legacy) and new email_unsubscribes table
  */
 async function isUnsubscribed(supabase: ReturnType<typeof createSupabaseServerClient>, email: string): Promise<boolean> {
-  const { data } = await supabase
+  // Check new unsubscribes table first
+  const { data: unsubRecord } = await supabase
+    .from("email_unsubscribes")
+    .select("id")
+    .eq("email", email.toLowerCase())
+    .in("category", ["marketing", "all"])
+    .maybeSingle();
+
+  if (unsubRecord) return true;
+
+  // Fallback: check legacy leads table
+  const { data: leadData } = await supabase
     .from("leads")
     .select("status")
     .eq("client_email", email.toLowerCase())
     .eq("status", "unsubscribed")
     .maybeSingle();
 
-  return !!data;
+  return !!leadData;
 }
 
 /**
@@ -154,8 +166,8 @@ async function queuePostEventEmails(supabase: ReturnType<typeof createSupabaseSe
     const daysSinceEvent = (now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24);
 
     for (const step of POST_EVENT_STEPS) {
-      // ±0.5 day window for J+1/J+4, ±3 day window for monthly steps
-      const tolerance = step.day >= 90 ? 3 : 0.5;
+      // ±0.5 day window for J+1/J+4, ±1 day window for monthly steps (reduced from ±3)
+      const tolerance = step.day >= 90 ? 1 : 0.5;
       if (Math.abs(daysSinceEvent - step.day) > tolerance) continue;
 
       // Check if already queued/sent for this event + template

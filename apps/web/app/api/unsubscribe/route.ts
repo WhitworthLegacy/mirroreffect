@@ -44,16 +44,37 @@ export async function GET(request: NextRequest) {
       console.error("[unsubscribe] Lead update error:", leadError);
     }
 
-    // Cancel any pending notifications for this email
+    // Cancel only MARKETING notifications (not transactional ones like booking confirmations)
+    const marketingTemplates = [
+      "NURTURE_J1_VALUE",
+      "NURTURE_J3_FAQ",
+      "NURTURE_J7_PROOF",
+      "NURTURE_J14_PROMO",
+      "NURTURE_J21_GOODBYE",
+      "B2C_EVENT_ANNIVERSARY",
+      "B2C_OFFRE_ANNIVERSAIRE"
+    ];
+
     const { error: notifError } = await supabase
       .from("notifications")
       .update({ status: "cancelled" })
       .eq("to_email", email.toLowerCase())
-      .eq("status", "queued");
+      .eq("status", "queued")
+      .in("template_key", marketingTemplates);
 
     if (notifError) {
       console.error("[unsubscribe] Notification cancel error:", notifError);
     }
+
+    // Also insert into unsubscribes table for tracking
+    await supabase
+      .from("email_unsubscribes")
+      .insert({
+        email: email.toLowerCase(),
+        category: "marketing"
+      })
+      .onConflict("email,category")
+      .ignoreDuplicates();
 
     console.log(`[unsubscribe] User unsubscribed: ${email}`);
 

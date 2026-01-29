@@ -36,16 +36,29 @@ function releaseLock(paymentId: string): void {
 
 /**
  * Cherche un lead par email (case-insensitive)
- * Retourne le lead le plus récent si plusieurs matches
+ * Retourne le lead avec status='progress' en priorité, sinon le plus récent
  */
 async function findLeadByEmail(supabase: ReturnType<typeof createSupabaseServerClient>, email: string) {
+  // Priorité 1: Lead en cours (status='progress')
+  const { data: progressLead } = await supabase
+    .from("leads")
+    .select("lead_id, created_at, status")
+    .eq("client_email", email.toLowerCase())
+    .eq("status", "progress")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (progressLead) return progressLead;
+
+  // Priorité 2: Sinon, le lead le plus récent (peu importe le statut)
   const { data, error } = await supabase
     .from("leads")
-    .select("lead_id, created_at")
+    .select("lead_id, created_at, status")
     .eq("client_email", email.toLowerCase())
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error && error.code !== "PGRST116") {
     console.error("[mollie-webhook] Erreur recherche lead:", error);
@@ -332,27 +345,40 @@ export async function POST(req: Request) {
     // =============================================================================
     const locale = (meta.language as string) || "fr";
 
-    // Queue booking confirmation with full event payload
-    const totalCentsVal = meta.total_cents ? Number(meta.total_cents) : null;
-    const balanceCentsVal = meta.balance_due_cents ? Number(meta.balance_due_cents) : null;
+    // Vérifier si la notification existe déjà (éviter les doublons)
+    const { data: existingNotification } = await supabase
+      .from("notifications")
+      .select("id")
+      .eq("template_key", "B2C_BOOKING_CONFIRMED")
+      .eq("to_email", clientEmail)
+      .eq("event_id", eventId)
+      .maybeSingle();
 
-    await supabase.from("notifications").insert({
-      event_id: eventId,
-      template_key: "B2C_BOOKING_CONFIRMED",
-      to_email: clientEmail,
-      locale,
-      payload: {
-        client_name: (meta.client_name as string) || "",
-        event_date: (meta.event_date as string) || "",
-        address: (meta.address as string) || "",
-        pack_code: (meta.pack_code as string) || "",
-        deposit: DEPOSIT_CENTS / 100,
-        balance: balanceCentsVal ? balanceCentsVal / 100 : totalCentsVal ? (totalCentsVal - DEPOSIT_CENTS) / 100 : 0,
-      },
-      status: "queued"
-    });
+    if (!existingNotification) {
+      // Queue booking confirmation with full event payload
+      const totalCentsVal = meta.total_cents ? Number(meta.total_cents) : null;
+      const balanceCentsVal = meta.balance_due_cents ? Number(meta.balance_due_cents) : null;
 
-    console.log(`[mollie-webhook] Notifications créées:`, { ...logContext, eventId });
+      await supabase.from("notifications").insert({
+        event_id: eventId,
+        template_key: "B2C_BOOKING_CONFIRMED",
+        to_email: clientEmail,
+        locale,
+        payload: {
+          client_name: (meta.client_name as string) || "",
+          event_date: (meta.event_date as string) || "",
+          address: (meta.address as string) || "",
+          pack_code: (meta.pack_code as string) || "",
+          deposit: DEPOSIT_CENTS / 100,
+          balance: balanceCentsVal ? balanceCentsVal / 100 : totalCentsVal ? (totalCentsVal - DEPOSIT_CENTS) / 100 : 0,
+        },
+        status: "queued"
+      });
+
+      console.log(`[mollie-webhook] Notification créée:`, { ...logContext, eventId });
+    } else {
+      console.log(`[mollie-webhook] Notification déjà existante, ignorée:`, { ...logContext, eventId });
+    }
 
     // =============================================================================
     // 5) Meta Conversions API - Track Purchase event

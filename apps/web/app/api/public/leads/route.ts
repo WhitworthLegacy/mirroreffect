@@ -47,28 +47,36 @@ function sanitize(value?: string): string {
   return value ? value.trim() : "";
 }
 
-// Déduplication en mémoire (fenêtre de 3s)
-const recentEvents = new Map<string, number>();
+// Déduplication via Supabase (multi-serveur safe)
 const DEDUP_WINDOW_MS = 3000;
 
-function getDedupKey(leadId: string | undefined, step: string | undefined, buttonLabel: string | undefined): string {
-  return `${leadId || "no-lead"}_${step || "no-step"}_${buttonLabel || "no-button"}`;
-}
+async function isDuplicateInDatabase(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  leadId: string | undefined,
+  clientEmail: string | undefined
+): Promise<boolean> {
+  // Ne vérifier que si on a un identifiant
+  if (!leadId && !clientEmail) return false;
 
-function isDuplicate(key: string): boolean {
-  const now = Date.now();
-  const lastTime = recentEvents.get(key);
-  if (lastTime && now - lastTime < DEDUP_WINDOW_MS) {
-    return true;
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - DEDUP_WINDOW_MS);
+
+  // Vérifier par lead_id ou email dans les 3 dernières secondes
+  const query = supabase
+    .from("leads")
+    .select("lead_id, created_at")
+    .gte("created_at", cutoff.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (leadId) {
+    query.eq("lead_id", leadId);
+  } else if (clientEmail) {
+    query.eq("client_email", clientEmail.toLowerCase());
   }
-  recentEvents.set(key, now);
-  // Nettoyer les anciennes entrées
-  for (const [k, v] of recentEvents.entries()) {
-    if (now - v > 10000) {
-      recentEvents.delete(k);
-    }
-  }
-  return false;
+
+  const { data } = await query.maybeSingle();
+  return Boolean(data);
 }
 
 export async function POST(req: Request) {
@@ -113,8 +121,7 @@ export async function POST(req: Request) {
   const leadId = data.leadId || data.lead_id;
   const step = data.step || "";
   const buttonLabel = data.buttonLabel || data.cta_label || "";
-  const dedupKey = getDedupKey(leadId, step, buttonLabel);
-  const isDup = isDuplicate(dedupKey);
+  const clientEmail = sanitize(data.client_email || "");
 
   const logContext = {
     requestId,
@@ -123,19 +130,27 @@ export async function POST(req: Request) {
     step,
     hasLeadId: Boolean(leadId),
     hasUTM: Boolean(data.utm || data.utm_source || data.utm_campaign || data.utm_medium),
-    isDuplicate: isDup,
+    isDuplicate: false,
     isWriteAttempt: false
   };
+
+  const supabase = createSupabaseServerClient();
+
+  // Vérification déduplication pour lead_progress et button_click
+  if (event === "button_click" || event === "lead_progress") {
+    const isDup = await isDuplicateInDatabase(supabase, leadId, clientEmail);
+    logContext.isDuplicate = isDup;
+
+    if (isDup) {
+      console.log(`[leads][${requestId}] Événement ignoré (duplicate):`, logContext);
+      return Response.json({ ok: true, requestId, skipped: true, reason: "duplicate" }, { status: 200 });
+    }
+  }
 
   // =============================================================================
   // Événement: button_click (log only, pas d'écriture)
   // =============================================================================
   if (event === "button_click") {
-    if (isDup) {
-      console.log(`[leads][${requestId}] Événement ignoré (duplicate):`, logContext);
-      return Response.json({ ok: true, requestId, skipped: true, reason: "duplicate" }, { status: 200 });
-    }
-
     if (!leadId) {
       console.log(`[leads][${requestId}] button_click ignoré (pas de leadId):`, logContext);
       return Response.json({ ok: true, requestId, skipped: true, reason: "no_lead_id" }, { status: 200 });
@@ -144,8 +159,6 @@ export async function POST(req: Request) {
     console.log(`[leads][${requestId}] button_click loggé:`, { ...logContext, buttonLabel, leadId });
     return Response.json({ ok: true, requestId, skipped: true, reason: "button_click_log_only" }, { status: 200 });
   }
-
-  const supabase = createSupabaseServerClient();
 
   // =============================================================================
   // Événement: cta_update (mise à jour CTA)
@@ -184,7 +197,6 @@ export async function POST(req: Request) {
   // Événement: lead_progress (création/mise à jour lead)
   // =============================================================================
   if (event === "lead_progress") {
-    const clientEmail = sanitize(data.client_email || "");
     const isNewLead = data.is_new_lead === true;
 
     if (!leadId && !clientEmail) {
