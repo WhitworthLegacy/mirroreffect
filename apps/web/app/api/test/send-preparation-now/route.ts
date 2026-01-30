@@ -16,9 +16,9 @@ const PACK_NAMES = {
 };
 
 const PACK_PRINTS = {
-  DISCOVERY: "150 photos 10×15",
-  ESSENTIAL: "Illimité 3h",
-  PREMIUM: "Illimité 5h",
+  DISCOVERY: "200 impressions",
+  ESSENTIAL: "400 impressions",
+  PREMIUM: "800 impressions",
 };
 
 /**
