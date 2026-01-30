@@ -9,7 +9,7 @@ function getResend(): Resend {
 }
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Mirror Effect <hello@mirroreffect.co>";
-const REPLY_TO = process.env.RESEND_REPLY_TO || "hello@mirroreffect.co";
+const REPLY_TO = process.env.RESEND_REPLY_TO || "admin@mirroreffect.co";
 
 type SendEmailInput = {
   to: string;
