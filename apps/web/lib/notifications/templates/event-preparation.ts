@@ -106,53 +106,7 @@ const infoBox = (content: string, variant: 'gold' | 'light' = 'light') => {
 `;
 };
 
-function generateUpsellSection(data: EventPreparationData): string {
-  const { pack_code, guest_count, upgrade_price } = data;
-
-  if (pack_code === "DISCOVERY") {
-    return infoBox(`
-      <p style="margin: 0 0 12px; color: #666; font-size: 14px; line-height: 1.6;">
-        <strong style="color: #12130F;">Notre conseil :</strong>
-      </p>
-      <p style="margin: 0 0 12px; color: #333; font-size: 14px; line-height: 1.6;">
-        Avec ${guest_count} invités, nous recommandons la formule Essentiel (impressions illimitées 3h) pour ${upgrade_price}€ supplémentaires. Cela garantit que tous vos invités repartent avec leurs photos.
-      </p>
-      <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
-        Si cela vous intéresse, répondez simplement "OUI ESSENTIEL" à cet email.
-      </p>
-    `, 'gold');
-  }
-
-  if (pack_code === "ESSENTIAL") {
-    return infoBox(`
-      <p style="margin: 0 0 12px; color: #666; font-size: 14px; line-height: 1.6;">
-        <strong style="color: #12130F;">Suggestion :</strong>
-      </p>
-      <p style="margin: 0 0 12px; color: #333; font-size: 14px; line-height: 1.6;">
-        Pour un événement avec ${guest_count} invités, la formule Premium (impressions illimitées 5h + livre d'or) peut être intéressante pour ${upgrade_price}€ supplémentaires.
-      </p>
-      <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
-        Si cela vous intéresse, répondez simplement "OUI PREMIUM" à cet email.
-      </p>
-    `, 'gold');
-  }
-
-  if (pack_code === "PREMIUM") {
-    return infoBox(`
-      <p style="margin: 0 0 12px; color: #666; font-size: 14px; line-height: 1.6;">
-        <strong style="color: #12130F;">Option disponible :</strong>
-      </p>
-      <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
-        Si vous souhaitez un volume d'impressions très important, nous proposons un pack supplémentaire de 400 impressions pour 50€. Répondez "OUI +400" si cela vous intéresse.
-      </p>
-    `, 'gold');
-  }
-
-  return "";
-}
-
 export function renderEventPreparation(data: EventPreparationData): { subject: string; html: string } {
-  const upsellSection = generateUpsellSection(data);
 
   const subject = `Préparation de votre événement - ${data.event_date}`;
 
@@ -200,14 +154,16 @@ export function renderEventPreparation(data: EventPreparationData): { subject: s
     `)}
 
     <h2 style="margin: 32px 0 16px; color: #12130F; font-size: 18px; font-weight: 600;">
-      Recommandation impressions
+      Nombre d'impressions
     </h2>
 
     <p style="margin: 0 0 16px; color: #333; font-size: 15px; line-height: 1.7;">
-      Nous recommandons 3 à 4 impressions par invité. Pour ${data.guest_count} invités, cela représente environ <strong>${data.recommended_prints} impressions</strong>.
+      Nous recommandons toujours 3 à 4 impressions par invité pour que chacun reparte avec ses souvenirs.
     </p>
 
-    ${upsellSection}
+    <p style="margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.7;">
+      <strong>Êtes-vous sûr d'avoir choisi le nombre d'impressions suffisant ?</strong>
+    </p>
 
     <h2 style="margin: 32px 0 16px; color: #12130F; font-size: 18px; font-weight: 600;">
       Confirmation d'adresse
