@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip3 install:*)",
+      "Bash(/Users/macbook/Library/Python/3.9/bin/xlsx2csv:*)",
+      "Bash(xlsx2csv:*)",
+      "Bash(python3:*)",
+      "Bash(pnpm import:all:*)",
+      "Bash(pnpm --filter web build:*)",
+      "Bash(tree:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nUpdate pack pricing and delivery fees\n\n- Découverte: 450€ + 100€ BE / 150€ FR = 550€/600€\n- Essentiel: 500€ + 100€ BE / 150€ FR = 600€/650€\n- Premium: 550€ + 100€ BE / 150€ FR = 650€/700€\n- Acompte: 200€\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
