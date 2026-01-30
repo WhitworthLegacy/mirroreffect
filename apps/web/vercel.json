@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/send-booking-confirmations",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/send-event-preparation",
+      "schedule": "0 10 * * 5"
     }
   ]
 }
