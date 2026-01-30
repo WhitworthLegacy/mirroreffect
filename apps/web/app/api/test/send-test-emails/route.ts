@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       guest_count: 80,
       pack_name: "Essentiel",
       pack_code: "ESSENTIAL",
-      included_prints: "Illimité 3h",
+      included_prints: "400 impressions",
       balance_due: 300,
       recommended_prints: Math.ceil(80 * 3.5),
       deadline_date: deadlineDateFormatted,
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     const preparationResult = await sendEmailViaResend({
       to: TEST_EMAIL,
-      subject: `🎉 Test - ${subject}`,
+      subject: `Test - ${subject}`,
       html,
       tags: [
         { name: "template", value: "event_preparation_test" },
