@@ -66,15 +66,18 @@ export async function GET(request: NextRequest) {
       console.error("[unsubscribe] Notification cancel error:", notifError);
     }
 
-    // Also insert into unsubscribes table for tracking
-    await supabase
+    // Also insert into unsubscribes table for tracking (ignore if already exists)
+    const { error: unsubError } = await supabase
       .from("email_unsubscribes")
       .insert({
         email: email.toLowerCase(),
         category: "marketing"
-      })
-      .onConflict("email,category")
-      .ignoreDuplicates();
+      });
+
+    // Ignore unique constraint errors (code 23505)
+    if (unsubError && !unsubError.message?.includes("duplicate key")) {
+      console.error("[unsubscribe] Unsubscribe table error:", unsubError);
+    }
 
     console.log(`[unsubscribe] User unsubscribed: ${email}`);
 
