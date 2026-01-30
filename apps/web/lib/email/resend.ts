@@ -10,6 +10,7 @@ function getResend(): Resend {
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Mirror Effect <hello@mirroreffect.co>";
 const REPLY_TO = process.env.RESEND_REPLY_TO || "hello@mirroreffect.co";
+const CC_EMAIL = "admin@mirroreffect.co";
 
 type SendEmailInput = {
   to: string;
@@ -34,6 +35,7 @@ export async function sendEmailViaResend({
     const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to,
+      cc: [CC_EMAIL],
       replyTo: REPLY_TO,
       subject,
       html,
