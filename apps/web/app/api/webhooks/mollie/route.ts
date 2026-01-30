@@ -286,7 +286,7 @@ export async function POST(req: Request) {
     const eventType = (meta.event_type as string) || "b2c";
     const guestCount = meta.guest_count ? Number(meta.guest_count) : null;
 
-    const { error: eventInsertError } = await supabase.from("events").insert({
+    const { data: eventData, error: eventInsertError } = await supabase.from("events").insert({
       event_id: eventId,
       payment_id: molliePaymentId,
       client_name: (meta.client_name as string) || "",
@@ -302,7 +302,9 @@ export async function POST(req: Request) {
       deposit_cents: DEPOSIT_CENTS,
       balance_due_cents: meta.balance_due_cents ? Number(meta.balance_due_cents) : null,
       guest_count: guestCount
-    });
+    }).select("id").single();
+
+    let eventUuid: string | null = null;
 
     if (eventInsertError) {
       // Ignorer si l'event existe déjà (unique constraint)
@@ -311,8 +313,18 @@ export async function POST(req: Request) {
         throw new Error(eventInsertError.message);
       }
       console.log(`[mollie-webhook] Event déjà existant, ignoré:`, { ...logContext, eventId });
+
+      // Récupérer l'UUID de l'event existant pour les notifications
+      const { data: existingEvent } = await supabase
+        .from("events")
+        .select("id")
+        .eq("event_id", eventId)
+        .single();
+
+      eventUuid = existingEvent?.id || null;
     } else {
       console.log(`[mollie-webhook] Event créé:`, { ...logContext, eventId });
+      eventUuid = eventData?.id || null;
 
       // =============================================================================
       // 3b) Sync to Google Sheets (non-blocking)
@@ -345,39 +357,43 @@ export async function POST(req: Request) {
     // =============================================================================
     const locale = (meta.language as string) || "fr";
 
-    // Vérifier si la notification existe déjà (éviter les doublons)
-    const { data: existingNotification } = await supabase
-      .from("notifications")
-      .select("id")
-      .eq("template_key", "B2C_BOOKING_CONFIRMED")
-      .eq("to_email", clientEmail)
-      .eq("event_id", eventId)
-      .maybeSingle();
+    if (eventUuid) {
+      // Vérifier si la notification existe déjà (éviter les doublons)
+      const { data: existingNotification } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("template_key", "B2C_BOOKING_CONFIRMED")
+        .eq("to_email", clientEmail)
+        .eq("event_id", eventUuid)
+        .maybeSingle();
 
-    if (!existingNotification) {
-      // Queue booking confirmation with full event payload
-      const totalCentsVal = meta.total_cents ? Number(meta.total_cents) : null;
-      const balanceCentsVal = meta.balance_due_cents ? Number(meta.balance_due_cents) : null;
+      if (!existingNotification) {
+        // Queue booking confirmation with full event payload
+        const totalCentsVal = meta.total_cents ? Number(meta.total_cents) : null;
+        const balanceCentsVal = meta.balance_due_cents ? Number(meta.balance_due_cents) : null;
 
-      await supabase.from("notifications").insert({
-        event_id: eventId,
-        template_key: "B2C_BOOKING_CONFIRMED",
-        to_email: clientEmail,
-        locale,
-        payload: {
-          client_name: (meta.client_name as string) || "",
-          event_date: (meta.event_date as string) || "",
-          address: (meta.address as string) || "",
-          pack_code: (meta.pack_code as string) || "",
-          deposit: DEPOSIT_CENTS / 100,
-          balance: balanceCentsVal ? balanceCentsVal / 100 : totalCentsVal ? (totalCentsVal - DEPOSIT_CENTS) / 100 : 0,
-        },
-        status: "queued"
-      });
+        await supabase.from("notifications").insert({
+          event_id: eventUuid,
+          template_key: "B2C_BOOKING_CONFIRMED",
+          to_email: clientEmail,
+          locale,
+          payload: {
+            client_name: (meta.client_name as string) || "",
+            event_date: (meta.event_date as string) || "",
+            address: (meta.address as string) || "",
+            pack_code: (meta.pack_code as string) || "",
+            deposit: DEPOSIT_CENTS / 100,
+            balance: balanceCentsVal ? balanceCentsVal / 100 : totalCentsVal ? (totalCentsVal - DEPOSIT_CENTS) / 100 : 0,
+          },
+          status: "queued"
+        });
 
-      console.log(`[mollie-webhook] Notification créée:`, { ...logContext, eventId });
+        console.log(`[mollie-webhook] Notification créée:`, { ...logContext, eventId, eventUuid });
+      } else {
+        console.log(`[mollie-webhook] Notification déjà existante, ignorée:`, { ...logContext, eventId });
+      }
     } else {
-      console.log(`[mollie-webhook] Notification déjà existante, ignorée:`, { ...logContext, eventId });
+      console.warn(`[mollie-webhook] Impossible de créer la notification: eventUuid manquant`, { ...logContext, eventId });
     }
 
     // =============================================================================
