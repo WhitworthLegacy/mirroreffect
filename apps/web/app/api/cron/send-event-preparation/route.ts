@@ -56,11 +56,11 @@ export async function GET(request: NextRequest) {
 
     console.log(`[cron/event-preparation] Looking for events between ${startDate} and ${endDate}`);
 
-    // Fetch events happening next weekend
+    // Fetch events happening next weekend (active or confirmed status)
     const { data: events, error: fetchError } = await supabase
       .from("events")
       .select("*")
-      .eq("status", "active")
+      .in("status", ["active", "confirmed"])
       .gte("event_date", startDate)
       .lte("event_date", endDate)
       .order("event_date", { ascending: true });
