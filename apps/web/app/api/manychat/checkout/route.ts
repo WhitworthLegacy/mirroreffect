@@ -9,8 +9,9 @@ interface ManyChatCheckoutPayload {
   event_date?: string;
   event_type?: string;
   address?: string;
+  event_country?: string; // "Belgique" ou "France"
   pack_code?: "DISCOVERY" | "ESSENTIAL" | "PREMIUM";
-  zone_code?: "BE" | "FR_NORD";
+  zone_code?: "BE" | "FR_NORD"; // Optionnel si event_country est fourni
   guest_count?: string | number;
   language?: "fr" | "nl";
 }

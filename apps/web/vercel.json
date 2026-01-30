@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/send-emails",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/send-booking-confirmations",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
