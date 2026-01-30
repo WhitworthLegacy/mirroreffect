@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const { data: events, error: fetchError } = await supabase
       .from("events")
       .select("*")
-      .in("status", ["active", "confirmed"])
+      .eq("status", "active")
       .gte("event_date", startDate)
       .lte("event_date", endDate)
       .order("event_date", { ascending: true });
