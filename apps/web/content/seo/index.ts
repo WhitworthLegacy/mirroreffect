@@ -8,6 +8,7 @@ import blogImpressions from "./blog-impressions";
 import blogRgpd from "./blog-rgpd";
 import blogPhotoboothMiroirMariageBruxellesAnimationPhotoHautDeGamme from "./blog-photobooth-miroir-mariage-bruxelles-animation-photo-haut-de-gamme";
 import blogBorneSelfieEvenementCorporateBelgique from "./blog-borne-selfie-evenement-corporate-belgique";
+import blogAnimationPhotoGalaEntrepriseBelgique from "./blog-animation-photo-gala-entreprise-belgique";
 import nlBlogSelfieZuilCorporateEvenementPremiumFotoAnimatieBelgie from "./nl-blog-selfie-zuil-corporate-evenement-premium-foto-animatie-belgie";
 import etudeBirmingham from "./etude-de-cas-birmingham";
 import etudeHilton from "./etude-de-cas-hilton";
@@ -51,6 +52,7 @@ export type SeoPage = {
 };
 
 export const seoPages: SeoPage[] = [
+  blogAnimationPhotoGalaEntrepriseBelgique,
   nlBlogSelfieZuilCorporateEvenementPremiumFotoAnimatieBelgie,
   blogBorneSelfieEvenementCorporateBelgique,
   blogPhotoboothMiroirMariageBruxellesAnimationPhotoHautDeGamme,
